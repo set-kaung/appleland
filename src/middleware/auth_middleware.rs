@@ -8,6 +8,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use std::sync::Arc;
+use tracing::info;
 
 pub async fn auth_middleware(
     State(state): State<AppState>,
@@ -32,6 +33,10 @@ pub async fn auth_middleware(
 
     match (&*auth_arc).verify(&token).await {
         Ok(claims) => {
+            if claims.role != "authenticated" {
+                info!("unathenticated access with role: {}", claims.role);
+                return StatusCode::FORBIDDEN.into_response();
+            }
             request.extensions_mut().insert::<Claims>(claims);
             next.run(request).await
         }

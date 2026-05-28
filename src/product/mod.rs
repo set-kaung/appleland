@@ -1,3 +1,4 @@
+mod error;
 pub mod handler;
 pub mod model;
 mod store;
@@ -11,6 +12,8 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_products).post(handler::create_product))
         .route(
             "/{product_id}",
-            get(get_product_by_id).patch(handler::update_product),
+            get(get_product_by_id)
+                .patch(handler::update_product)
+                .delete(handler::delete_product),
         )
 }

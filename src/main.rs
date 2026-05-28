@@ -8,11 +8,11 @@ mod product;
 use app_state::AppState;
 use axum::middleware as axum_middleware;
 use axum::{Router, error_handling::HandleErrorLayer, http::StatusCode};
-use log::error;
 use serde::Deserialize;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::{BoxError, ServiceBuilder, timeout::TimeoutLayer};
+use tracing::{error, info};
 
 use crate::middleware::auth_middleware::auth_middleware;
 
@@ -42,9 +42,15 @@ async fn main() -> Result<(), sqlx::Error> {
             std::process::exit(1);
         }
     }
+    tracing_subscriber::fmt::init();
 
     let pool = db::connect_db(conn_str).await?;
-
+    let options = pool.connect_options();
+    info!(
+        "Connected to: {}:{}",
+        options.get_host(),
+        options.get_port()
+    );
     let app_state = AppState::new(Arc::new(auth::SupabaseAuth::new(supabase_ref)), pool);
 
     let api_routes = Router::new().nest("/products", product::router());
