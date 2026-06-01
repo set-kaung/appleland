@@ -1,33 +1,32 @@
-use tracing::{debug, error};
+use super::store;
+use crate::app_error::StoreError;
+use crate::app_extractor;
 use uuid::Uuid;
 
-use super::{
-    model::{CreateProductPayload, Product},
-    store,
-};
-use crate::{
-    app_state::AppState,
-    product::{error::StoreError, model::UpdateProductPayload},
-};
+use crate::pagination;
+use tracing::{debug, error};
+
+use super::model::{CreateProductPayload, Product};
+use crate::app_state;
+use crate::product::model::UpdateProductPayload;
+
 use axum::{
     Json,
     extract::{Query, State},
     http::StatusCode,
 };
 
-use crate::core::pagination::*;
-
 pub async fn list_products(
-    State(state): State<AppState>,
-    Query(query): Query<PaginationQuery>,
-) -> Result<Json<PaginatedResponse<Product>>, (StatusCode, String)> {
+    State(state): State<app_state::AppState>,
+    Query(query): Query<pagination::PaginationQuery>,
+) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     store::fetch_paged(&state.db, limit, offset)
         .await
         .map(|(data, total_items)| {
             let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
-            Json(PaginatedResponse {
+            Json(pagination::PaginatedResponse {
                 data,
                 total_items,
                 total_pages,
@@ -44,7 +43,7 @@ pub async fn list_products(
 }
 
 pub async fn get_product_by_id(
-    State(state): State<AppState>,
+    State(state): State<app_state::AppState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
 ) -> Result<Json<Product>, (StatusCode, String)> {
     store::fetch_by_id(&state.db, product_id)
@@ -60,8 +59,8 @@ pub async fn get_product_by_id(
 }
 
 pub async fn create_product(
-    State(state): State<AppState>,
-    Json(payload): Json<CreateProductPayload>,
+    State(state): State<app_state::AppState>,
+    app_extractor::ValidatedJson(payload): app_extractor::ValidatedJson<CreateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {
         error!("failed to create transaction: {e}");
@@ -126,7 +125,7 @@ pub async fn create_product(
 }
 
 pub async fn update_product(
-    State(state): State<AppState>,
+    State(state): State<app_state::AppState>,
     Json(payload): Json<UpdateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {
@@ -160,7 +159,7 @@ pub async fn update_product(
 }
 
 pub async fn delete_product(
-    State(state): State<AppState>,
+    State(state): State<app_state::AppState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {

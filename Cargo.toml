@@ -10,6 +10,7 @@ envy = "0.4.2"
 jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 reqwest = { version = "0.13.3", features = ["json", "rustls"] }
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", features = ["full"] }
 sqlx = { version = "0.8.6", features = [
@@ -17,15 +18,15 @@ sqlx = { version = "0.8.6", features = [
     "tls-rustls-ring-webpki",
     "postgres",
     "uuid",
-    "bigdecimal",
+    "rust_decimal",
     "chrono",
     "macros",
 ] }
-
 chrono = { version = "0.4", features = ["serde"] }
-bigdecimal = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 tower = { version = "0.5.3", features = ["timeout"] }
-
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.6", features = ["cors"] }
+tower_governor = "0.8.0"

@@ -1,5 +1,5 @@
-use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -10,7 +10,7 @@ pub struct Product {
     pub sku: String,
     pub name: String,
     pub description: Option<String>,
-    pub price: BigDecimal,
+    pub price: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -20,7 +20,7 @@ pub struct CreateProductPayload {
     pub sku: String,
     pub name: String,
     pub description: Option<String>,
-    pub price: BigDecimal,
+    pub price: Decimal,
 }
 
 #[derive(Debug, Deserialize)]
@@ -29,5 +29,5 @@ pub struct UpdateProductPayload {
     pub sku: String,
     pub name: String,
     pub description: Option<String>,
-    pub price: BigDecimal,
+    pub price: Decimal,
 }
