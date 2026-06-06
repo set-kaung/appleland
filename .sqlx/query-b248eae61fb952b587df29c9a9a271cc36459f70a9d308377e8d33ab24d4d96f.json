@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO products (sku, name, description, price)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, sku, name, description, price, created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO products (barcode, name, description,category,sub_category,price,is_active)\n        VALUES ($1, $2, $3, $4, $5, $6, $7)\n        RETURNING id, barcode, name, description,category,sub_category, price, is_active, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "sku",
+        "name": "barcode",
         "type_info": "Text"
       },
       {
@@ -25,16 +25,31 @@
       },
       {
         "ordinal": 4,
+        "name": "category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "sub_category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
         "name": "price",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 5,
+        "ordinal": 7,
+        "name": "is_active",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -44,7 +59,10 @@
         "Text",
         "Text",
         "Text",
-        "Numeric"
+        "Text",
+        "Text",
+        "Numeric",
+        "Bool"
       ]
     },
     "nullable": [
@@ -53,9 +71,12 @@
       false,
       true,
       false,
+      true,
+      false,
+      false,
       false,
       false
     ]
   },
-  "hash": "ca2f0222d90e8855e4028e42a52eedf63767195c93e113848b2da96eabbf9cdb"
+  "hash": "b248eae61fb952b587df29c9a9a271cc36459f70a9d308377e8d33ab24d4d96f"
 }

@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "sku",
+        "name": "barcode",
         "type_info": "Text"
       },
       {
@@ -37,6 +37,21 @@
         "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "sub_category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "is_active",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -49,6 +64,9 @@
       true,
       false,
       false,
+      false,
+      false,
+      true,
       false
     ]
   },

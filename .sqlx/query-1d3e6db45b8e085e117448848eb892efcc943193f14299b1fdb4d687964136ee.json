@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE products\n       SET sku = $1, name = $2, description = $3, price = $4, updated_at = NOW()\n       WHERE id = $5\n       RETURNING id, sku, name, description, price, created_at, updated_at\n        ",
+  "query": "UPDATE products\n       SET barcode = $1, name = $2, description = $3,category = $4,sub_category = $5, price = $6, is_active = $7,updated_at = NOW()\n       WHERE id = $8\n       RETURNING id,barcode, name, description,category, sub_category, price, is_active, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "sku",
+        "name": "barcode",
         "type_info": "Text"
       },
       {
@@ -25,16 +25,31 @@
       },
       {
         "ordinal": 4,
+        "name": "category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "sub_category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
         "name": "price",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 5,
+        "ordinal": 7,
+        "name": "is_active",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -44,7 +59,10 @@
         "Text",
         "Text",
         "Text",
+        "Text",
+        "Text",
         "Numeric",
+        "Bool",
         "Uuid"
       ]
     },
@@ -54,9 +72,12 @@
       false,
       true,
       false,
+      true,
+      false,
+      false,
       false,
       false
     ]
   },
-  "hash": "45621d521aa619174685b8b6bca6d8b14ae80f31e049f34c0e44bd062b530ecd"
+  "hash": "1d3e6db45b8e085e117448848eb892efcc943193f14299b1fdb4d687964136ee"
 }

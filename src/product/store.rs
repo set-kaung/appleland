@@ -48,14 +48,17 @@ pub async fn create(
     sqlx::query_as!(
         Product,
         r#"
-        INSERT INTO products (sku, name, description, price)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, sku, name, description, price, created_at, updated_at
+        INSERT INTO products (barcode, name, description,category,sub_category,price,is_active)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, barcode, name, description,category,sub_category, price, is_active, created_at, updated_at
         "#,
-        payload.sku,
+        payload.barcode,
         payload.name,
         payload.description,
-        payload.price
+        payload.category,
+        payload.sub_category,
+        payload.price,
+        payload.is_active
     )
     .fetch_one(&mut **tx)
     .await
@@ -68,14 +71,17 @@ pub async fn update(
     sqlx::query_as!(
         Product,
         r#"UPDATE products
-       SET sku = $1, name = $2, description = $3, price = $4, updated_at = NOW()
-       WHERE id = $5
-       RETURNING id, sku, name, description, price, created_at, updated_at
+       SET barcode = $1, name = $2, description = $3,category = $4,sub_category = $5, price = $6, is_active = $7,updated_at = NOW()
+       WHERE id = $8
+       RETURNING id,barcode, name, description,category, sub_category, price, is_active, created_at, updated_at
         "#,
-        payload.sku,
+        payload.barcode,
         payload.name,
         payload.description,
+        payload.category,
+        payload.sub_category,
         payload.price,
+        payload.is_active,
         payload.id
     )
     .fetch_one(&mut **tx)

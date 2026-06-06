@@ -7,9 +7,12 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Product {
     pub id: Uuid,
-    pub sku: String,
+    pub barcode: String,
     pub name: String,
     pub description: Option<String>,
+    pub category: String,
+    pub sub_category: Option<String>,
+    pub is_active: bool,
     pub price: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -17,17 +20,23 @@ pub struct Product {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateProductPayload {
-    pub sku: String,
     pub name: String,
+    pub barcode: String,
     pub description: Option<String>,
+    pub category: String,
+    pub sub_category: Option<String>,
+    pub is_active: bool,
     pub price: Decimal,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateProductPayload {
     pub id: Uuid,
-    pub sku: String,
+    pub barcode: String,
     pub name: String,
     pub description: Option<String>,
+    pub category: String,
+    pub sub_category: Option<String>,
+    pub is_active: bool,
     pub price: Decimal,
 }
