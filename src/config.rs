@@ -15,13 +15,27 @@ pub struct Config {
     pub burst_size: u32,
     #[serde(default = "default_per_sec")]
     pub per_sec: u64,
+
+    #[serde(default = "default_expiry_interval")]
+    pub session_delete_interval: String,
+
+    #[serde(default)]
+    pub rust_log: Option<String>,
 }
 
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        indoc::writedoc!(
             f,
-            "port: {}\nsupabase_ref: {}\ndatabase_host: {}\nallowed_origins: {}\nburst_size: {}\nper_sec: {}\n",
+            "
+                port: {}
+                supabase_ref: {}
+                database_host: {}
+                allowed_origins: {}
+                burst_size: {}
+                per_sec: {}
+                session_delete_interval: {}
+                rust_log: {}",
             self.port,
             self.supabase_ref,
             database_host(&self.database_url),
@@ -31,7 +45,9 @@ impl std::fmt::Display for Config {
                 .collect::<Vec<String>>()
                 .join(" "),
             self.burst_size,
-            self.per_sec
+            self.per_sec,
+            self.session_delete_interval,
+            self.rust_log.clone().unwrap_or("NONE".to_string()),
         )
     }
 }
@@ -67,11 +83,11 @@ fn default_burst_size() -> u32 {
     15
 }
 
+fn default_expiry_interval() -> String {
+    "1m".to_string()
+}
+
 pub fn load_config() -> Result<Config, AppError> {
-    match std::env::var("BURST_SIZE") {
-        Ok(v) => println!("Raw BURST_SIZE from env: {:?}", v.as_bytes()),
-        Err(e) => println!("BURST_SIZE not found: {e}"),
-    }
     match envy::from_env::<Config>().map_err(AppError::ConfigErr) {
         Ok(conf) => {
             println!("Configurations\n==============\n{}", conf);

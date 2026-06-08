@@ -23,6 +23,9 @@ pub enum AppError {
 
     #[error("session store error")]
     SessionStoreErr,
+
+    #[error("general error")]
+    GeneralErr,
 }
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {

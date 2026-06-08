@@ -29,6 +29,12 @@ async fn main() -> Result<(), AppError> {
         .init();
 
     let conf = config::load_config()?;
+    let session_delete_interval =
+        parse_duration::parse(&conf.session_delete_interval).map_err(|e| {
+            tracing::error!("failed to parse duration: {}", e);
+            AppError::GeneralErr
+        })?;
+
     let pool = db::connect_db(conf.database_url).await?;
 
     let api_state = ApiState::new(
@@ -41,7 +47,7 @@ async fn main() -> Result<(), AppError> {
     let deletion_task = tokio::task::spawn(
         session_store
             .clone()
-            .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+            .continuously_delete_expired(session_delete_interval),
     );
 
     let abort_handle = deletion_task.abort_handle();
@@ -89,7 +95,7 @@ async fn main() -> Result<(), AppError> {
         conf.per_sec,
     );
 
-    println!("Starting api server on port :{}", conf.port);
+    tracing::info!("Starting api server on port :{}", conf.port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", conf.port))
         .await
         .unwrap();

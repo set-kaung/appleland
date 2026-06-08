@@ -81,7 +81,13 @@ async fn get_admin_by_username(
     )
     .fetch_one(pool)
     .await
-    .map_err(app_error::StoreError::Database)
+    .map_err(|e| match e {
+        sqlx::Error::RowNotFound => app_error::StoreError::NoRows,
+        _ => {
+            tracing::debug!("{}", e);
+            app_error::StoreError::Database(e)
+        }
+    })
 }
 
 #[axum::debug_handler]
