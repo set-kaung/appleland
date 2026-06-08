@@ -4,7 +4,6 @@ use crate::product::model::UpdateProductPayload;
 use sqlx::{Error, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-#[allow(dead_code)]
 pub async fn fetch_all(pool: &PgPool) -> Result<Vec<Product>, app_error::StoreError> {
     sqlx::query_as!(Product, "SELECT * FROM products")
         .fetch_all(pool)
@@ -99,6 +98,10 @@ pub async fn delete(
 
     if affected > 1 {
         return Err(app_error::StoreError::SafetyTrigger(affected));
+    }
+
+    if affected == 0 {
+        return Err(app_error::StoreError::NoRows);
     }
 
     Ok(affected == 1)

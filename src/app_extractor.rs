@@ -1,10 +1,13 @@
 use axum::{
     Json,
-    extract::{FromRequest, Request},
+    extract::{FromRequest, FromRequestParts, Request},
     http::StatusCode,
 };
 
+use tower_sessions::Session;
 use tracing;
+
+use crate::{app_error::APIError, auth::AdminRole};
 
 pub struct ValidatedJson<T>(pub T);
 
@@ -25,6 +28,66 @@ where
                     "Invalid request body".to_string(),
                 ))
             }
+        }
+    }
+}
+
+pub struct SaleAdminRole;
+pub struct PlaygroundAdminRole;
+pub struct SuperAdminRole;
+
+pub trait IsAdminRole {
+    fn get_role() -> AdminRole;
+}
+
+impl IsAdminRole for SaleAdminRole {
+    fn get_role() -> AdminRole {
+        AdminRole::SaleAdmin
+    }
+}
+
+impl IsAdminRole for PlaygroundAdminRole {
+    fn get_role() -> AdminRole {
+        AdminRole::PlaygroundAdmin
+    }
+}
+
+impl IsAdminRole for SuperAdminRole {
+    fn get_role() -> AdminRole {
+        AdminRole::SuperAdmin
+    }
+}
+
+pub struct RequiresRole<T>(pub AdminRole, pub std::marker::PhantomData<T>);
+
+impl<S, T> FromRequestParts<S> for RequiresRole<T>
+where
+    S: Send + Sync,
+    T: IsAdminRole,
+{
+    type Rejection = APIError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let session = parts
+            .extensions
+            .get::<Session>()
+            .ok_or(APIError::InternalErr)?;
+
+        let role: AdminRole = session
+            .get("role")
+            .await
+            .map_err(|_| APIError::InternalErr)?
+            .ok_or(APIError::AdminInvalidCreds)?;
+
+        let required = T::get_role();
+
+        if role == required || role == AdminRole::SuperAdmin {
+            Ok(RequiresRole(role, std::marker::PhantomData))
+        } else {
+            Err(APIError::AdminInvalidCreds)
         }
     }
 }

@@ -1,5 +1,6 @@
 use appleland::app_error::AppError;
-use appleland::app_state::AppState;
+use appleland::app_state::AdminState;
+use appleland::app_state::ApiState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
@@ -7,33 +8,79 @@ use appleland::middleware;
 use appleland::product;
 use axum::middleware as axum_middleware;
 use axum::{Router, http::StatusCode};
-
 use std::net::SocketAddr;
 use std::sync::Arc;
+use time::Duration;
+use tokio::signal;
+use tokio::task::AbortHandle;
+use tower_sessions::ExpiredDeletion;
+use tower_sessions::{Expiry, SessionManagerLayer};
+use tower_sessions_sqlx_store::PostgresStore;
+use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .unwrap(),
+        )
+        .init();
 
     let conf = config::load_config()?;
     let pool = db::connect_db(conf.database_url).await?;
 
-    let app_state = AppState::new(Arc::new(auth::SupabaseAuth::new(conf.supabase_ref)), pool);
+    let api_state = ApiState::new(
+        Arc::new(auth::SupabaseAuth::new(conf.supabase_ref)),
+        pool.clone(),
+    );
+
+    let session_store = PostgresStore::new(pool.clone());
+    session_store.migrate().await?;
+    let deletion_task = tokio::task::spawn(
+        session_store
+            .clone()
+            .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+    );
+
+    let abort_handle = deletion_task.abort_handle();
+
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(true)
+        .with_same_site(tower_sessions::cookie::SameSite::Lax)
+        .with_expiry(Expiry::OnInactivity(Duration::hours(24)));
+
+    let admin_state = AdminState::new(pool);
 
     let root_routes = Router::new().route("/health", axum::routing::get(health));
-    let api_routes = Router::new().nest("/products", product::router());
+
+    let api_routes = Router::new()
+        .nest("/products", product::route_api_states())
+        .layer(axum_middleware::from_fn_with_state(
+            api_state.clone(),
+            middleware::user_auth_middleware,
+        ));
+
+    let admin_protected_routes = Router::new()
+        .nest("/products", product::route_admin_states())
+        .layer(axum_middleware::from_fn_with_state(
+            admin_state.clone(),
+            middleware::admin_auth_middleware,
+        ));
+
+    let admin_routes = Router::new()
+        .route("/login", axum::routing::post(auth::admin_login_handler))
+        .route("/logout", axum::routing::post(auth::admin_logout_handler))
+        .merge(admin_protected_routes)
+        .layer(session_layer)
+        .with_state(admin_state);
 
     let app_router = Router::new()
         .merge(root_routes)
-        .nest(
-            &format!("/api/v{}", conf.api_version),
-            // apply auth_middleware to all routes in api_routes
-            api_routes.route_layer(axum_middleware::from_fn_with_state(
-                app_state.clone(),
-                middleware::auth_middleware,
-            )),
-        )
-        .with_state(app_state);
+        .nest("/api", api_routes)
+        .nest("/admin", admin_routes)
+        .with_state(api_state);
 
     let app = middleware::with_global_middleware(
         app_router,
@@ -42,10 +89,7 @@ async fn main() -> Result<(), AppError> {
         conf.per_sec,
     );
 
-    println!(
-        "Starting api server (v{}) on port :{}",
-        conf.api_version, conf.port
-    );
+    println!("Starting api server on port :{}", conf.port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", conf.port))
         .await
         .unwrap();
@@ -53,12 +97,43 @@ async fn main() -> Result<(), AppError> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
     .await
     .unwrap();
-
+    match deletion_task.await {
+        Ok(_) => tracing::info!("Session deletion task completed normally"),
+        Err(e) if e.is_cancelled() => {
+            tracing::info!("Session deletion task cancelled via shutdown")
+        }
+        Err(e) => tracing::error!("Session deletion task failed: {}", e),
+    }
     Ok(())
 }
 
 async fn health() -> Result<(StatusCode, String), ()> {
     Ok((StatusCode::OK, "service is up".to_string()))
+}
+
+async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => { deletion_task_abort_handle.abort() },
+        _ = terminate => { deletion_task_abort_handle.abort() },
+    }
 }

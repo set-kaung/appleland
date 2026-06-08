@@ -8,7 +8,6 @@ pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
     pub supabase_ref: String,
-    pub api_version: u8,
     pub database_url: String,
     #[serde(deserialize_with = "deserialize_comma_separated")]
     pub allowed_origins: Vec<HeaderValue>,
@@ -22,10 +21,9 @@ impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "port: {}\nsupabase_ref: {}\napi_version: {}\ndatabase_host: {}\nallowed_origins: {}\nburst_size: {}\nper_sec: {}\n",
+            "port: {}\nsupabase_ref: {}\ndatabase_host: {}\nallowed_origins: {}\nburst_size: {}\nper_sec: {}\n",
             self.port,
             self.supabase_ref,
-            self.api_version,
             database_host(&self.database_url),
             self.allowed_origins
                 .iter()

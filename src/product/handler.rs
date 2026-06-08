@@ -1,10 +1,9 @@
 use super::store;
-use crate::app_error::StoreError;
-use crate::app_extractor;
-use uuid::Uuid;
-
+use crate::app_extractor::{self, RequiresRole, SaleAdminRole};
 use crate::pagination;
+use crate::{app_error::StoreError, app_state::AccessDB};
 use tracing::{debug, error};
+use uuid::Uuid;
 
 use super::model::{CreateProductPayload, Product};
 use crate::app_state;
@@ -16,13 +15,16 @@ use axum::{
     http::StatusCode,
 };
 
-pub async fn list_products(
-    State(state): State<app_state::AppState>,
+pub async fn list_products<S>(
+    State(state): State<S>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
+) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)>
+where
+    S: AccessDB + Clone + Send + Sync + 'static,
+{
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
-    store::fetch_paged(&state.db, limit, offset)
+    store::fetch_paged(&state.access_db(), limit, offset)
         .await
         .map(|(data, total_items)| {
             let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
@@ -42,11 +44,14 @@ pub async fn list_products(
         })
 }
 
-pub async fn get_product_by_id(
-    State(state): State<app_state::AppState>,
+pub async fn get_product_by_id<S>(
+    State(state): State<S>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
-) -> Result<Json<Product>, (StatusCode, String)> {
-    store::fetch_by_id(&state.db, product_id)
+) -> Result<Json<Product>, (StatusCode, String)>
+where
+    S: AccessDB + Clone + Send + Sync + 'static,
+{
+    store::fetch_by_id(&state.access_db(), product_id)
         .await
         .map(Json)
         .map_err(|err| {
@@ -59,7 +64,8 @@ pub async fn get_product_by_id(
 }
 
 pub async fn create_product(
-    State(state): State<app_state::AppState>,
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
+    State(state): State<app_state::AdminState>,
     app_extractor::ValidatedJson(payload): app_extractor::ValidatedJson<CreateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {
@@ -125,7 +131,7 @@ pub async fn create_product(
 }
 
 pub async fn update_product(
-    State(state): State<app_state::AppState>,
+    State(state): State<app_state::AdminState>,
     Json(payload): Json<UpdateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {
@@ -159,7 +165,7 @@ pub async fn update_product(
 }
 
 pub async fn delete_product(
-    State(state): State<app_state::AppState>,
+    State(state): State<app_state::AdminState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {
@@ -194,5 +200,6 @@ pub async fn delete_product(
                 "Failed to delete product".to_string(),
             ))
         }
+        Err(StoreError::NoRows) => Ok(StatusCode::NOT_FOUND),
     }
 }

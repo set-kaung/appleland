@@ -1,8 +1,13 @@
-use super::app_state::AppState;
-use super::auth::{AuthError, Claims};
+use crate::app_state::AdminState;
+
+use super::app_state::ApiState;
+use super::auth::{AdminRole, AuthError, Claims};
+use crate::app_error::APIError;
 use axum::Router;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::HeaderValue;
+use axum::http::Method;
+use axum::http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use axum::{
     body::Body,
     extract::Request,
@@ -11,17 +16,18 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-
 use std::sync::Arc;
 use std::time::Duration;
 use tower::timeout::TimeoutLayer;
 use tower::{BoxError, ServiceBuilder};
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
-use tower_http::cors::{AllowOrigin, Any, CorsLayer};
-use tracing::info;
+use tower_http::classify::ServerErrorsFailureClass;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_sessions::Session;
+use tracing::{Span, info};
 
-pub async fn auth_middleware(
-    State(state): State<AppState>,
+pub async fn user_auth_middleware(
+    State(state): State<ApiState>,
     mut request: Request<Body>,
     next: Next,
 ) -> Response {
@@ -68,8 +74,9 @@ pub async fn auth_middleware(
 pub async fn debug_log_middleware(request: Request<axum::body::Body>, next: Next) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+
     let response = next.run(request).await;
-    tracing::debug!("{} {} {}", response.status(), method, path);
+    tracing::info!("{} {} {}", response.status(), method, path);
     response
 }
 
@@ -86,14 +93,7 @@ pub fn with_global_middleware(
         .unwrap();
     let rate_limit_layer = GovernorLayer::new(governor_conf);
 
-    let cors_layer = if allowed_origins
-        .iter()
-        .any(|h| h == &HeaderValue::from_static("*"))
-    {
-        CorsLayer::new().allow_origin(AllowOrigin::any())
-    } else {
-        CorsLayer::new().allow_origin(allowed_origins)
-    };
+    let cors_layer = CorsLayer::new().allow_origin(allowed_origins);
 
     router.layer(
         ServiceBuilder::new()
@@ -110,7 +110,43 @@ pub fn with_global_middleware(
                 }
             }))
             .layer(TimeoutLayer::new(Duration::from_secs(10)))
-            .layer(cors_layer.allow_methods(Any).allow_headers(Any))
-            .layer(axum::middleware::from_fn(debug_log_middleware)),
+            .layer(
+                cors_layer
+                    .allow_methods([
+                        Method::GET,
+                        Method::POST,
+                        Method::PUT,
+                        Method::PATCH,
+                        Method::DELETE,
+                    ])
+                    .allow_headers(vec![CONTENT_TYPE, AUTHORIZATION, ACCEPT])
+                    .allow_credentials(true),
+            )
+            .layer(axum::middleware::from_fn(debug_log_middleware))
+            .layer(TraceLayer::new_for_http().on_failure(
+                |error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
+                    tracing::error!("Request failed: {:?}", error);
+                },
+            )),
     )
+}
+
+pub async fn admin_auth_middleware(
+    State(_): State<AdminState>,
+    session: Session,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    let role = session.get::<AdminRole>("role").await;
+    if let Ok(v) = role {
+        match v {
+            Some(_) => next.run(request).await,
+            None => {
+                tracing::info!("no session found");
+                APIError::Forbidden.into_response()
+            }
+        }
+    } else {
+        APIError::InternalErr.into_response()
+    }
 }
