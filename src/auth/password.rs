@@ -6,6 +6,7 @@ use sqlx::query_as;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tower_sessions::Session;
+use utoipa::ToSchema;
 
 use argon2::{
     Argon2,
@@ -48,7 +49,7 @@ impl ToString for AdminRole {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
     username: String,
     password: String,
@@ -87,6 +88,16 @@ async fn get_admin_by_username(
     })
 }
 
+#[utoipa::path(
+    post,
+    path = "/admin/login",
+    request_body = LoginRequest,
+    responses(
+        (status = 200),
+        (status = 401)
+    ),
+    tag = "Authentication"
+)]
 #[axum::debug_handler]
 pub async fn admin_login_handler(
     State(state): State<AppState>,
@@ -129,7 +140,17 @@ pub async fn admin_login_handler(
         }
     }
 }
-
+#[utoipa::path(
+    post,
+    path = "/admin/logout",
+    responses(
+        (status = 200)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Authentication"
+)]
 pub async fn admin_logout_handler(session: Session) -> Result<StatusCode, APIError> {
     session
         .delete()

@@ -1,7 +1,0 @@
-name: page
-in: query
-required: false
-schema:
-  type: integer
-  minimum: 1
-  default: 1

@@ -1,3 +1,4 @@
+use appleland::api_doc;
 use appleland::app_error::AppError;
 use appleland::app_state::AppState;
 use appleland::auth;
@@ -16,6 +17,7 @@ use tower_sessions::ExpiredDeletion;
 use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing_subscriber::EnvFilter;
+use utoipa::OpenApi;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -88,6 +90,16 @@ async fn main() -> Result<(), AppError> {
         conf.burst_size,
         conf.per_sec,
     );
+    if conf.gen_docs {
+        let openapi = api_doc::ApiDoc::openapi();
+
+        let yaml = openapi.to_yaml().unwrap();
+
+        match std::fs::write("docs/openapi.yaml", yaml) {
+            Ok(_) => tracing::info!("docs generated"),
+            Err(err) => tracing::error!("error generating docs: {err}"),
+        }
+    }
 
     tracing::info!("Starting api server on port :{}", conf.port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", conf.port))

@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Deserialize)]
+use utoipa::{IntoParams, ToSchema};
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
 pub struct PaginationQuery {
     pub page: Option<i64>,
     pub per_page: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct PaginatedResponse<T> {
     pub data: Vec<T>,
     pub total_items: i64,

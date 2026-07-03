@@ -3,6 +3,7 @@ use crate::app_error::StoreError;
 use crate::app_extractor::{self, RequiresRole, SaleAdminRole};
 use crate::inventory::store as inventory_store;
 use crate::pagination;
+use axum::extract::Path;
 use tower_sessions::Session;
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -17,6 +18,16 @@ use axum::{
     http::StatusCode,
 };
 
+#[utoipa::path(
+    get,
+    path = "/api/products",
+    params(pagination::PaginationQuery),
+    responses(
+        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<Product>),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Products"
+)]
 pub async fn get_products_paginated(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
@@ -43,6 +54,55 @@ pub async fn get_products_paginated(
         })
 }
 
+#[utoipa::path(
+    get,
+    path = "/admin/products",
+    params(pagination::PaginationQuery),
+    responses(
+        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<Product>),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Products"
+)]
+pub async fn get_products_paginated_admin(
+    State(state): State<AppState>,
+    Query(query): Query<pagination::PaginationQuery>,
+) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    store::fetch_paged(&state.db, limit, offset)
+        .await
+        .map(|(data, total_items)| {
+            let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+            Json(pagination::PaginatedResponse {
+                data,
+                total_items,
+                total_pages,
+                current_page,
+            })
+        })
+        .map_err(|err| {
+            error!("failed to fetch products in list_products: {err}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to fetch products".to_string(),
+            )
+        })
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/products/all",
+    responses(
+        (status = 200, body = Vec<Product>),
+        (status = 401),
+        (status = 403)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Products"
+)]
 pub async fn get_all_products(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<app_state::AppState>,
@@ -56,6 +116,19 @@ pub async fn get_all_products(
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/products/{product_id}",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID")
+    ),
+    responses(
+        (status = 200, body = Product),
+        (status = 404, description = "Product not found"),
+        (status = 500)
+    ),
+    tag = "Products"
+)]
 pub async fn get_product_by_id(
     State(state): State<AppState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
@@ -72,6 +145,22 @@ pub async fn get_product_by_id(
         })
 }
 
+#[utoipa::path(
+    post,
+    path = "/admin/products",
+    request_body = CreateProductPayload,
+    responses(
+        (status = 201, body = Product),
+        (status = 400),
+        (status = 401),
+        (status = 409),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Products"
+)]
 pub async fn create_product(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<app_state::AppState>,
@@ -166,10 +255,29 @@ pub async fn create_product(
         }
     }
 }
-
+#[utoipa::path(
+    put,
+    path = "/admin/products/{product_id}",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID")
+    ),
+    request_body = UpdateProductPayload,
+    responses(
+        (status = 200, body = Product),
+        (status = 400),
+        (status = 401),
+        (status = 404),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Products"
+)]
 pub async fn update_product(
     State(state): State<app_state::AppState>,
     session: Session,
+    Path(product_id): Path<Uuid>,
     Json(payload): Json<UpdateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
     let admin_id: Uuid = session
@@ -187,7 +295,7 @@ pub async fn update_product(
     })?;
 
     let update_payload = UpdateProduct {
-        id: payload.id,
+        id: product_id,
         barcode: payload.barcode,
         name: payload.name,
         description: payload.description,
@@ -219,6 +327,24 @@ pub async fn update_product(
         }
     }
 }
+
+#[utoipa::path(
+    delete,
+    path = "/admin/products/{product_id}",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID")
+    ),
+    responses(
+        (status = 204),
+        (status = 404),
+        (status = 409),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Products"
+)]
 
 pub async fn delete_product(
     State(state): State<AppState>,

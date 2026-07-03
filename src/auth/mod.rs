@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 mod supabase;
 pub use supabase::SupabaseAuth;
-mod password;
+pub mod password;
 pub use password::{AdminRole, admin_login_handler, admin_logout_handler};
 
 #[async_trait]

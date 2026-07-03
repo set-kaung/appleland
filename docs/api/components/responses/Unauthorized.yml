@@ -1,5 +1,0 @@
-description: Missing or invalid authentication
-content:
-  application/json:
-    schema:
-      $ref: ../schemas/ErrorMessage.yml

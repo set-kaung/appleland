@@ -15,7 +15,7 @@ pub fn route() -> Router<AppState> {
 
 pub fn route_admin() -> Router<AppState> {
     Router::new()
-        .route("/", get(get_products_paginated).post(create_product))
+        .route("/", get(get_products_paginated_admin).post(create_product))
         .route("/all", get(get_all_products))
         .route(
             "/{product_id}",

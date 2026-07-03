@@ -2,9 +2,10 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Product {
     pub id: Uuid,
     pub barcode: String,
@@ -20,7 +21,7 @@ pub struct Product {
     pub updated_by: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProductPayload {
     pub name: String,
     pub barcode: String,
@@ -44,9 +45,8 @@ pub struct InsertProduct {
     pub updated_by: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProductPayload {
-    pub id: Uuid,
     pub barcode: String,
     pub name: String,
     pub description: Option<String>,

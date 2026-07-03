@@ -1,3 +1,5 @@
+pub mod api_doc;
+
 pub mod app_error;
 pub mod app_extractor;
 pub mod app_state;

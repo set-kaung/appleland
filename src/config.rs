@@ -21,6 +21,9 @@ pub struct Config {
 
     #[serde(default)]
     pub rust_log: Option<String>,
+
+    #[serde(default)]
+    pub gen_docs: bool,
 }
 
 impl std::fmt::Display for Config {

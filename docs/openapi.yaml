@@ -1,0 +1,388 @@
+openapi: 3.1.0
+info:
+  title: appleland
+  description: ''
+  license:
+    name: ''
+  version: 0.1.0
+paths:
+  /admin/login:
+    post:
+      tags:
+      - Authentication
+      operationId: admin_login_handler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+        '401':
+          description: ''
+  /admin/logout:
+    post:
+      tags:
+      - Authentication
+      operationId: admin_logout_handler
+      responses:
+        '200':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products:
+    post:
+      tags:
+      - Admin Products
+      operationId: create_product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductPayload'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products/all:
+    get:
+      tags:
+      - Admin Products
+      operationId: get_all_products
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '401':
+          description: ''
+        '403':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products/{product_id}:
+    put:
+      tags:
+      - Admin Products
+      operationId: update_product
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductPayload'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '404':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+    delete:
+      tags:
+      - Admin Products
+      operationId: delete_product
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: ''
+        '404':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+  /api/products:
+    get:
+      tags:
+      - Products
+      operationId: get_products_paginated
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated list of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Product'
+        '500':
+          description: Internal server error
+  /api/products/{product_id}:
+    get:
+      tags:
+      - Products
+      operationId: get_product_by_id
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+        '500':
+          description: ''
+components:
+  schemas:
+    CreateProductPayload:
+      type: object
+      required:
+      - name
+      - barcode
+      - category
+      - is_active
+      - price
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        sub_category:
+          type:
+          - string
+          - 'null'
+    LoginRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        password:
+          type: string
+        username:
+          type: string
+    PaginatedResponse_Product:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - barcode
+            - name
+            - category
+            - is_active
+            - price
+            - created_at
+            - updated_at
+            - created_by
+            - updated_by
+            properties:
+              barcode:
+                type: string
+              category:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+              created_by:
+                type: string
+                format: uuid
+              description:
+                type:
+                - string
+                - 'null'
+              id:
+                type: string
+                format: uuid
+              is_active:
+                type: boolean
+              name:
+                type: string
+              price:
+                type: string
+              sub_category:
+                type:
+                - string
+                - 'null'
+              updated_at:
+                type: string
+                format: date-time
+              updated_by:
+                type: string
+                format: uuid
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+    PaginationQuery:
+      type: object
+      properties:
+        page:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        per_page:
+          type:
+          - integer
+          - 'null'
+          format: int64
+    Product:
+      type: object
+      required:
+      - id
+      - barcode
+      - name
+      - category
+      - is_active
+      - price
+      - created_at
+      - updated_at
+      - created_by
+      - updated_by
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        description:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        sub_category:
+          type:
+          - string
+          - 'null'
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+    UpdateProductPayload:
+      type: object
+      required:
+      - barcode
+      - name
+      - category
+      - is_active
+      - price
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        sub_category:
+          type:
+          - string
+          - 'null'
+tags:
+- name: Products
+- name: Admin Products
+- name: Authentication
