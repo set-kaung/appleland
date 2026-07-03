@@ -2,22 +2,24 @@ pub mod handler;
 pub mod model;
 mod store;
 
-use crate::app_state::{AdminState, ApiState};
 use axum::{Router, routing::get};
 use handler::*;
 
-pub fn route_api_states() -> Router<ApiState> {
+use crate::app_state::AppState;
+
+pub fn route() -> Router<AppState> {
     Router::new()
-        .route("/", get(list_products::<ApiState>))
-        .route("/{product_id}", get(get_product_by_id::<ApiState>))
+        .route("/", get(get_products_paginated))
+        .route("/{product_id}", get(get_product_by_id))
 }
 
-pub fn route_admin_states() -> Router<AdminState> {
+pub fn route_admin() -> Router<AppState> {
     Router::new()
-        .route("/", get(list_products::<AdminState>).post(create_product))
+        .route("/", get(get_products_paginated).post(create_product))
+        .route("/all", get(get_all_products))
         .route(
             "/{product_id}",
-            get(get_product_by_id::<AdminState>)
+            get(get_product_by_id)
                 .delete(delete_product)
                 .put(update_product),
         )

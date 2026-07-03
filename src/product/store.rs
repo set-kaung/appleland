@@ -1,5 +1,5 @@
-use super::model::{CreateProductPayload, Product};
-use crate::product::model::{UpdateProduct, UpdateProductPayload};
+use super::model::Product;
+use crate::product::model::UpdateProduct;
 use crate::{app_error, product::model::InsertProduct};
 use sqlx::{Error, PgPool, Postgres, Transaction};
 use uuid::Uuid;

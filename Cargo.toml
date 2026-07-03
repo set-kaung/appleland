@@ -43,3 +43,5 @@ time = { version = "0.3", features = [
 argon2 = "0.5.3"
 parse_duration = "2.1.1"
 indoc = "2.0.7"
+utoipa = "5"
+utoipa-axum = "0.2"

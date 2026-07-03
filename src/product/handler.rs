@@ -1,14 +1,14 @@
 use super::store;
+use crate::app_error::StoreError;
 use crate::app_extractor::{self, RequiresRole, SaleAdminRole};
 use crate::inventory::store as inventory_store;
 use crate::pagination;
-use crate::{app_error::StoreError, app_state::AccessDB};
 use tower_sessions::Session;
 use tracing::{debug, error};
 use uuid::Uuid;
 
 use super::model::{CreateProductPayload, Product};
-use crate::app_state;
+use crate::app_state::{self, AppState};
 use crate::product::model::{InsertProduct, UpdateProduct, UpdateProductPayload};
 
 use axum::{
@@ -17,16 +17,13 @@ use axum::{
     http::StatusCode,
 };
 
-pub async fn get_products_paginated<S>(
-    State(state): State<S>,
+pub async fn get_products_paginated(
+    State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)>
-where
-    S: AccessDB + Clone + Send + Sync + 'static,
-{
+) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
-    store::fetch_paged(&state.access_db(), limit, offset)
+    store::fetch_paged(&state.db, limit, offset)
         .await
         .map(|(data, total_items)| {
             let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
@@ -48,28 +45,22 @@ where
 
 pub async fn get_all_products(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
-    State(state): State<app_state::AdminState>,
+    State(state): State<app_state::AppState>,
 ) -> Result<Json<Vec<Product>>, (StatusCode, String)> {
-    store::fetch_all(&state.access_db())
-        .await
-        .map(Json)
-        .map_err(|err| {
-            error!("failed to get all products: {err}");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to fetch all products".to_string(),
-            )
-        })
+    store::fetch_all(&state.db).await.map(Json).map_err(|err| {
+        error!("failed to get all products: {err}");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch all products".to_string(),
+        )
+    })
 }
 
-pub async fn get_product_by_id<S>(
-    State(state): State<S>,
+pub async fn get_product_by_id(
+    State(state): State<AppState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
-) -> Result<Json<Product>, (StatusCode, String)>
-where
-    S: AccessDB + Clone + Send + Sync + 'static,
-{
-    store::fetch_by_id(&state.access_db(), product_id)
+) -> Result<Json<Product>, (StatusCode, String)> {
+    store::fetch_by_id(&state.db, product_id)
         .await
         .map(Json)
         .map_err(|err| {
@@ -83,7 +74,7 @@ where
 
 pub async fn create_product(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
-    State(state): State<app_state::AdminState>,
+    State(state): State<app_state::AppState>,
     session: Session,
     app_extractor::ValidatedJson(payload): app_extractor::ValidatedJson<CreateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
@@ -177,7 +168,7 @@ pub async fn create_product(
 }
 
 pub async fn update_product(
-    State(state): State<app_state::AdminState>,
+    State(state): State<app_state::AppState>,
     session: Session,
     Json(payload): Json<UpdateProductPayload>,
 ) -> Result<(StatusCode, Json<Product>), (StatusCode, String)> {
@@ -230,7 +221,7 @@ pub async fn update_product(
 }
 
 pub async fn delete_product(
-    State(state): State<app_state::AdminState>,
+    State(state): State<AppState>,
     session: Session,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {

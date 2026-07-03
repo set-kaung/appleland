@@ -1,4 +1,4 @@
-use crate::app_error::APIError;
+use crate::{app_error::APIError, app_state::AppState};
 use axum::{Json, extract::State};
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -13,10 +13,7 @@ use argon2::{
 };
 use uuid::Uuid;
 
-use crate::{
-    app_error::{self, StoreError::NoRows},
-    app_state::AdminState,
-};
+use crate::app_error::{self, StoreError::NoRows};
 
 #[derive(
     Clone, Debug, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, serde::Serialize, serde::Deserialize,
@@ -92,7 +89,7 @@ async fn get_admin_by_username(
 
 #[axum::debug_handler]
 pub async fn admin_login_handler(
-    State(state): State<AdminState>,
+    State(state): State<AppState>,
     session: Session,
     Json(payload): Json<LoginRequest>,
 ) -> Result<StatusCode, APIError> {

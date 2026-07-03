@@ -1,6 +1,5 @@
 use appleland::app_error::AppError;
-use appleland::app_state::AdminState;
-use appleland::app_state::ApiState;
+use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
@@ -37,7 +36,7 @@ async fn main() -> Result<(), AppError> {
 
     let pool = db::connect_db(conf.database_url).await?;
 
-    let api_state = ApiState::new(
+    let state = AppState::new(
         Arc::new(auth::SupabaseAuth::new(conf.supabase_ref)),
         pool.clone(),
     );
@@ -57,21 +56,16 @@ async fn main() -> Result<(), AppError> {
         .with_same_site(tower_sessions::cookie::SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(Duration::hours(24)));
 
-    let admin_state = AdminState::new(pool);
-
     let root_routes = Router::new().route("/health", axum::routing::get(health));
 
-    let api_routes = Router::new()
-        .nest("/products", product::route_api_states())
-        .layer(axum_middleware::from_fn_with_state(
-            api_state.clone(),
-            middleware::user_auth_middleware,
-        ));
+    let api_routes = Router::new().nest("/products", product::route()).layer(
+        axum_middleware::from_fn_with_state(state.clone(), middleware::user_auth_middleware),
+    );
 
     let admin_protected_routes = Router::new()
-        .nest("/products", product::route_admin_states())
+        .nest("/products", product::route_admin())
         .layer(axum_middleware::from_fn_with_state(
-            admin_state.clone(),
+            state.clone(),
             middleware::admin_auth_middleware,
         ));
 
@@ -80,13 +74,13 @@ async fn main() -> Result<(), AppError> {
         .route("/logout", axum::routing::post(auth::admin_logout_handler))
         .merge(admin_protected_routes)
         .layer(session_layer)
-        .with_state(admin_state);
+        .with_state(state.clone());
 
     let app_router = Router::new()
         .merge(root_routes)
         .nest("/api", api_routes)
         .nest("/admin", admin_routes)
-        .with_state(api_state);
+        .with_state(state.clone());
 
     let app = middleware::with_global_middleware(
         app_router,

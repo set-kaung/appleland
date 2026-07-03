@@ -1,8 +1,6 @@
-use crate::app_state::AdminState;
-
-use super::app_state::ApiState;
 use super::auth::{AdminRole, AuthError, Claims};
 use crate::app_error::APIError;
+use crate::app_state::AppState;
 use axum::Router;
 use axum::error_handling::HandleErrorLayer;
 use axum::http::HeaderValue;
@@ -27,7 +25,7 @@ use tower_sessions::Session;
 use tracing::{Span, info};
 
 pub async fn user_auth_middleware(
-    State(state): State<ApiState>,
+    State(state): State<AppState>,
     mut request: Request<Body>,
     next: Next,
 ) -> Response {
@@ -42,7 +40,7 @@ pub async fn user_auth_middleware(
         return StatusCode::UNAUTHORIZED.into_response();
     };
 
-    let auth_arc = state.auth_arc();
+    let auth_arc = state.auth;
     request
         .extensions_mut()
         .insert::<Arc<dyn crate::auth::AuthProvider>>(Arc::clone(&auth_arc));
@@ -132,7 +130,7 @@ pub fn with_global_middleware(
 }
 
 pub async fn admin_auth_middleware(
-    State(_): State<AdminState>,
+    State(_): State<AppState>,
     session: Session,
     request: Request<Body>,
     next: Next,
