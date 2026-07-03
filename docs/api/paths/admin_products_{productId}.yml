@@ -1,0 +1,73 @@
+get:
+  summary: Get product by ID (admin)
+  operationId: adminGetProductById
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  parameters:
+    - $ref: ../components/parameters/ProductId.yml
+  responses:
+    '200':
+      description: Product found
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Product.yml
+    '401':
+      $ref: ../components/responses/Unauthorized.yml
+    '500':
+      $ref: ../components/responses/InternalError.yml
+put:
+  summary: Update a product
+  description: |
+    The product `id` must be present in the request body; the path
+    `{productId}` is used for routing only.
+  operationId: adminUpdateProduct
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  parameters:
+    - $ref: ../components/parameters/ProductId.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UpdateProductPayload.yml
+  responses:
+    '200':
+      description: Product updated
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Product.yml
+    '401':
+      $ref: ../components/responses/Unauthorized.yml
+    '500':
+      $ref: ../components/responses/InternalError.yml
+delete:
+  summary: Delete a product
+  operationId: adminDeleteProduct
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  parameters:
+    - $ref: ../components/parameters/ProductId.yml
+  responses:
+    '204':
+      description: Product deleted
+    '401':
+      $ref: ../components/responses/Unauthorized.yml
+    '404':
+      description: Product not found
+    '409':
+      description: Safety trigger — attempted to delete more than one row
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ErrorMessage.yml
+    '500':
+      $ref: ../components/responses/InternalError.yml

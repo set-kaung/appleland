@@ -1,6 +1,6 @@
 use super::model::{CreateProductPayload, Product};
-use crate::app_error;
-use crate::product::model::UpdateProductPayload;
+use crate::product::model::{UpdateProduct, UpdateProductPayload};
+use crate::{app_error, product::model::InsertProduct};
 use sqlx::{Error, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
@@ -42,37 +42,14 @@ pub async fn fetch_by_id(pool: &PgPool, id: Uuid) -> Result<Product, Error> {
 
 pub async fn create(
     tx: &mut Transaction<'_, Postgres>,
-    payload: CreateProductPayload,
+    payload: InsertProduct,
 ) -> Result<Product, Error> {
     sqlx::query_as!(
         Product,
         r#"
-        INSERT INTO products (barcode, name, description,category,sub_category,price,is_active)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, barcode, name, description,category,sub_category, price, is_active, created_at, updated_at
-        "#,
-        payload.barcode,
-        payload.name,
-        payload.description,
-        payload.category,
-        payload.sub_category,
-        payload.price,
-        payload.is_active
-    )
-    .fetch_one(&mut **tx)
-    .await
-}
-
-pub async fn update(
-    tx: &mut Transaction<'_, Postgres>,
-    payload: UpdateProductPayload,
-) -> Result<Product, Error> {
-    sqlx::query_as!(
-        Product,
-        r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category = $4,sub_category = $5, price = $6, is_active = $7,updated_at = NOW()
-       WHERE id = $8
-       RETURNING id,barcode, name, description,category, sub_category, price, is_active, created_at, updated_at
+        INSERT INTO products (barcode, name, description,category,sub_category,price,is_active,created_by,updated_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$8)
+        RETURNING id, barcode, name, description,category,sub_category, price, is_active, created_at, updated_at, created_by,updated_by
         "#,
         payload.barcode,
         payload.name,
@@ -81,7 +58,32 @@ pub async fn update(
         payload.sub_category,
         payload.price,
         payload.is_active,
-        payload.id
+        payload.created_by
+    )
+    .fetch_one(&mut **tx)
+    .await
+}
+
+pub async fn update(
+    tx: &mut Transaction<'_, Postgres>,
+    payload: UpdateProduct,
+) -> Result<Product, Error> {
+    sqlx::query_as!(
+        Product,
+        r#"UPDATE products
+       SET barcode = $1, name = $2, description = $3,category = $4,sub_category = $5, price = $6, is_active = $7,updated_by= $8, updated_at = NOW()
+       WHERE id = $9
+       RETURNING id,barcode, name, description,category, sub_category, price, is_active, created_at, updated_at,created_by,updated_by
+        "#,
+        payload.barcode,
+        payload.name,
+        payload.description,
+        payload.category,
+        payload.sub_category,
+        payload.price,
+        payload.is_active,
+        payload.updated_by,
+        payload.id,
     )
     .fetch_one(&mut **tx)
     .await

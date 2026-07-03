@@ -1,0 +1,71 @@
+get:
+  summary: List products paged (admin)
+  operationId: adminListProducts
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  parameters:
+    - $ref: ../components/parameters/Page.yml
+    - $ref: ../components/parameters/PageSize.yml
+  responses:
+    "200":
+      description: Paginated product list
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/PaginatedProducts.yml
+    "401":
+      $ref: ../components/responses/Unauthorized.yml
+    "500":
+      $ref: ../components/responses/InternalError.yml
+post:
+  summary: Create a product
+  description: Requires the `SaleAdmin` role stored in the session.
+  operationId: adminCreateProduct
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  x-required-role: SaleAdmin
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateProductPayload.yml
+  responses:
+    "201":
+      description: Product created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Product.yml
+    "400":
+      description: Required field missing
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ErrorMessage.yml
+    "401":
+      $ref: ../components/responses/Unauthorized.yml
+    "403":
+      description: Authenticated but role is insufficient
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ErrorMessage.yml
+    "409":
+      description: A product with the given barcode already exists
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ErrorMessage.yml
+    "422":
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ErrorMessage.yml
+    "500":
+      $ref: ../components/responses/InternalError.yml

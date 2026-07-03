@@ -1,0 +1,10 @@
+get:
+  summary: list all products (admin)
+  operationId: adminListAllProducts
+  tags:
+    - Products (Admin)
+  security:
+    - sessionCookie: []
+  parameters:
+    - $ref: ../components/parameters/Page.yml
+    - $ref: ../components/parameters/PageSize.yml

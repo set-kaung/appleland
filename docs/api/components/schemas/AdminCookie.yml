@@ -1,0 +1,7 @@
+in: cookie
+name: id
+required: true
+description: The server-side session ID cookie automatically managed by the browser.
+schema:
+  type: string
+  example: "0189e34b-871d-7b22-bc32-159c38fbf24a"

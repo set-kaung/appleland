@@ -1,0 +1,13 @@
+post:
+  summary: Admin logout
+  description: Deletes the current server-side session.
+  operationId: adminLogout
+  tags:
+    - Auth
+  security:
+    - sessionCookie: []
+  responses:
+    '200':
+      description: Session deleted
+    '500':
+      $ref: ../components/responses/InternalError.yml

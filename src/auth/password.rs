@@ -75,7 +75,7 @@ async fn get_admin_by_username(
         Admin,
         "
     SELECT id,username,password_hash,role as \"role: AdminRole\",created_at,updated_at
-    FROM admins 
+    FROM admins
     WHERE username = $1",
         username
     )
@@ -111,12 +111,12 @@ pub async fn admin_login_handler(
                 Err(APIError::AdminInvalidCreds)
             } else {
                 session.insert("id", admin.id).await.map_err(|e| {
-                    tracing::error!("faied to parse password hash: {}", e);
+                    tracing::error!("failed to insert ID into session: {}", e);
                     APIError::InternalErr
                 })?;
 
                 session.insert("role", admin.role).await.map_err(|e| {
-                    tracing::error!("failed to parse password hash: {}", e);
+                    tracing::error!("failed to insert role into session: {}", e);
                     APIError::InternalErr
                 })?;
 

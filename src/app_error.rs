@@ -11,11 +11,14 @@ pub enum StoreError {
 
     #[error("record not found")]
     NoRows,
+
+    #[error("no rows affected")]
+    NoRowsAffected,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("failed to load fonig: {0}")]
+    #[error("failed to load config: {0}")]
     ConfigErr(#[from] envy::Error),
 
     #[error("failed to connect to database: {0}")]
