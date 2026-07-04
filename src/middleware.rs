@@ -45,7 +45,7 @@ pub async fn user_auth_middleware(
         .extensions_mut()
         .insert::<Arc<dyn crate::auth::AuthProvider>>(Arc::clone(&auth_arc));
 
-    match (&*auth_arc).verify(&token).await {
+    match (*auth_arc).verify(&token).await {
         Ok(claims) => {
             if claims.role != "authenticated" {
                 info!("unathenticated access with role: {}", claims.role);

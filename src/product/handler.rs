@@ -195,7 +195,7 @@ pub async fn create_product(
     match store::create(&mut tx, insert_payload).await {
         Ok(product) => {
             if let Err(inv_err) =
-                inventory_store::insert_inventory_row(product.id, admin_id, 0, &mut tx).await
+                inventory_store::insert_new_inventory_record(product.id, admin_id, 0, &mut tx).await
             {
                 error!("failed to create inventory row: {inv_err:?}");
                 return Err((
@@ -221,20 +221,18 @@ pub async fn create_product(
                 match pg_err.code() {
                     "23505" => {
                         debug!("error: {:?}", pg_err.column().unwrap_or("unknown"));
-                        return Err((
+                        Err((
                             StatusCode::CONFLICT,
                             "a product with the given key already exists".to_string(),
-                        ));
+                        ))
                     }
-                    "23502" => {
-                        return Err((
-                            StatusCode::BAD_REQUEST,
-                            format!(
-                                "Required field is missing: {}",
-                                pg_err.column().unwrap_or("unknown")
-                            ),
-                        ));
-                    }
+                    "23502" => Err((
+                        StatusCode::BAD_REQUEST,
+                        format!(
+                            "Required field is missing: {}",
+                            pg_err.column().unwrap_or("unknown")
+                        ),
+                    )),
                     _ => Err((
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "Database error occurred".into(),
@@ -350,7 +348,7 @@ pub async fn update_product(
 
 pub async fn delete_product(
     State(state): State<AppState>,
-    session: Session,
+    _session: Session,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let mut tx = state.db.begin().await.map_err(|e| {

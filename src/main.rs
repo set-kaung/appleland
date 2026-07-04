@@ -4,6 +4,7 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
+use appleland::inventory;
 use appleland::middleware;
 use appleland::product;
 use axum::middleware as axum_middleware;
@@ -66,6 +67,7 @@ async fn main() -> Result<(), AppError> {
 
     let admin_protected_routes = Router::new()
         .nest("/products", product::route_admin())
+        .nest("/inventory", inventory::route_admin())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::admin_auth_middleware,

@@ -39,6 +39,8 @@ time = { version = "0.3", features = [
     "serde",
     "serde-well-known",
     "formatting",
+    "serde-human-readable",
+    "parsing",
 ] }
 argon2 = "0.5.3"
 parse_duration = "2.1.1"

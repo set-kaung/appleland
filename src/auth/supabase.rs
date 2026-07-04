@@ -49,10 +49,10 @@ impl SupabaseAuth {
     async fn get_jwks(&self) -> Result<Jwks, AuthError> {
         {
             let cache = self.cache.read().await;
-            if let Some(ref cached) = *cache {
-                if cached.fetched_at.elapsed() < self.cache_ttl {
-                    return Ok(cached.jwks.clone());
-                }
+            if let Some(ref cached) = *cache
+                && cached.fetched_at.elapsed() < self.cache_ttl
+            {
+                return Ok(cached.jwks.clone());
             }
         }
 
@@ -81,16 +81,13 @@ impl SupabaseAuth {
 #[async_trait]
 impl AuthProvider for SupabaseAuth {
     async fn verify(&self, token: &str) -> Result<Claims, AuthError> {
-        let header: Header;
-        match decode_header(token) {
-            Ok(h) => {
-                header = h;
-            }
+        let header: Header = match decode_header(token) {
+            Ok(h) => h,
             Err(err) => {
                 println!("error decoding jwks header: {}", err);
                 return Err(AuthError::InvalidToken);
             }
-        }
+        };
 
         let jwks = self.get_jwks().await?;
 
@@ -112,7 +109,7 @@ impl AuthProvider for SupabaseAuth {
         let mut validation = Validation::new(Algorithm::ES256);
         validation.set_audience(&["authenticated"]);
 
-        match decode::<Claims>(token, &decoding_key, &mut validation) {
+        match decode::<Claims>(token, &decoding_key, &validation) {
             Ok(data) => Ok(data.claims),
             Err(e) => match e.kind() {
                 ErrorKind::ExpiredSignature => Err(AuthError::Expired),

@@ -3,7 +3,7 @@ use axum::{Json, extract::State};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use sqlx::query_as;
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 use time::OffsetDateTime;
 use tower_sessions::Session;
 use utoipa::ToSchema;
@@ -39,13 +39,24 @@ impl FromStr for AdminRole {
     }
 }
 
-impl ToString for AdminRole {
-    fn to_string(&self) -> String {
-        match self {
+// impl ToString for AdminRole {
+//     fn to_string(&self) -> String {
+//         match self {
+//             AdminRole::SaleAdmin => "sale_admin".to_string(),
+//             AdminRole::PlaygroundAdmin => "playground_admin".to_string(),
+//             AdminRole::SuperAdmin => "super_admin".to_string(),
+//         }
+//     }
+// }
+
+impl Display for AdminRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str_rep = match self {
             AdminRole::SaleAdmin => "sale_admin".to_string(),
             AdminRole::PlaygroundAdmin => "playground_admin".to_string(),
             AdminRole::SuperAdmin => "super_admin".to_string(),
-        }
+        };
+        write!(f, "{}", str_rep)
     }
 }
 
@@ -56,6 +67,7 @@ pub struct LoginRequest {
 }
 
 #[derive(sqlx::FromRow, Clone)]
+#[allow(dead_code)]
 struct Admin {
     id: Uuid,
     username: String,
