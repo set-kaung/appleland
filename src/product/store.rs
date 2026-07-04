@@ -1,24 +1,27 @@
 use super::model::Product;
-use crate::product::model::UpdateProduct;
+use crate::product::model::{ProductWithInventory, UpdateProduct};
 use crate::{app_error, product::model::InsertProduct};
 use sqlx::{Error, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-pub async fn fetch_all(pool: &PgPool) -> Result<Vec<Product>, app_error::StoreError> {
-    sqlx::query_as!(Product, "SELECT * FROM products")
-        .fetch_all(pool)
-        .await
-        .map_err(app_error::StoreError::Database)
+pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductWithInventory>, app_error::StoreError> {
+    sqlx::query_as!(
+        ProductWithInventory,
+        "SELECT p.*,i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id"
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(app_error::StoreError::Database)
 }
 
 pub async fn fetch_paged(
     pool: &PgPool,
     limit: i64,
     offset: i64,
-) -> Result<(Vec<Product>, i64), app_error::StoreError> {
+) -> Result<(Vec<ProductWithInventory>, i64), app_error::StoreError> {
     let products = sqlx::query_as!(
-        Product,
-        "SELECT * FROM products LIMIT $1 OFFSET $2",
+        ProductWithInventory,
+        "SELECT p.*, i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id LIMIT $1 OFFSET $2",
         limit,
         offset
     )
@@ -34,8 +37,8 @@ pub async fn fetch_paged(
     Ok((products, total_items.unwrap_or(0)))
 }
 
-pub async fn fetch_by_id(pool: &PgPool, id: Uuid) -> Result<Product, Error> {
-    sqlx::query_as!(Product, "SELECT * FROM products WHERE id = $1", id)
+pub async fn fetch_by_id(pool: &PgPool, id: Uuid) -> Result<ProductWithInventory, Error> {
+    sqlx::query_as!(ProductWithInventory, "SELECT p.*,i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id WHERE p.id = $1", id)
         .fetch_one(pool)
         .await
 }

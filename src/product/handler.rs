@@ -10,7 +10,9 @@ use uuid::Uuid;
 
 use super::model::{CreateProductPayload, Product};
 use crate::app_state::{self, AppState};
-use crate::product::model::{InsertProduct, UpdateProduct, UpdateProductPayload};
+use crate::product::model::{
+    InsertProduct, ProductWithInventory, UpdateProduct, UpdateProductPayload,
+};
 
 use axum::{
     Json,
@@ -23,7 +25,7 @@ use axum::{
     path = "/api/products",
     params(pagination::PaginationQuery),
     responses(
-        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<Product>),
+        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<ProductWithInventory>),
         (status = 500, description = "Internal server error")
     ),
     tag = "Products"
@@ -31,7 +33,7 @@ use axum::{
 pub async fn get_products_paginated(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
+) -> Result<Json<pagination::PaginatedResponse<ProductWithInventory>>, (StatusCode, String)> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     store::fetch_paged(&state.db, limit, offset)
@@ -59,7 +61,7 @@ pub async fn get_products_paginated(
     path = "/admin/products",
     params(pagination::PaginationQuery),
     responses(
-        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<Product>),
+        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<ProductWithInventory>),
         (status = 500, description = "Internal server error")
     ),
     tag = "Products"
@@ -67,7 +69,7 @@ pub async fn get_products_paginated(
 pub async fn get_products_paginated_admin(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<Product>>, (StatusCode, String)> {
+) -> Result<Json<pagination::PaginatedResponse<ProductWithInventory>>, (StatusCode, String)> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     store::fetch_paged(&state.db, limit, offset)
@@ -94,7 +96,7 @@ pub async fn get_products_paginated_admin(
     get,
     path = "/admin/products/all",
     responses(
-        (status = 200, body = Vec<Product>),
+        (status = 200, body = Vec<ProductWithInventory>),
         (status = 401),
         (status = 403)
     ),
@@ -106,7 +108,7 @@ pub async fn get_products_paginated_admin(
 pub async fn get_all_products(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<app_state::AppState>,
-) -> Result<Json<Vec<Product>>, (StatusCode, String)> {
+) -> Result<Json<Vec<ProductWithInventory>>, (StatusCode, String)> {
     store::fetch_all(&state.db).await.map(Json).map_err(|err| {
         error!("failed to get all products: {err}");
         (
@@ -123,7 +125,7 @@ pub async fn get_all_products(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     responses(
-        (status = 200, body = Product),
+        (status = 200, body = ProductWithInventory),
         (status = 404, description = "Product not found"),
         (status = 500)
     ),
@@ -132,7 +134,7 @@ pub async fn get_all_products(
 pub async fn get_product_by_id(
     State(state): State<AppState>,
     axum::extract::Path(product_id): axum::extract::Path<Uuid>,
-) -> Result<Json<Product>, (StatusCode, String)> {
+) -> Result<Json<ProductWithInventory>, (StatusCode, String)> {
     store::fetch_by_id(&state.db, product_id)
         .await
         .map(Json)

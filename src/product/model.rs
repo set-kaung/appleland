@@ -68,3 +68,20 @@ pub struct UpdateProduct {
     pub price: Decimal,
     pub updated_by: Uuid,
 }
+
+#[derive(Debug, Serialize, Deserialize, ToSchema, sqlx::FromRow)]
+pub struct ProductWithInventory {
+    pub id: Uuid,
+    pub barcode: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: String,
+    pub sub_category: Option<String>,
+    pub is_active: bool,
+    pub price: Decimal,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
+    pub created_by: Uuid,
+    pub updated_by: Uuid,
+    pub quantity_in_stock: i64,
+}

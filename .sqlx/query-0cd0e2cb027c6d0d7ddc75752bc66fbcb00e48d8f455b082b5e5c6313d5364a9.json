@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM products LIMIT $1 OFFSET $2",
+  "query": "SELECT p.*,i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id WHERE p.id = $1",
   "describe": {
     "columns": [
       {
@@ -62,12 +62,16 @@
         "ordinal": 11,
         "name": "updated_by",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 12,
+        "name": "quantity_in_stock",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -82,8 +86,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "465002973eac30246675d96ec495ff111b31f4eecebed13f70612b5b970ce615"
+  "hash": "0cd0e2cb027c6d0d7ddc75752bc66fbcb00e48d8f455b082b5e5c6313d5364a9"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM products WHERE id = $1",
+  "query": "SELECT p.*,i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id",
   "describe": {
     "columns": [
       {
@@ -62,12 +62,15 @@
         "ordinal": 11,
         "name": "updated_by",
         "type_info": "Uuid"
+      },
+      {
+        "ordinal": 12,
+        "name": "quantity_in_stock",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -81,8 +84,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "33de585f492d980dd6fc2420352233a03fdc6ed226fdb338a31601f906805454"
+  "hash": "270efa68b18a891d00db5793b01be1f803fda010d7e95c2c795b6333778151e6"
 }

@@ -73,7 +73,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Product'
+                  $ref: '#/components/schemas/ProductWithInventory'
         '401':
           description: ''
         '403':
@@ -163,7 +163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_Product'
+                $ref: '#/components/schemas/PaginatedResponse_ProductWithInventory'
         '500':
           description: Internal server error
   /api/products/{product_id}:
@@ -185,7 +185,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductWithInventory'
         '404':
           description: Product not found
         '500':
@@ -295,6 +295,76 @@ components:
         total_pages:
           type: integer
           format: int64
+    PaginatedResponse_ProductWithInventory:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - barcode
+            - name
+            - category
+            - is_active
+            - price
+            - created_at
+            - updated_at
+            - created_by
+            - updated_by
+            - quantity_in_stock
+            properties:
+              barcode:
+                type: string
+              category:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+              created_by:
+                type: string
+                format: uuid
+              description:
+                type:
+                - string
+                - 'null'
+              id:
+                type: string
+                format: uuid
+              is_active:
+                type: boolean
+              name:
+                type: string
+              price:
+                type: string
+              quantity_in_stock:
+                type: integer
+                format: int64
+              sub_category:
+                type:
+                - string
+                - 'null'
+              updated_at:
+                type: string
+                format: date-time
+              updated_by:
+                type: string
+                format: uuid
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginationQuery:
       type: object
       properties:
@@ -345,6 +415,57 @@ components:
           type: string
         price:
           type: string
+        sub_category:
+          type:
+          - string
+          - 'null'
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+    ProductWithInventory:
+      type: object
+      required:
+      - id
+      - barcode
+      - name
+      - category
+      - is_active
+      - price
+      - created_at
+      - updated_at
+      - created_by
+      - updated_by
+      - quantity_in_stock
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        description:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        quantity_in_stock:
+          type: integer
+          format: int64
         sub_category:
           type:
           - string
