@@ -94,12 +94,18 @@ async fn main() -> Result<(), AppError> {
     );
     if conf.gen_docs {
         let openapi = api_doc::ApiDoc::openapi();
-
+        let admin_api = api_doc::ApiDoc::openapi();
         let yaml = openapi.to_yaml().unwrap();
+        let admin_yaml = admin_api.to_yaml().unwrap();
 
         match std::fs::write("docs/openapi.yaml", yaml) {
-            Ok(_) => tracing::info!("docs generated"),
-            Err(err) => tracing::error!("error generating docs: {err}"),
+            Ok(_) => tracing::info!("api docs generated"),
+            Err(err) => tracing::error!("error generating api docs: {err}"),
+        }
+
+        match std::fs::write("docs/admin_openapi.yaml", admin_yaml) {
+            Ok(_) => tracing::info!("api docs generated"),
+            Err(err) => tracing::error!("error generating  admin api docs: {err}"),
         }
     }
 
