@@ -14,11 +14,11 @@ CREATE TABLE IF NOT EXISTS products(
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     created_by uuid NOT NULL,
-    updated_by uuid NOT NULL
+    updated_by uuid NOT NULL,
 
     FOREIGN KEY (category_id)
         REFERENCES categories(id),
 
     FOREIGN KEY (sub_category_id)
         REFERENCES categories(id)
-)
+);

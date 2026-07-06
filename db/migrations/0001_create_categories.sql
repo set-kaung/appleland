@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS categories(
     created_by UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by UUID NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
