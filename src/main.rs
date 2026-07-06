@@ -4,9 +4,8 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
-use appleland::inventory;
+use appleland::{category, inventory,product};
 use appleland::middleware;
-use appleland::product;
 use axum::middleware as axum_middleware;
 use axum::{Router, http::StatusCode};
 use std::net::SocketAddr;
@@ -68,6 +67,7 @@ async fn main() -> Result<(), AppError> {
     let admin_protected_routes = Router::new()
         .nest("/products", product::route_admin())
         .nest("/inventory", inventory::route_admin())
+        .nest("/categories", category::route_admin())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::admin_auth_middleware,
@@ -94,7 +94,7 @@ async fn main() -> Result<(), AppError> {
     );
     if conf.gen_docs {
         let openapi = api_doc::ApiDoc::openapi();
-        let admin_api = api_doc::ApiDoc::openapi();
+        let admin_api = api_doc::AdminApiDoc::openapi();
         let yaml = openapi.to_yaml().unwrap();
         let admin_yaml = admin_api.to_yaml().unwrap();
 

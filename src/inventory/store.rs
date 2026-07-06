@@ -1,6 +1,7 @@
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
+use crate::app_error::StoreError;
 use crate::{
     app_error,
     inventory::model::{Inventory, UpdateInventory},
@@ -24,7 +25,7 @@ pub async fn insert_new_inventory_record(
     .execute(&mut **tx)
     .await?;
     if result.rows_affected() != 1 {
-        return Err(app_error::StoreError::NoRowsAffected);
+        return Err(StoreError::RecordNotFound);
     }
     Ok(())
 }

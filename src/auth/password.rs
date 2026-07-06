@@ -12,9 +12,10 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordVerifier},
 };
+use tracing::error;
 use uuid::Uuid;
 
-use crate::app_error::{self, StoreError::NoRows};
+use crate::app_error::{self, StoreError::RecordNotFound};
 
 #[derive(
     Clone, Debug, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, serde::Serialize, serde::Deserialize,
@@ -92,7 +93,7 @@ async fn get_admin_by_username(
     .fetch_one(pool)
     .await
     .map_err(|e| match e {
-        sqlx::Error::RowNotFound => app_error::StoreError::NoRows,
+        sqlx::Error::RowNotFound => app_error::StoreError::RecordNotFound,
         _ => {
             tracing::debug!("{}", e);
             app_error::StoreError::Database(e)
@@ -146,7 +147,7 @@ pub async fn admin_login_handler(
         Err(e) => {
             tracing::debug!("err admin: {}", e);
             match e {
-                NoRows => Err(APIError::AdminInvalidCreds),
+                RecordNotFound => Err(APIError::AdminInvalidCreds),
                 _ => Err(APIError::InternalErr),
             }
         }
@@ -174,13 +175,13 @@ pub async fn admin_logout_handler(session: Session) -> Result<StatusCode, APIErr
         .map(|_| StatusCode::OK)
 }
 
-/// log_err will log the error `e` and convert to `err_variant`
-#[macro_export]
-macro_rules! log_err {
-    ($e:expr, $err_variant:expr) => {
-        $e.map_err(|e| {
-            tracing::error!("error: {}", e);
-            $err_variant
-        })
-    };
+pub async fn session_admin_id(session: Session) -> Result<Uuid, APIError> {
+    session
+        .get::<Uuid>("id")
+        .await
+        .map_err(|e| {
+            error!("session error: {e}");
+            APIError::InternalErr
+        })?
+        .ok_or(APIError::Unauthorized)
 }

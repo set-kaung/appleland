@@ -1,8 +1,16 @@
-use crate::product::model::{CreateProductPayload, Product, UpdateProductPayload};
+use crate::product::model::{
+    AdminProduct, CreateProductPayload, UpdateProductPayload, UserProduct,
+};
 
+use crate::category::model::{
+    CreateCategoryPayload,
+    AdminCategory
+};
+
+use super::inventory;
 use super::pagination::*;
 use super::product;
-use super::inventory;
+use super::category;
 use crate::auth::password;
 use utoipa::OpenApi;
 
@@ -14,9 +22,9 @@ use utoipa::OpenApi;
     ),
     components(
         schemas(
-            Product,
+            UserProduct,
             PaginationQuery,
-            PaginatedResponse<Product>,
+            PaginatedResponse<UserProduct>,
         )
     ),
     tags(
@@ -35,14 +43,17 @@ pub struct ApiDoc;
         inventory::handler::update_inventory,
         password::admin_login_handler,
         password::admin_logout_handler,
+        category::handler::create_category,
     ),
     components(
         schemas(
-            Product,
+            AdminProduct,
             CreateProductPayload,
             UpdateProductPayload,
             PaginationQuery,
-            PaginatedResponse<Product>,
+            PaginatedResponse<UserProduct>,
+            CreateCategoryPayload,
+            AdminCategory
         )
     ),
     tags(

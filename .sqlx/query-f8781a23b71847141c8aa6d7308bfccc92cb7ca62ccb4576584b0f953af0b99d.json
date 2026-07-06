@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT p.*,i.quantity as quantity_in_stock FROM products p JOIN inventory i on p.id = i.product_id WHERE p.id = $1",
+  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity as quantity_in_stock\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -25,13 +25,13 @@
       },
       {
         "ordinal": 4,
-        "name": "category",
-        "type_info": "Text"
+        "name": "category_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 5,
-        "name": "sub_category",
-        "type_info": "Text"
+        "name": "sub_category_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 6,
@@ -65,13 +65,24 @@
       },
       {
         "ordinal": 12,
+        "name": "category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "sub_category",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
         "name": "quantity_in_stock",
         "type_info": "Int4"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -87,8 +98,10 @@
       false,
       false,
       false,
+      false,
+      true,
       false
     ]
   },
-  "hash": "0cd0e2cb027c6d0d7ddc75752bc66fbcb00e48d8f455b082b5e5c6313d5364a9"
+  "hash": "f8781a23b71847141c8aa6d7308bfccc92cb7ca62ccb4576584b0f953af0b99d"
 }

@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE products\n       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, price = $6, is_active = $7,updated_by= $8, updated_at = NOW()\n       WHERE id = $9\n       RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Numeric",
+        "Bool",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b845840683fe8fd5f68f1a7b87b34cd04a251cd52dbebd8d9971a9c733e9e6d7"
+}

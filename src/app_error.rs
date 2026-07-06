@@ -4,16 +4,19 @@ use reqwest::StatusCode;
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
     #[error("Database error occurred: {0}")]
-    Database(#[from] sqlx::Error),
+    Database(sqlx::Error),
 
     #[error("Safety trigger: Query attempted to delete {0} rows instead of 1. Rolled back.")]
     SafetyTrigger(u64),
 
     #[error("record not found")]
-    NoRows,
+    RecordNotFound,
 
-    #[error("no rows affected")]
-    NoRowsAffected,
+    #[error("record with {0} already exists")]
+    UniqueKeyViolated(String),
+
+    #[error("required field missing")]
+    NullField(String),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -40,6 +43,15 @@ pub enum APIError {
 
     #[error("forbidden")]
     Forbidden,
+
+    #[error("bad request")]
+    BadRequest(String),
+
+    #[error("unauthorized")]
+    Unauthorized,
+
+    #[error("not found")]
+    NotFound,
 }
 
 impl IntoResponse for APIError {
@@ -52,6 +64,54 @@ impl IntoResponse for APIError {
                 (StatusCode::UNAUTHORIZED, "invalid credentials").into_response()
             }
             APIError::Forbidden => (StatusCode::FORBIDDEN, "forbidden").into_response(),
+            APIError::BadRequest(e) => (StatusCode::BAD_REQUEST, e).into_response(),
+            APIError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized").into_response(),
+            APIError::NotFound => (StatusCode::NOT_FOUND, "not found").into_response(),
+        }
+    }
+}
+
+impl From<sqlx::Error> for StoreError {
+    fn from(e: sqlx::Error) -> Self {
+        match &e {
+            sqlx::Error::Database(db) => {
+                if let Some(pg) = db.try_downcast_ref::<sqlx::postgres::PgDatabaseError>() {
+                    return match pg.code() {
+                        "23505" => StoreError::UniqueKeyViolated(
+                            pg.constraint()
+                                .map_or("missing field".to_string(), |s| s.to_string()),
+                        ),
+                        "23502" => StoreError::NullField(
+                            pg.constraint()
+                                .map_or("missing field".to_string(), |s| s.to_string()),
+                        ),
+                        _ => StoreError::Database(e),
+                    };
+                }
+                StoreError::Database(e)
+            }
+
+            sqlx::Error::RowNotFound => StoreError::RecordNotFound,
+
+            _ => StoreError::Database(e),
+        }
+    }
+}
+
+impl From<StoreError> for APIError {
+    fn from(err: StoreError) -> Self {
+        match err {
+            StoreError::RecordNotFound => APIError::NotFound,
+            StoreError::SafetyTrigger(n) => {
+                tracing::error!(rows = n, "unexpected row count");
+                APIError::InternalErr
+            }
+            StoreError::Database(e) => {
+                tracing::error!(?e, "database error");
+                APIError::InternalErr
+            }
+            StoreError::UniqueKeyViolated(e) => APIError::BadRequest(format!("{e} mut be unique")),
+            StoreError::NullField(e) => APIError::BadRequest(format!("missing field: {e}")),
         }
     }
 }

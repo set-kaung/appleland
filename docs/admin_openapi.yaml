@@ -6,38 +6,184 @@ info:
     name: ''
   version: 0.1.0
 paths:
-  /api/products:
-    get:
+  /admin/categories:
+    post:
       tags:
-      - Products
-      operationId: get_products_paginated
-      parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-      - name: per_page
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
+      - Admin Categories
+      operationId: create_category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryPayload'
+        required: true
       responses:
-        '200':
-          description: Paginated list of products
+        '201':
+          description: ''
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_ProductWithInventory'
+                $ref: '#/components/schemas/AdminCategory'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '409':
+          description: ''
         '500':
-          description: Internal server error
-  /api/products/{product_id}:
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/inventory/{product_id}:
+    put:
+      tags:
+      - Admin Products
+      operationId: update_inventory
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInventoryPayload'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventory'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '404':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/login:
+    post:
+      tags:
+      - Authentication
+      operationId: admin_login_handler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+        '401':
+          description: ''
+  /admin/logout:
+    post:
+      tags:
+      - Authentication
+      operationId: admin_logout_handler
+      responses:
+        '200':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products:
+    post:
+      tags:
+      - Admin Products
+      operationId: create_product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductPayload'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products/all:
     get:
       tags:
-      - Products
-      operationId: get_product_by_id
+      - Admin Products
+      operationId: get_all_products
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminProduct'
+        '401':
+          description: ''
+        '403':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/products/{product_id}:
+    put:
+      tags:
+      - Admin Products
+      operationId: update_product
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductPayload'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '404':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+    delete:
+      tags:
+      - Admin Products
+      operationId: delete_product
       parameters:
       - name: product_id
         in: path
@@ -47,19 +193,180 @@ paths:
           type: string
           format: uuid
       responses:
-        '200':
+        '204':
           description: ''
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductWithInventory'
         '404':
-          description: Product not found
+          description: ''
+        '409':
+          description: ''
         '500':
           description: ''
+      security:
+      - session_cookie: []
 components:
   schemas:
-    PaginatedResponse_Product:
+    AdminCategory:
+      type: object
+      required:
+      - id
+      - name
+      - created_by
+      - created_at
+      - updated_by
+      - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+    AdminProduct:
+      type: object
+      required:
+      - id
+      - barcode
+      - name
+      - category_id
+      - category
+      - is_active
+      - price
+      - created_at
+      - updated_at
+      - created_by
+      - updated_by
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        category_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        description:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+          format: uuid
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        sub_category:
+          type:
+          - string
+          - 'null'
+        sub_category_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+    CreateCategoryPayload:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+    CreateProductPayload:
+      type: object
+      required:
+      - name
+      - barcode
+      - category_id
+      - is_active
+      - price
+      properties:
+        barcode:
+          type: string
+        category_id:
+          type: string
+          format: uuid
+        description:
+          type:
+          - string
+          - 'null'
+        is_active:
+          type: boolean
+        name:
+          type: string
+        price:
+          type: string
+        sub_category_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+    Inventory:
+      type: object
+      required:
+      - id
+      - product_id
+      - quantity
+      - created_by
+      - updated_by
+      - created_at
+      - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+    LoginRequest:
+      type: object
+      required:
+      - username
+      - password
+      properties:
+        password:
+          type: string
+        username:
+          type: string
+    PaginatedResponse_UserProduct:
       type: object
       required:
       - data
@@ -79,90 +386,13 @@ components:
             - barcode
             - name
             - category
-            - is_active
             - price
-            - created_at
-            - updated_at
-            - created_by
-            - updated_by
-            properties:
-              barcode:
-                type: string
-              category:
-                type: string
-              created_at:
-                type: string
-                format: date-time
-              created_by:
-                type: string
-                format: uuid
-              description:
-                type:
-                - string
-                - 'null'
-              id:
-                type: string
-                format: uuid
-              is_active:
-                type: boolean
-              name:
-                type: string
-              price:
-                type: string
-              sub_category:
-                type:
-                - string
-                - 'null'
-              updated_at:
-                type: string
-                format: date-time
-              updated_by:
-                type: string
-                format: uuid
-        total_items:
-          type: integer
-          format: int64
-        total_pages:
-          type: integer
-          format: int64
-    PaginatedResponse_ProductWithInventory:
-      type: object
-      required:
-      - data
-      - total_items
-      - total_pages
-      - current_page
-      properties:
-        current_page:
-          type: integer
-          format: int64
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - barcode
-            - name
-            - category
-            - is_active
-            - price
-            - created_at
-            - updated_at
-            - created_by
-            - updated_by
             - quantity_in_stock
             properties:
               barcode:
                 type: string
               category:
                 type: string
-              created_at:
-                type: string
-                format: date-time
-              created_by:
-                type: string
-                format: uuid
               description:
                 type:
                 - string
@@ -170,25 +400,17 @@ components:
               id:
                 type: string
                 format: uuid
-              is_active:
-                type: boolean
               name:
                 type: string
               price:
                 type: string
               quantity_in_stock:
                 type: integer
-                format: int64
+                format: int32
               sub_category:
                 type:
                 - string
                 - 'null'
-              updated_at:
-                type: string
-                format: date-time
-              updated_by:
-                type: string
-                format: uuid
         total_items:
           type: integer
           format: int64
@@ -208,103 +430,43 @@ components:
           - integer
           - 'null'
           format: int64
-    Product:
+    UpdateInventoryPayload:
       type: object
       required:
-      - id
-      - barcode
-      - name
-      - category
-      - is_active
-      - price
-      - created_at
-      - updated_at
-      - created_by
-      - updated_by
+      - quantity
       properties:
-        barcode:
-          type: string
-        category:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        created_by:
-          type: string
-          format: uuid
-        description:
-          type:
-          - string
-          - 'null'
-        id:
-          type: string
-          format: uuid
-        is_active:
-          type: boolean
-        name:
-          type: string
-        price:
-          type: string
-        sub_category:
-          type:
-          - string
-          - 'null'
-        updated_at:
-          type: string
-          format: date-time
-        updated_by:
-          type: string
-          format: uuid
-    ProductWithInventory:
-      type: object
-      required:
-      - id
-      - barcode
-      - name
-      - category
-      - is_active
-      - price
-      - created_at
-      - updated_at
-      - created_by
-      - updated_by
-      - quantity_in_stock
-      properties:
-        barcode:
-          type: string
-        category:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        created_by:
-          type: string
-          format: uuid
-        description:
-          type:
-          - string
-          - 'null'
-        id:
-          type: string
-          format: uuid
-        is_active:
-          type: boolean
-        name:
-          type: string
-        price:
-          type: string
-        quantity_in_stock:
+        quantity:
           type: integer
-          format: int64
-        sub_category:
+          format: int32
+    UpdateProductPayload:
+      type: object
+      required:
+      - barcode
+      - name
+      - category_id
+      - is_active
+      - price
+      properties:
+        barcode:
+          type: string
+        category_id:
+          type: string
+          format: uuid
+        description:
           type:
           - string
           - 'null'
-        updated_at:
+        is_active:
+          type: boolean
+        name:
           type: string
-          format: date-time
-        updated_by:
+        price:
           type: string
+        sub_category_id:
+          type:
+          - string
+          - 'null'
           format: uuid
 tags:
-- name: Products
+- name: Admin Products
+- name: Authentication
