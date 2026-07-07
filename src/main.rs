@@ -55,7 +55,7 @@ async fn main() -> Result<(), AppError> {
 
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
-        .with_same_site(tower_sessions::cookie::SameSite::Lax)
+        .with_same_site(tower_sessions::cookie::SameSite::None)
         .with_expiry(Expiry::OnInactivity(Duration::hours(24)));
 
     let root_routes = Router::new().route("/health", axum::routing::get(health));
