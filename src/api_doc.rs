@@ -7,6 +7,8 @@ use crate::category::model::{
     AdminCategory
 };
 
+use crate::auth::password::{Admin,LoginRequest};
+
 use super::inventory;
 use super::pagination::*;
 use super::product;
@@ -53,7 +55,9 @@ pub struct ApiDoc;
             PaginationQuery,
             PaginatedResponse<UserProduct>,
             CreateCategoryPayload,
-            AdminCategory
+            AdminCategory,
+            Admin,
+            LoginRequest,
         )
     ),
     tags(

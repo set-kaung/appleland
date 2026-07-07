@@ -1,8 +1,8 @@
 use crate::{app_error::APIError, app_state::AppState};
 use axum::{Json, extract::State};
 use reqwest::StatusCode;
-use serde::Deserialize;
-use sqlx::query_as;
+use serde::{Deserialize, Serialize};
+use sqlx::{query_as};
 use std::{fmt::Display, str::FromStr};
 use time::OffsetDateTime;
 use tower_sessions::Session;
@@ -19,6 +19,7 @@ use crate::app_error::{self, StoreError::RecordNotFound};
 
 #[derive(
     Clone, Debug, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, serde::Serialize, serde::Deserialize,
+    ToSchema
 )]
 #[sqlx(type_name = "admin_role", rename_all = "snake_case")]
 pub enum AdminRole {
@@ -69,7 +70,7 @@ pub struct LoginRequest {
 
 #[derive(sqlx::FromRow, Clone)]
 #[allow(dead_code)]
-struct Admin {
+struct AdminRow {
     id: Uuid,
     username: String,
     password_hash: String,
@@ -78,12 +79,29 @@ struct Admin {
     updated_at: OffsetDateTime,
 }
 
+#[derive(Serialize,Deserialize, Clone,ToSchema)]
+pub struct Admin {
+    pub id: Uuid,
+    pub username: String,
+    pub role: AdminRole,
+}
+
+impl From<AdminRow> for Admin{
+    fn from(value: AdminRow) -> Self {
+        Self{
+            id:value.id,
+            username: value.username,
+            role:value.role
+        }
+    }
+}
+
 async fn get_admin_by_username(
     pool: &sqlx::PgPool,
     username: String,
-) -> Result<Admin, app_error::StoreError> {
+) -> Result<AdminRow, app_error::StoreError> {
     query_as!(
-        Admin,
+        AdminRow,
         "
     SELECT id,username,password_hash,role as \"role: AdminRole\",created_at,updated_at
     FROM admins
@@ -106,7 +124,7 @@ async fn get_admin_by_username(
     path = "/admin/login",
     request_body = LoginRequest,
     responses(
-        (status = 200),
+        (status = 200, body= Admin),
         (status = 401)
     ),
     tag = "Authentication"
@@ -116,9 +134,10 @@ pub async fn admin_login_handler(
     State(state): State<AppState>,
     session: Session,
     Json(payload): Json<LoginRequest>,
-) -> Result<StatusCode, APIError> {
+) -> Result<(StatusCode,Json<Admin>), APIError> {
     match get_admin_by_username(&state.db, payload.username).await {
         Ok(admin) => {
+            let admin_resp:Admin = admin.clone().into();
             let parsed_hash = PasswordHash::new(&admin.password_hash).map_err(|e| {
                 tracing::error!("faied to parse password hash: {}", e);
                 APIError::InternalErr
@@ -141,7 +160,7 @@ pub async fn admin_login_handler(
                     APIError::InternalErr
                 })?;
 
-                Ok(StatusCode::OK)
+                Ok((StatusCode::OK,Json(admin_resp.into())))
             }
         }
         Err(e) => {
