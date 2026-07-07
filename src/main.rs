@@ -4,8 +4,8 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
-use appleland::{category, inventory,product};
 use appleland::middleware;
+use appleland::{category, inventory, product};
 use axum::middleware as axum_middleware;
 use axum::{Router, http::StatusCode};
 use std::net::SocketAddr;
@@ -100,12 +100,12 @@ async fn main() -> Result<(), AppError> {
         let admin_yaml = admin_api.to_yaml().unwrap();
 
         match std::fs::write("docs/openapi.yaml", yaml) {
-            Ok(_) => tracing::info!("api docs generated"),
+            Ok(_) => tracing::info!("api docs generated to docs/openapi.yaml"),
             Err(err) => tracing::error!("error generating api docs: {err}"),
         }
 
-        match std::fs::write("docs/admin_openapi.yaml", admin_yaml) {
-            Ok(_) => tracing::info!("admin api docs generated"),
+        match std::fs::write("docs/admin/openapi.yaml", admin_yaml) {
+            Ok(_) => tracing::info!("admin api docs generated to docs/admin/openapi.yaml"),
             Err(err) => tracing::error!("error generating  admin api docs: {err}"),
         }
     }

@@ -17,6 +17,7 @@ pub struct AdminProduct {
     pub sub_category: Option<String>,
     pub is_active: bool,
     pub price: Decimal,
+    pub quantity_in_stock: i32,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub created_by: Uuid,
@@ -134,6 +135,7 @@ impl From<ProductRow> for AdminProduct {
             updated_at: row.updated_at,
             created_by: row.created_by,
             updated_by: row.updated_by,
+            quantity_in_stock: row.quantity_in_stock,
         }
     }
 }

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: appleland
-  description: ''
+  description: API to be consumed by admin dashboar
   license:
     name: ''
   version: 0.1.0
@@ -84,6 +84,10 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Admin'
         '401':
           description: ''
   /admin/logout:
@@ -205,6 +209,20 @@ paths:
       - session_cookie: []
 components:
   schemas:
+    Admin:
+      type: object
+      required:
+      - id
+      - username
+      - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/AdminRole'
+        username:
+          type: string
     AdminCategory:
       type: object
       required:
@@ -242,6 +260,7 @@ components:
       - category
       - is_active
       - price
+      - quantity_in_stock
       - created_at
       - updated_at
       - created_by
@@ -273,6 +292,9 @@ components:
           type: string
         price:
           type: string
+        quantity_in_stock:
+          type: integer
+          format: int32
         sub_category:
           type:
           - string
@@ -288,6 +310,12 @@ components:
         updated_by:
           type: string
           format: uuid
+    AdminRole:
+      type: string
+      enum:
+      - SaleAdmin
+      - PlaygroundAdmin
+      - SuperAdmin
     CreateCategoryPayload:
       type: object
       required:

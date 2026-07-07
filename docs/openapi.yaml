@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: appleland
-  description: ''
+  description: API to be consumed by user applications
   license:
     name: ''
   version: 0.1.0

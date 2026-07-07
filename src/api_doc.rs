@@ -2,22 +2,20 @@ use crate::product::model::{
     AdminProduct, CreateProductPayload, UpdateProductPayload, UserProduct,
 };
 
-use crate::category::model::{
-    CreateCategoryPayload,
-    AdminCategory
-};
+use crate::category::model::{AdminCategory, CreateCategoryPayload};
 
-use crate::auth::password::{Admin,LoginRequest};
+use crate::auth::password::{Admin, LoginRequest};
 
+use super::category;
 use super::inventory;
 use super::pagination::*;
 use super::product;
-use super::category;
 use crate::auth::password;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
+    info(description = "API to be consumed by user applications"),
     paths(
         product::handler::get_products_paginated,
         product::handler::get_product_by_id,
@@ -31,12 +29,13 @@ use utoipa::OpenApi;
     ),
     tags(
         (name = "Products")
-    )
+    ),
 )]
 pub struct ApiDoc;
 
 #[derive(OpenApi)]
 #[openapi(
+    info(description = "API to be consumed by admin dashboar"),
     paths(
         product::handler::get_all_products,
         product::handler::create_product,
