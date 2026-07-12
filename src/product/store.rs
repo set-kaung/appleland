@@ -4,19 +4,21 @@ use crate::{app_error, product::model::InsertProduct};
 use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, app_error::StoreError> {
-    sqlx::query_as!(
+pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
+    let product_rows = sqlx::query_as!(
         ProductRow,
         r#"
-            SELECT p.*, c1.name as category, c2.name as sub_category, i.quantity as quantity_in_stock
+            SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity, 0) as "quantity_in_stock!"
             FROM products p
-            JOIN inventory i on p.id = i.product_id
+            LEFT JOIN inventory i on p.id = i.product_id
             JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
             "#
     )
     .fetch_all(pool)
-    .await.map_err(StoreError::Database)
+    .await?;
+    tracing::info!("total product rows: {}", product_rows.len());
+    Ok(product_rows)
 }
 
 pub async fn fetch_paged(
@@ -56,7 +58,7 @@ pub async fn fetch_paged_admin(
     pool: &PgPool,
     limit: i64,
     offset: i64,
-) -> Result<(Vec<ProductRow>, i64), app_error::StoreError> {
+) -> Result<(Vec<ProductRow>, i64), StoreError> {
     let products = sqlx::query_as!(
         ProductRow,
         r#"
