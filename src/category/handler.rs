@@ -2,11 +2,13 @@ use axum::extract::State;
 use axum::Json;
 use tower_sessions::Session;
 use tracing::error;
-use crate::{app_extractor, app_state};
+use crate::{app_state};
 use crate::app_error::APIError;
+use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::category::model::{AdminCategory, CreateCategoryPayload, InsertCategory};
 use super::store;
+use crate::app_extractor::ValidatedJson;
 
 
 #[utoipa::path(
@@ -28,7 +30,7 @@ use super::store;
 pub async fn create_category(
     State(state): State<app_state::AppState>,
     session: Session,
-    app_extractor::ValidatedJson(payload): app_extractor::ValidatedJson<CreateCategoryPayload>)
+    ValidatedJson(payload): ValidatedJson<CreateCategoryPayload>)
     -> Result<Json<AdminCategory>, APIError>
 {
     let mut tx = state.db.begin().await.map_err(|e|
@@ -53,4 +55,26 @@ pub async fn create_category(
         }
     )?;
     Ok(Json(category))
+}
+
+
+#[utoipa::path(
+    get,
+    path = "/admin/categories",
+    responses(
+    (status = 201, body = Vec<AdminCategory>),
+        (status = 400),
+        (status = 401),
+        (status = 409),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Categories"
+)]
+pub async fn get_all_categories(State(s):State::<AppState>) -> Result<Json<Vec<AdminCategory>>,APIError>{
+    let categories = store::get_all_categories(&s.db).await?.into_iter().map(|e|e.into()).collect();
+    
+    Ok(Json(categories))
 }

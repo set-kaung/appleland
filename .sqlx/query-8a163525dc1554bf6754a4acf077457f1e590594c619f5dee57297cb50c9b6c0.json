@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity as quantity_in_stock\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity, 0) as \"quantity_in_stock!\"\n        FROM products p\n        LEFT JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -75,7 +75,7 @@
       },
       {
         "ordinal": 14,
-        "name": "quantity_in_stock",
+        "name": "quantity_in_stock!",
         "type_info": "Int4"
       }
     ],
@@ -100,8 +100,8 @@
       false,
       false,
       true,
-      false
+      null
     ]
   },
-  "hash": "f8781a23b71847141c8aa6d7308bfccc92cb7ca62ccb4576584b0f953af0b99d"
+  "hash": "8a163525dc1554bf6754a4acf077457f1e590594c619f5dee57297cb50c9b6c0"
 }

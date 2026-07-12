@@ -1,4 +1,4 @@
-use sqlx::{Postgres, Transaction};
+use sqlx::{PgPool, Postgres, Transaction};
 use crate::app_error::StoreError;
 use crate::category::model::{CategoryRow, InsertCategory};
 
@@ -13,4 +13,7 @@ pub async fn create_category(tx: &mut Transaction<'_, Postgres>, insert_category
         insert_category.updated_by
     ).fetch_one(&mut **tx).await?;
     Ok(category_row)
+}
+pub async fn get_all_categories(pool: &PgPool) -> Result<Vec<CategoryRow>,StoreError>{
+    sqlx::query_as!(CategoryRow, "SELECT * FROM categories").fetch_all(pool).await.map_err(Into::into)
 }

@@ -1,4 +1,4 @@
-use appleland::api_doc;
+use appleland::{api_doc, sales};
 use appleland::app_error::AppError;
 use appleland::app_state::AppState;
 use appleland::auth;
@@ -68,6 +68,7 @@ async fn main() -> Result<(), AppError> {
         .nest("/products", product::route_admin())
         .nest("/inventory", inventory::route_admin())
         .nest("/categories", category::route_admin())
+        .nest("/sales", sales::route_admin())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::admin_auth_middleware,

@@ -42,7 +42,10 @@ pub async fn fetch_paged(
     .fetch_all(pool)
     .await?;
 
-    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM products")
+    let total_items = sqlx::query_scalar!(
+    "SELECT COUNT(*) FROM products WHERE is_active = $1",
+    is_active
+)
         .fetch_one(pool)
         .await?;
 
@@ -57,9 +60,9 @@ pub async fn fetch_paged_admin(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity as quantity_in_stock
+        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity, 0) as "quantity_in_stock!"
         FROM products p
-        JOIN inventory i on p.id = i.product_id
+        LEFT JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         LIMIT $1 OFFSET $2"#,

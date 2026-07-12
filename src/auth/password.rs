@@ -160,7 +160,7 @@ pub async fn admin_login_handler(
                     APIError::InternalErr
                 })?;
 
-                Ok((StatusCode::OK,Json(admin_resp.into())))
+                Ok((StatusCode::OK,Json(admin_resp)))
             }
         }
         Err(e) => {

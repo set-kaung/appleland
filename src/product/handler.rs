@@ -130,7 +130,7 @@ pub async fn get_all_products(
 )]
 pub async fn get_product_by_id(
     State(state): State<AppState>,
-    axum::extract::Path(product_id): axum::extract::Path<Uuid>,
+    Path(product_id): Path<Uuid>,
 ) -> Result<Json<UserProduct>, APIError> {
     let product: UserProduct = store::fetch_by_id(&state.db, product_id).await?.into();
     Ok(Json(product))

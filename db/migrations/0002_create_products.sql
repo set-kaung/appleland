@@ -1,6 +1,6 @@
 -- Add migration script here
 CREATE TABLE IF NOT EXISTS products(
-    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT gen_random_uuid(),
 
     name TEXT NOT NULL,
     barcode TEXT NOT NULL UNIQUE,

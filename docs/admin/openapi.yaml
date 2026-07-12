@@ -207,6 +207,57 @@ paths:
           description: ''
       security:
       - session_cookie: []
+  /api/products/{sale_id}:
+    get:
+      tags:
+      - Sales
+      operationId: get_sale_detail_by_id
+      parameters:
+      - name: sale_id
+        in: path
+        description: Sale UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSaleDetails'
+        '404':
+          description: Sale Detail not found
+        '500':
+          description: ''
+  /api/sales:
+    get:
+      tags:
+      - Sales
+      operationId: get_sales_paginated
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated list of sale records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_AdminSale'
+        '500':
+          description: Internal server error
 components:
   schemas:
     Admin:
@@ -316,6 +367,41 @@ components:
       - SaleAdmin
       - PlaygroundAdmin
       - SuperAdmin
+    AdminSale:
+      type: object
+      required:
+      - id
+      - total_amount
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        total_amount:
+          type: string
+    AdminSaleDetails:
+      type: object
+      required:
+      - id
+      - total_amount
+      - created_at
+      - sale_items
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        sale_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleItem'
+        total_amount:
+          type: string
     CreateCategoryPayload:
       type: object
       required:
@@ -394,6 +480,40 @@ components:
           type: string
         username:
           type: string
+    PaginatedResponse_AdminSale:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - total_amount
+            - created_at
+            properties:
+              created_at:
+                type: string
+                format: date-time
+              id:
+                type: string
+                format: uuid
+              total_amount:
+                type: string
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginatedResponse_UserProduct:
       type: object
       required:
@@ -458,6 +578,39 @@ components:
           - integer
           - 'null'
           format: int64
+    SaleItem:
+      type: object
+      required:
+      - id
+      - product_id
+      - product_name
+      - sale_id
+      - quantity
+      - selling_price
+      - cost_price
+      - created_at
+      properties:
+        cost_price:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        sale_id:
+          type: string
+          format: uuid
+        selling_price:
+          type: string
     UpdateInventoryPayload:
       type: object
       required:

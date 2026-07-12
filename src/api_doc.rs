@@ -3,11 +3,13 @@ use crate::product::model::{
 };
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload};
+use crate::sales::model::{AdminSale, AdminSaleDetails};
 
 use crate::auth::password::{Admin, LoginRequest};
 
 use super::category;
 use super::inventory;
+use super::sales;
 use super::pagination::*;
 use super::product;
 use crate::auth::password;
@@ -45,6 +47,8 @@ pub struct ApiDoc;
         password::admin_login_handler,
         password::admin_logout_handler,
         category::handler::create_category,
+        sales::handler::get_sales_paginated,
+        sales::handler::get_sale_detail_by_id,
     ),
     components(
         schemas(
@@ -55,6 +59,8 @@ pub struct ApiDoc;
             PaginatedResponse<UserProduct>,
             CreateCategoryPayload,
             AdminCategory,
+            AdminSale,
+            AdminSaleDetails,
             Admin,
             LoginRequest,
         )

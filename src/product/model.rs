@@ -103,6 +103,8 @@ pub struct ProductRow {
     pub quantity_in_stock: i32,
 }
 
+
+
 impl From<ProductRow> for UserProduct {
     fn from(row: ProductRow) -> Self {
         Self {
