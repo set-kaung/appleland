@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    SELECT\n        p.id,\n        barcode,\n        p.name,\n        description,\n        category_id,\n        c1.name as category,\n        sub_category_id,\n        c2.name as sub_category,\n        is_active,\n        price,\n        p.created_at,\n        p.updated_at,\n        p.created_by,\n        p.updated_by,\n        COALESCE(i.quantity, 0) AS \"quantity_in_stock!\"\n    FROM products p\n    LEFT JOIN inventory i on p.id = i.product_id\n    JOIN categories c1 on c1.id = p.category_id\n    LEFT JOIN categories c2 on c2.id = p.sub_category_id\n    WHERE p.name ILIKE $1 or p.barcode ILIKE $1\n    LIMIT $2 OFFSET $3\n",
+  "query": "\n    SELECT\n        p.id,\n        barcode,\n        p.name,\n        description,\n        category_id,\n        c1.name as category,\n        sub_category_id,\n        c2.name as \"sub_category?\",\n        is_active,\n        price,\n        p.created_at,\n        p.updated_at,\n        p.created_by,\n        p.updated_by,\n        COALESCE(i.quantity, 0) AS \"quantity_in_stock!\"\n    FROM products p\n    LEFT JOIN inventory i on p.id = i.product_id\n    JOIN categories c1 on c1.id = p.category_id\n    LEFT JOIN categories c2 on c2.id = p.sub_category_id\n    WHERE p.name ILIKE $1 or p.barcode ILIKE $1\n    LIMIT $2 OFFSET $3\n",
   "describe": {
     "columns": [
       {
@@ -40,7 +40,7 @@
       },
       {
         "ordinal": 7,
-        "name": "sub_category",
+        "name": "sub_category?",
         "type_info": "Text"
       },
       {
@@ -104,5 +104,5 @@
       null
     ]
   },
-  "hash": "6f371d6f787c06e0755d1e4c9c5d8c6fc0cb4b428460dbedf7428f79b2e443fe"
+  "hash": "1c16190c267e1c978f4fcf96459715c4d671a6fdd648b8e7c1d791968e7b1722"
 }
