@@ -2,7 +2,7 @@
 CREATE TABLE inventory (
     id UUID PRIMARY KEY UNIQUE NULL DEFAULT gen_random_uuid(),
 
-    product_id UUID NOT NULL,
+    product_id UUID UNIQUE NOT NULL,
     quantity integer NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
