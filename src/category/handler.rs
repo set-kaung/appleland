@@ -1,15 +1,14 @@
-use axum::extract::State;
-use axum::Json;
-use tower_sessions::Session;
-use tracing::error;
-use crate::{app_state};
+use super::store;
 use crate::app_error::APIError;
+use crate::app_extractor::ValidatedJson;
+use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::category::model::{AdminCategory, CreateCategoryPayload, InsertCategory};
-use super::store;
-use crate::app_extractor::ValidatedJson;
-
+use axum::Json;
+use axum::extract::State;
+use tower_sessions::Session;
+use tracing::error;
 
 #[utoipa::path(
     post,
@@ -30,33 +29,29 @@ use crate::app_extractor::ValidatedJson;
 pub async fn create_category(
     State(state): State<app_state::AppState>,
     session: Session,
-    ValidatedJson(payload): ValidatedJson<CreateCategoryPayload>)
-    -> Result<Json<AdminCategory>, APIError>
-{
-    let mut tx = state.db.begin().await.map_err(|e|
-        {
-            error!("failed to start transc: {e}");
-            APIError::InternalErr
-        }
-    )?;
+    ValidatedJson(payload): ValidatedJson<CreateCategoryPayload>,
+) -> Result<Json<AdminCategory>, APIError> {
+    let mut tx = state.db.begin().await.map_err(|e| {
+        error!("failed to start transc: {e}");
+        APIError::InternalErr
+    })?;
     let admin_id = session_admin_id(session).await?;
 
-    let insert_category = InsertCategory{
+    let insert_category = InsertCategory {
         name: payload.name,
         created_by: admin_id,
         updated_by: admin_id,
     };
 
-    let category = store::create_category(&mut tx,insert_category).await?.into();
-    tx.commit().await.map_err(|e|
-        {
-            error!("failed to commit transc: {e}");
-            APIError::InternalErr
-        }
-    )?;
+    let category = store::create_category(&mut tx, insert_category)
+        .await?
+        .into();
+    tx.commit().await.map_err(|e| {
+        error!("failed to commit transc: {e}");
+        APIError::InternalErr
+    })?;
     Ok(Json(category))
 }
-
 
 #[utoipa::path(
     get,
@@ -73,8 +68,14 @@ pub async fn create_category(
     ),
     tag = "Admin Categories"
 )]
-pub async fn get_all_categories(State(s):State::<AppState>) -> Result<Json<Vec<AdminCategory>>,APIError>{
-    let categories = store::get_all_categories(&s.db).await?.into_iter().map(|e|e.into()).collect();
-    
+pub async fn get_all_categories(
+    State(s): State<AppState>,
+) -> Result<Json<Vec<AdminCategory>>, APIError> {
+    let categories = store::get_all_categories(&s.db)
+        .await?
+        .into_iter()
+        .map(|e| e.into())
+        .collect();
+
     Ok(Json(categories))
 }

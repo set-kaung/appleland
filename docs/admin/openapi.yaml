@@ -198,10 +198,50 @@ paths:
       security:
       - session_cookie: []
   /admin/products/search:
-    post:
+    get:
       tags:
       - Admin Products
       operationId: find_products_admin
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully retrieved paginated admin products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
+        '400':
+          description: Invalid query parameters or JSON payload validation failed
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Requires admin privileges
+        '500':
+          description: Internal database error
+      security:
+      - session_cookie: []
+  /admin/products/search/advanced:
+    post:
+      tags:
+      - Admin Products
+      operationId: find_products_admin_advanced
       parameters:
       - name: page
         in: query
@@ -774,9 +814,20 @@ components:
           - integer
           - 'null'
           format: int64
+    ProductFilter:
+      type: object
+      required:
+      - query
+      properties:
+        query:
+          type: string
     ProductSearchParams:
       type: object
       properties:
+        barcode:
+          type:
+          - string
+          - 'null'
         categories_id:
           type:
           - array

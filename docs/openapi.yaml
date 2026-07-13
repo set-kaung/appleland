@@ -14,20 +14,21 @@ paths:
       parameters:
       - name: page
         in: query
-        description: The page number to retrieve (1-indexed)
         required: false
         schema:
           type: integer
           format: int64
-        example: 1
-      - name: limit
+      - name: page_size
         in: query
-        description: Number of items per page
         required: false
         schema:
           type: integer
           format: int64
-        example: 10
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -168,9 +169,20 @@ components:
           - integer
           - 'null'
           format: int64
+    ProductFilter:
+      type: object
+      required:
+      - query
+      properties:
+        query:
+          type: string
     ProductSearchParams:
       type: object
       properties:
+        barcode:
+          type:
+          - string
+          - 'null'
         categories_id:
           type:
           - array

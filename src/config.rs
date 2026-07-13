@@ -1,5 +1,6 @@
 use crate::app_error::AppError;
 use axum::http::HeaderValue;
+use clap::Parser;
 use serde::Deserialize;
 use sqlx::postgres::PgConnectOptions;
 
@@ -21,9 +22,6 @@ pub struct Config {
 
     #[serde(default)]
     pub rust_log: Option<String>,
-
-    #[serde(default)]
-    pub gen_docs: bool,
 }
 
 impl std::fmt::Display for Config {
@@ -98,4 +96,11 @@ pub fn load_config() -> Result<Config, AppError> {
         }
         Err(err) => Err(err),
     }
+}
+
+#[derive(Debug, Parser)]
+pub struct Cli {
+    /// if set, generate documentation only and exit, default is false
+    #[arg(short, long, default_value_t = false)]
+    pub gen_docs_only: bool,
 }

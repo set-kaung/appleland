@@ -1,13 +1,14 @@
-use appleland::{api_doc, sales};
 use appleland::app_error::AppError;
 use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
 use appleland::middleware;
+use appleland::{api_doc, sales};
 use appleland::{category, inventory, product};
 use axum::middleware as axum_middleware;
 use axum::{Router, http::StatusCode};
+use clap::Parser;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use time::Duration;
@@ -28,6 +29,25 @@ async fn main() -> Result<(), AppError> {
                 .unwrap(),
         )
         .init();
+    let cli = config::Cli::parse();
+    let openapi = api_doc::ApiDoc::openapi();
+    let admin_api = api_doc::AdminApiDoc::openapi();
+
+    let yaml = openapi.to_yaml().unwrap();
+    let admin_yaml = admin_api.to_yaml().unwrap();
+
+    match std::fs::write("docs/openapi.yaml", yaml) {
+        Ok(_) => tracing::info!("api docs generated to docs/openapi.yaml"),
+        Err(err) => tracing::error!("error generating api docs: {err}"),
+    }
+
+    match std::fs::write("docs/admin/openapi.yaml", admin_yaml) {
+        Ok(_) => tracing::info!("admin api docs generated to docs/admin/openapi.yaml"),
+        Err(err) => tracing::error!("error generating  admin api docs: {err}"),
+    }
+    if cli.gen_docs_only {
+        return Ok(());
+    }
 
     let conf = config::load_config()?;
     let session_delete_interval =
@@ -93,23 +113,6 @@ async fn main() -> Result<(), AppError> {
         conf.burst_size,
         conf.per_sec,
     );
-    if conf.gen_docs {
-        let openapi = api_doc::ApiDoc::openapi();
-        let admin_api = api_doc::AdminApiDoc::openapi();
-
-        let yaml = openapi.to_yaml().unwrap();
-        let admin_yaml = admin_api.to_yaml().unwrap();
-
-        match std::fs::write("docs/openapi.yaml", yaml) {
-            Ok(_) => tracing::info!("api docs generated to docs/openapi.yaml"),
-            Err(err) => tracing::error!("error generating api docs: {err}"),
-        }
-
-        match std::fs::write("docs/admin/openapi.yaml", admin_yaml) {
-            Ok(_) => tracing::info!("admin api docs generated to docs/admin/openapi.yaml"),
-            Err(err) => tracing::error!("error generating  admin api docs: {err}"),
-        }
-    }
 
     tracing::info!("Starting api server on port :{}", conf.port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", conf.port))

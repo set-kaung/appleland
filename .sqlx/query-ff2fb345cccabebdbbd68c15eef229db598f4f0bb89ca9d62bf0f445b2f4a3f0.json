@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select COUNT(*) from products p where p.name ILIKE $1 or p.barcode ILIKE $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ff2fb345cccabebdbbd68c15eef229db598f4f0bb89ca9d62bf0f445b2f4a3f0"
+}

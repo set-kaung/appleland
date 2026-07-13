@@ -1,10 +1,10 @@
+use crate::db::DBQueryFilter;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, QueryBuilder};
 use time::OffsetDateTime;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
-use crate::db::DBQueryFilter;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AdminProduct {
@@ -104,8 +104,6 @@ pub struct ProductRow {
     pub quantity_in_stock: i32,
 }
 
-
-
 impl From<ProductRow> for UserProduct {
     fn from(row: ProductRow) -> Self {
         Self {
@@ -150,7 +148,7 @@ pub struct ProductSearchParams {
     pub max_price: Option<Decimal>,
     pub categories_id: Option<Vec<Uuid>>,
     pub sub_categories_id: Option<Vec<Uuid>>,
-
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -159,18 +157,19 @@ pub struct ProductSearchParamsAdmin {
     pub common: ProductSearchParams,
     // exists to provide admin to filter between active and inactive items
     // not intended for user facing searches
-    pub is_active: Option<bool>
+    pub is_active: Option<bool>,
 }
 
-
 impl DBQueryFilter<Postgres> for ProductSearchParams {
-    fn apply_filter(
-        &self,
-        query_builder: &mut QueryBuilder<Postgres>
-    ) {
+    fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
         if let Some(name) = &self.name {
             query_builder.push(" AND p.name ILIKE ");
             query_builder.push_bind(format!("%{name}%"));
+        }
+
+        if let Some(barcode) = &self.barcode {
+            query_builder.push(" AND p.barcode ILIKE ");
+            query_builder.push_bind(format!("%{barcode}%"));
         }
 
         if let Some(categories_id) = &self.categories_id {
@@ -179,12 +178,12 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
             query_builder.push(")");
         }
 
-        if let Some(max_price) = &self.max_price{
+        if let Some(max_price) = &self.max_price {
             query_builder.push(" AND p.price <=");
             query_builder.push_bind(*max_price);
         }
 
-        if let Some(min_price) = &self.max_price{
+        if let Some(min_price) = &self.max_price {
             query_builder.push(" AND p.price >=");
             query_builder.push_bind(*min_price);
         }
@@ -196,7 +195,7 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
     }
 }
 
-impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin{
+impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin {
     fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
         self.common.apply_filter(query_builder);
         if let Some(active) = self.is_active {
@@ -204,4 +203,10 @@ impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin{
             query_builder.push_bind(active);
         }
     }
+}
+
+#[derive(Debug, Deserialize, IntoParams,ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct ProductFilter{
+    pub query: String
 }

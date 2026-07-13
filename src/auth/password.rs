@@ -2,8 +2,8 @@ use crate::{app_error::APIError, app_state::AppState};
 use axum::{Json, extract::State};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use sqlx::{query_as};
-use std::{str::FromStr};
+use sqlx::query_as;
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tower_sessions::Session;
 use utoipa::ToSchema;
@@ -18,8 +18,16 @@ use uuid::Uuid;
 use crate::app_error::{self, StoreError::RecordNotFound};
 
 #[derive(
-    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, sqlx::Type, serde::Serialize, serde::Deserialize,
-    ToSchema
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    sqlx::Type,
+    serde::Serialize,
+    serde::Deserialize,
+    ToSchema,
 )]
 #[sqlx(type_name = "admin_role", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -80,19 +88,19 @@ struct AdminRow {
     updated_at: OffsetDateTime,
 }
 
-#[derive(Serialize,Deserialize, Clone,ToSchema)]
+#[derive(Serialize, Deserialize, Clone, ToSchema)]
 pub struct Admin {
     pub id: Uuid,
     pub username: String,
     pub role: AdminRole,
 }
 
-impl From<AdminRow> for Admin{
+impl From<AdminRow> for Admin {
     fn from(value: AdminRow) -> Self {
-        Self{
-            id:value.id,
+        Self {
+            id: value.id,
             username: value.username,
-            role:value.role
+            role: value.role,
         }
     }
 }
@@ -135,10 +143,10 @@ pub async fn admin_login_handler(
     State(state): State<AppState>,
     session: Session,
     Json(payload): Json<LoginRequest>,
-) -> Result<(StatusCode,Json<Admin>), APIError> {
+) -> Result<(StatusCode, Json<Admin>), APIError> {
     match get_admin_by_username(&state.db, payload.username).await {
         Ok(admin) => {
-            let admin_resp:Admin = admin.clone().into();
+            let admin_resp: Admin = admin.clone().into();
             let parsed_hash = PasswordHash::new(&admin.password_hash).map_err(|e| {
                 tracing::error!("faied to parse password hash: {}", e);
                 APIError::InternalErr
@@ -161,7 +169,7 @@ pub async fn admin_login_handler(
                     APIError::InternalErr
                 })?;
 
-                Ok((StatusCode::OK,Json(admin_resp)))
+                Ok((StatusCode::OK, Json(admin_resp)))
             }
         }
         Err(e) => {

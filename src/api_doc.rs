@@ -9,9 +9,9 @@ use crate::auth::password::{Admin, LoginRequest};
 
 use super::category;
 use super::inventory;
-use super::sales;
 use super::pagination::*;
 use super::product;
+use super::sales;
 use crate::auth::password;
 use utoipa::OpenApi;
 
@@ -28,6 +28,7 @@ use utoipa::OpenApi;
             UserProduct,
             PaginationQuery,
             PaginatedResponse<UserProduct>,
+            product::model::ProductFilter,
         )
     ),
     tags(
@@ -46,6 +47,7 @@ pub struct ApiDoc;
         product::handler::create_product,
         product::handler::update_product,
         product::handler::delete_product,
+        product::handler::find_products_admin_advanced,
         product::handler::find_products_admin,
         inventory::handler::update_inventory,
         password::admin_login_handler,
@@ -61,6 +63,7 @@ pub struct ApiDoc;
             CreateProductPayload,
             UpdateProductPayload,
             PaginationQuery,
+            product::model::ProductFilter,
             PaginatedResponse<UserProduct>,
             PaginatedResponse<AdminProduct>,
             CreateCategoryPayload,
