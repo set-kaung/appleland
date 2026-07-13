@@ -195,6 +195,13 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
     }
 }
 
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct ProductFilter {
+    pub query: String,
+    pub category_id: Option<Uuid>,
+}
+
 impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin {
     fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
         self.common.apply_filter(query_builder);
@@ -205,8 +212,3 @@ impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin {
     }
 }
 
-#[derive(Debug, Deserialize, IntoParams,ToSchema)]
-#[into_params(parameter_in = Query)]
-pub struct ProductFilter{
-    pub query: String
-}

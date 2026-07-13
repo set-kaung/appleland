@@ -220,6 +220,12 @@ paths:
         required: true
         schema:
           type: string
+      - name: category_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Successfully retrieved paginated admin products
@@ -819,6 +825,11 @@ components:
       required:
       - query
       properties:
+        category_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
         query:
           type: string
     ProductSearchParams:

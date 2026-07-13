@@ -6,52 +6,6 @@ info:
     name: ''
   version: 0.1.0
 paths:
-  /admin/products/search:
-    post:
-      tags:
-      - Products
-      operationId: find_products
-      parameters:
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-      - name: page_size
-        in: query
-        required: false
-        schema:
-          type: integer
-          format: int64
-      - name: query
-        in: query
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductSearchParams'
-        required: true
-      responses:
-        '200':
-          description: Successfully retrieved paginated admin products
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResponse_UserProduct'
-        '400':
-          description: Invalid query parameters or JSON payload validation failed
-        '401':
-          description: Unauthorized - Missing or invalid session
-        '403':
-          description: Forbidden - Requires admin privileges
-        '500':
-          description: Internal database error
-      security:
-      - session_cookie: []
   /api/products:
     get:
       tags:
@@ -79,6 +33,58 @@ paths:
                 $ref: '#/components/schemas/PaginatedResponse_UserProduct'
         '500':
           description: Internal server error
+  /api/products/search:
+    post:
+      tags:
+      - Products
+      operationId: find_products
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: category_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSearchParams'
+        required: true
+      responses:
+        '200':
+          description: Successfully retrieved paginated admin products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_UserProduct'
+        '400':
+          description: Invalid query parameters or JSON payload validation failed
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Requires admin privileges
+        '500':
+          description: Internal database error
+      security:
+      - session_cookie: []
   /api/products/{product_id}:
     get:
       tags:
@@ -174,6 +180,11 @@ components:
       required:
       - query
       properties:
+        category_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
         query:
           type: string
     ProductSearchParams:
