@@ -9,7 +9,8 @@ pub async fn connect_db(db_url: String) -> Result<Pool<Postgres>, sqlx::Error> {
     let mut connect_options: PgConnectOptions = db_url.parse()?;
     connect_options = connect_options
         .options([("statement_timeout", "10000")])
-        .log_statements(tracing::log::LevelFilter::Trace);
+        .log_statements(tracing::log::LevelFilter::Trace)
+        .application_name("appleland_api");
     match PgPoolOptions::new().connect_with(connect_options).await {
         Ok(pool) => {
             let options = pool.connect_options();

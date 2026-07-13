@@ -51,6 +51,7 @@ pub struct ApiDoc;
         password::admin_login_handler,
         password::admin_logout_handler,
         category::handler::create_category,
+        category::handler::get_all_categories,
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
     ),
