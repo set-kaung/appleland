@@ -6,6 +6,51 @@ info:
     name: ''
   version: 0.1.0
 paths:
+  /admin/products/search:
+    post:
+      tags:
+      - Products
+      operationId: find_products
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve (1-indexed)
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      - name: limit
+        in: query
+        description: Number of items per page
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSearchParams'
+        required: true
+      responses:
+        '200':
+          description: Successfully retrieved paginated admin products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_UserProduct'
+        '400':
+          description: Invalid query parameters or JSON payload validation failed
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Requires admin privileges
+        '500':
+          description: Internal database error
+      security:
+      - session_cookie: []
   /api/products:
     get:
       tags:
@@ -123,6 +168,35 @@ components:
           - integer
           - 'null'
           format: int64
+    ProductSearchParams:
+      type: object
+      properties:
+        categories_id:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            format: uuid
+        max_price:
+          type:
+          - string
+          - 'null'
+        min_price:
+          type:
+          - string
+          - 'null'
+        name:
+          type:
+          - string
+          - 'null'
+        sub_categories_id:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            format: uuid
     UserProduct:
       type: object
       required:

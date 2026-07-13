@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: appleland
-  description: API to be consumed by admin dashboar
+  description: API to be consumed by admin dashboard
   license:
     name: ''
   version: 0.1.0
@@ -200,7 +200,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductSearchParams'
+              $ref: '#/components/schemas/ProductSearchParamsAdmin'
         required: true
       responses:
         '200':
@@ -780,6 +780,15 @@ components:
           items:
             type: string
             format: uuid
+    ProductSearchParamsAdmin:
+      allOf:
+      - $ref: '#/components/schemas/ProductSearchParams'
+      - type: object
+        properties:
+          is_active:
+            type:
+            - boolean
+            - 'null'
     SaleItem:
       type: object
       required:

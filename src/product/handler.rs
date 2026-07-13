@@ -300,7 +300,7 @@ pub async fn delete_product(
 #[utoipa::path(
     post,
     path = "/admin/products/search",
-    request_body = ProductSearchParams,
+    request_body = ProductSearchParamsAdmin,
     params(
         ("page" = Option<i64>, Query, description = "The page number to retrieve (1-indexed)", example = 1),
         ("limit" = Option<i64>, Query, description = "Number of items per page", example = 10)
@@ -327,6 +327,50 @@ pub async fn find_products_admin(State(state): State<AppState>,
                                  Query(query): Query<pagination::PaginationQuery>,
                                  ValidatedJson(search_params): ValidatedJson<ProductSearchParamsAdmin>)
     -> PaginatedApiResult<AdminProduct>{
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (values, total_items) = store::find_products(&state.db,&search_params,limit,offset).await?;
+    let data = values.into_iter().map(|x|x.into()).collect();
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
+}
+
+
+#[utoipa::path(
+    post,
+    path = "/admin/products/search",
+    request_body = ProductSearchParams,
+    params(
+        ("page" = Option<i64>, Query, description = "The page number to retrieve (1-indexed)", example = 1),
+        ("limit" = Option<i64>, Query, description = "Number of items per page", example = 10)
+    ),
+    responses(
+        (
+            status = 200,
+            description = "Successfully retrieved paginated admin products",
+            body =
+            pagination::PaginatedResponse<UserProduct>
+        ),
+        (status = 400, description = "Invalid query parameters or JSON payload validation failed"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Requires admin privileges"),
+        (status = 500, description = "Internal database error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Products"
+)]
+#[axum::debug_handler]
+pub async fn find_products(State(state): State<AppState>,
+                                 Query(query): Query<pagination::PaginationQuery>,
+                                 ValidatedJson(search_params): ValidatedJson<ProductSearchParams>)
+                                 -> PaginatedApiResult<UserProduct>{
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     let (values, total_items) = store::find_products(&state.db,&search_params,limit,offset).await?;
