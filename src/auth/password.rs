@@ -3,7 +3,7 @@ use axum::{Json, extract::State};
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::{query_as};
-use std::{fmt::Display, str::FromStr};
+use std::{str::FromStr};
 use time::OffsetDateTime;
 use tower_sessions::Session;
 use utoipa::ToSchema;
@@ -22,6 +22,7 @@ use crate::app_error::{self, StoreError::RecordNotFound};
     ToSchema
 )]
 #[sqlx(type_name = "admin_role", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum AdminRole {
     SaleAdmin,
     PlaygroundAdmin,
@@ -51,12 +52,12 @@ impl FromStr for AdminRole {
 //     }
 // }
 
-impl Display for AdminRole {
+impl std::fmt::Display for AdminRole {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str_rep = match self {
-            AdminRole::SaleAdmin => "sale_admin".to_string(),
-            AdminRole::PlaygroundAdmin => "playground_admin".to_string(),
-            AdminRole::SuperAdmin => "super_admin".to_string(),
+            AdminRole::SaleAdmin => "sale_admin",
+            AdminRole::PlaygroundAdmin => "playground_admin",
+            AdminRole::SuperAdmin => "super_admin",
         };
         write!(f, "{}", str_rep)
     }
