@@ -18,7 +18,7 @@ use super::store;
         (status = 200, description = "Paginated list of sale records", body = pagination::PaginatedResponse<AdminSale>),
         (status = 500, description = "Internal server error")
     ),
-    tag = "Sales"
+    tag = "Admin Sales"
 )]
 pub async fn get_sales_paginated(
     State(state): State<AppState>,
@@ -51,7 +51,7 @@ pub async fn get_sales_paginated(
         (status = 404, description = "Sale Detail not found"),
         (status = 500)
     ),
-    tag = "Sales"
+    tag = "Admin Sales"
 )]
 pub async fn get_sale_detail_by_id(State(state): State<AppState>, Path(sale_id): Path<Uuid>) -> Result<Json<AdminSaleDetails>,APIError>{
     let data = store::fetch_sale_detail_by_id(&state.db,sale_id).await?;

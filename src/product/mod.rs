@@ -3,6 +3,7 @@ pub mod model;
 mod store;
 
 use axum::{Router, routing::get};
+use axum::routing::post;
 use handler::*;
 
 use crate::app_state::AppState;
@@ -19,8 +20,9 @@ pub fn route_admin() -> Router<AppState> {
         .route("/all", get(get_all_products))
         .route(
             "/{product_id}",
-            get(get_product_by_id)
+            get(get_product_by_id_admin)
                 .delete(delete_product)
                 .put(update_product),
         )
+        .route("/search", post(find_products_admin))
 }

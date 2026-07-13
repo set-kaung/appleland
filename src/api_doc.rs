@@ -37,12 +37,15 @@ pub struct ApiDoc;
 
 #[derive(OpenApi)]
 #[openapi(
-    info(description = "API to be consumed by admin dashboar"),
+    info(description = "API to be consumed by admin dashboard"),
     paths(
         product::handler::get_all_products,
+        product::handler::get_products_paginated_admin,
+        product::handler::get_product_by_id_admin,
         product::handler::create_product,
         product::handler::update_product,
         product::handler::delete_product,
+        product::handler::find_products_admin,
         inventory::handler::update_inventory,
         password::admin_login_handler,
         password::admin_logout_handler,
@@ -57,6 +60,7 @@ pub struct ApiDoc;
             UpdateProductPayload,
             PaginationQuery,
             PaginatedResponse<UserProduct>,
+            PaginatedResponse<AdminProduct>,
             CreateCategoryPayload,
             AdminCategory,
             AdminSale,
@@ -67,7 +71,10 @@ pub struct ApiDoc;
     ),
     tags(
         (name = "Admin Products"),
-        (name = "Authentication")
+        (name = "Admin Categories"),
+        (name = "Admin Sales"),
+        (name = "Admin Inventory"),
+        (name = "Authentication"),
     )
 )]
 pub struct AdminApiDoc;

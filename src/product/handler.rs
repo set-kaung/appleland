@@ -1,18 +1,15 @@
 use super::store;
 use crate::app_error::APIError;
-use crate::app_extractor::{self, RequiresRole, SaleAdminRole};
+use crate::app_extractor::{RequiresRole, SaleAdminRole, ValidatedJson};
 use crate::inventory::store as inventory_store;
-use crate::pagination;
+use crate::{pagination, ApiResult, PaginatedApiResult};
 use axum::extract::Path;
 use tower_sessions::Session;
 use tracing::error;
 use uuid::Uuid;
 
-use crate::app_state::{self, AppState};
-use crate::product::model::{
-    AdminProduct, CreateProductPayload, InsertProduct, UpdateProduct, UpdateProductPayload,
-    UserProduct,
-};
+use crate::app_state::{AppState};
+use crate::product::model::{AdminProduct, CreateProductPayload, InsertProduct, ProductSearchParams, ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct};
 
 use crate::auth::password::session_admin_id;
 use axum::{
@@ -34,7 +31,7 @@ use axum::{
 pub async fn get_products_paginated(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<UserProduct>>, APIError> {
+) -> PaginatedApiResult<UserProduct> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     store::fetch_paged(&state.db, limit, offset, true)
@@ -63,12 +60,12 @@ pub async fn get_products_paginated(
         (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<UserProduct>),
         (status = 500, description = "Internal server error")
     ),
-    tag = "Products"
+    tag = "Admin Products"
 )]
 pub async fn get_products_paginated_admin(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
-) -> Result<Json<pagination::PaginatedResponse<AdminProduct>>, APIError> {
+) -> PaginatedApiResult<AdminProduct> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     store::fetch_paged_admin(&state.db, limit, offset)
@@ -104,7 +101,7 @@ pub async fn get_products_paginated_admin(
 )]
 pub async fn get_all_products(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
-    State(state): State<app_state::AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<AdminProduct>>, APIError> {
     store::fetch_all(&state.db)
         .await
@@ -131,8 +128,29 @@ pub async fn get_all_products(
 pub async fn get_product_by_id(
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,
-) -> Result<Json<UserProduct>, APIError> {
+) -> ApiResult<UserProduct> {
     let product: UserProduct = store::fetch_by_id(&state.db, product_id).await?.into();
+    Ok(Json(product))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/products/{product_id}",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID")
+    ),
+    responses(
+        (status = 200, body = AdminProduct),
+        (status = 404, description = "Product not found"),
+        (status = 500)
+    ),
+    tag = "Admin Products"
+)]
+pub async fn get_product_by_id_admin(
+    State(state): State<AppState>,
+    Path(product_id): Path<Uuid>,
+) -> ApiResult<AdminProduct> {
+    let product: AdminProduct = store::fetch_by_id(&state.db, product_id).await?.into();
     Ok(Json(product))
 }
 
@@ -153,9 +171,9 @@ pub async fn get_product_by_id(
     tag = "Admin Products"
 )]
 pub async fn create_product(
-    State(state): State<app_state::AppState>,
+    State(state): State<AppState>,
     session: Session,
-    app_extractor::ValidatedJson(payload): app_extractor::ValidatedJson<CreateProductPayload>,
+    ValidatedJson(payload): ValidatedJson<CreateProductPayload>,
 ) -> Result<(StatusCode, Json<AdminProduct>), APIError> {
     let admin_id: Uuid = session_admin_id(session).await?;
 
@@ -209,7 +227,7 @@ pub async fn create_product(
     tag = "Admin Products"
 )]
 pub async fn update_product(
-    State(state): State<app_state::AppState>,
+    State(state): State<AppState>,
     session: Session,
     Path(product_id): Path<Uuid>,
     Json(payload): Json<UpdateProductPayload>,
@@ -262,7 +280,7 @@ pub async fn update_product(
 pub async fn delete_product(
     State(state): State<AppState>,
     _session: Session,
-    axum::extract::Path(product_id): axum::extract::Path<Uuid>,
+    Path(product_id): Path<Uuid>,
 ) -> Result<StatusCode, APIError> {
     let mut tx = state.db.begin().await.map_err(|e| {
         error!("failed to create transaction: {e}");
@@ -275,4 +293,49 @@ pub async fn delete_product(
         APIError::InternalErr
     })?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+
+
+#[utoipa::path(
+    post,
+    path = "/admin/products/search",
+    request_body = ProductSearchParams,
+    params(
+        ("page" = Option<i64>, Query, description = "The page number to retrieve (1-indexed)", example = 1),
+        ("limit" = Option<i64>, Query, description = "Number of items per page", example = 10)
+    ),
+    responses(
+        (
+            status = 200,
+            description = "Successfully retrieved paginated admin products",
+            body =
+            pagination::PaginatedResponse<AdminProduct>
+        ),
+        (status = 400, description = "Invalid query parameters or JSON payload validation failed"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Requires admin privileges"),
+        (status = 500, description = "Internal database error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Products"
+)]
+#[axum::debug_handler]
+pub async fn find_products_admin(State(state): State<AppState>,
+                                 Query(query): Query<pagination::PaginationQuery>,
+                                 ValidatedJson(search_params): ValidatedJson<ProductSearchParamsAdmin>)
+    -> PaginatedApiResult<AdminProduct>{
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (values, total_items) = store::find_products(&state.db,&search_params,limit,offset).await?;
+    let data = values.into_iter().map(|x|x.into()).collect();
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
 }

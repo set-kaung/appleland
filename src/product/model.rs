@@ -1,9 +1,10 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Postgres, QueryBuilder};
 use time::OffsetDateTime;
 use utoipa::ToSchema;
 use uuid::Uuid;
+use crate::db::DBQueryFilter;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AdminProduct {
@@ -138,6 +139,69 @@ impl From<ProductRow> for AdminProduct {
             created_by: row.created_by,
             updated_by: row.updated_by,
             quantity_in_stock: row.quantity_in_stock,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ProductSearchParams {
+    pub name: Option<String>,
+    pub min_price: Option<Decimal>,
+    pub max_price: Option<Decimal>,
+    pub categories_id: Option<Vec<Uuid>>,
+    pub sub_categories_id: Option<Vec<Uuid>>,
+
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ProductSearchParamsAdmin {
+    #[serde(flatten)]
+    pub common: ProductSearchParams,
+    // exists to provide admin to filter between active and inactive items
+    // not intended for user facing searches
+    pub is_active: Option<bool>
+}
+
+
+impl DBQueryFilter<Postgres> for ProductSearchParams {
+    fn apply_filter(
+        &self,
+        query_builder: &mut QueryBuilder<Postgres>
+    ) {
+        if let Some(name) = &self.name {
+            query_builder.push(" AND p.name ILIKE ");
+            query_builder.push_bind(format!("%{name}%"));
+        }
+
+        if let Some(categories_id) = &self.categories_id {
+            query_builder.push(" AND p.category_id = ANY(");
+            query_builder.push_bind(categories_id.clone());
+            query_builder.push(")");
+        }
+
+        if let Some(max_price) = &self.max_price{
+            query_builder.push(" AND p.price <=");
+            query_builder.push_bind(*max_price);
+        }
+
+        if let Some(min_price) = &self.max_price{
+            query_builder.push(" AND p.price >=");
+            query_builder.push_bind(*min_price);
+        }
+        if let Some(sub_categories_id) = &self.sub_categories_id {
+            query_builder.push(" AND p.sub_category_id = ANY(");
+            query_builder.push_bind(sub_categories_id.clone());
+            query_builder.push(")");
+        }
+    }
+}
+
+impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin{
+    fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
+        self.common.apply_filter(query_builder);
+        if let Some(active) = self.is_active {
+            query_builder.push(" AND p.is_active = ");
+            query_builder.push_bind(active);
         }
     }
 }

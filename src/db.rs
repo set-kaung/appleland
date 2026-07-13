@@ -1,4 +1,4 @@
-use sqlx::ConnectOptions;
+use sqlx::{ConnectOptions};
 use sqlx::{
     Postgres,
     pool::Pool,
@@ -22,4 +22,13 @@ pub async fn connect_db(db_url: String) -> Result<Pool<Postgres>, sqlx::Error> {
         }
         Err(err) => Err(err),
     }
+}
+
+
+
+pub trait DBQueryFilter<DB: sqlx::Database> {
+    fn apply_filter(
+        &self,
+        query_builder: &mut sqlx::QueryBuilder<DB>
+    );
 }

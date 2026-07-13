@@ -37,7 +37,7 @@ paths:
   /admin/inventory/{product_id}:
     put:
       tags:
-      - Admin Products
+      - Admin Inventory
       operationId: update_inventory
       parameters:
       - name: product_id
@@ -101,6 +101,32 @@ paths:
       security:
       - session_cookie: []
   /admin/products:
+    get:
+      tags:
+      - Admin Products
+      operationId: get_products_paginated_admin
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated list of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_UserProduct'
+        '500':
+          description: Internal server error
     post:
       tags:
       - Admin Products
@@ -148,7 +174,75 @@ paths:
           description: ''
       security:
       - session_cookie: []
+  /admin/products/search:
+    post:
+      tags:
+      - Admin Products
+      operationId: find_products_admin
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve (1-indexed)
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      - name: limit
+        in: query
+        description: Number of items per page
+        required: false
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductSearchParams'
+        required: true
+      responses:
+        '200':
+          description: Successfully retrieved paginated admin products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
+        '400':
+          description: Invalid query parameters or JSON payload validation failed
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Requires admin privileges
+        '500':
+          description: Internal database error
+      security:
+      - session_cookie: []
   /admin/products/{product_id}:
+    get:
+      tags:
+      - Admin Products
+      operationId: get_product_by_id_admin
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+        '404':
+          description: Product not found
+        '500':
+          description: ''
     put:
       tags:
       - Admin Products
@@ -210,7 +304,7 @@ paths:
   /api/products/{sale_id}:
     get:
       tags:
-      - Sales
+      - Admin Sales
       operationId: get_sale_detail_by_id
       parameters:
       - name: sale_id
@@ -234,7 +328,7 @@ paths:
   /api/sales:
     get:
       tags:
-      - Sales
+      - Admin Sales
       operationId: get_sales_paginated
       parameters:
       - name: page
@@ -243,7 +337,7 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: per_page
+      - name: page_size
         in: query
         required: false
         schema:
@@ -480,6 +574,85 @@ components:
           type: string
         username:
           type: string
+    PaginatedResponse_AdminProduct:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - barcode
+            - name
+            - category_id
+            - category
+            - is_active
+            - price
+            - quantity_in_stock
+            - created_at
+            - updated_at
+            - created_by
+            - updated_by
+            properties:
+              barcode:
+                type: string
+              category:
+                type: string
+              category_id:
+                type: string
+                format: uuid
+              created_at:
+                type: string
+                format: date-time
+              created_by:
+                type: string
+                format: uuid
+              description:
+                type:
+                - string
+                - 'null'
+              id:
+                type: string
+                format: uuid
+              is_active:
+                type: boolean
+              name:
+                type: string
+              price:
+                type: string
+              quantity_in_stock:
+                type: integer
+                format: int32
+              sub_category:
+                type:
+                - string
+                - 'null'
+              sub_category_id:
+                type:
+                - string
+                - 'null'
+                format: uuid
+              updated_at:
+                type: string
+                format: date-time
+              updated_by:
+                type: string
+                format: uuid
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginatedResponse_AdminSale:
       type: object
       required:
@@ -573,11 +746,40 @@ components:
           - integer
           - 'null'
           format: int64
-        per_page:
+        page_size:
           type:
           - integer
           - 'null'
           format: int64
+    ProductSearchParams:
+      type: object
+      properties:
+        categories_id:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            format: uuid
+        max_price:
+          type:
+          - string
+          - 'null'
+        min_price:
+          type:
+          - string
+          - 'null'
+        name:
+          type:
+          - string
+          - 'null'
+        sub_categories_id:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            format: uuid
     SaleItem:
       type: object
       required:
@@ -648,6 +850,41 @@ components:
           - string
           - 'null'
           format: uuid
+    UserProduct:
+      type: object
+      required:
+      - id
+      - barcode
+      - name
+      - category
+      - price
+      - quantity_in_stock
+      properties:
+        barcode:
+          type: string
+        category:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: string
+        quantity_in_stock:
+          type: integer
+          format: int32
+        sub_category:
+          type:
+          - string
+          - 'null'
 tags:
 - name: Admin Products
+- name: Admin Categories
+- name: Admin Sales
+- name: Admin Inventory
 - name: Authentication

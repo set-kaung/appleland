@@ -18,7 +18,7 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: per_page
+      - name: page_size
         in: query
         required: false
         schema:
@@ -118,7 +118,7 @@ components:
           - integer
           - 'null'
           format: int64
-        per_page:
+        page_size:
           type:
           - integer
           - 'null'

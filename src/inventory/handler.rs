@@ -32,7 +32,7 @@ use crate::{
     security(
         ("session_cookie" = [])
     ),
-    tag = "Admin Products"
+    tag = "Admin Inventory"
 )]
 pub async fn update_inventory(
     State(state): State<AppState>,
