@@ -7,7 +7,7 @@ use appleland::middleware;
 use appleland::{api_doc, sales};
 use appleland::{category, inventory, product};
 use axum::middleware as axum_middleware;
-use axum::{Router, http::StatusCode};
+use axum::{http::StatusCode, Router};
 use clap::Parser;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -29,6 +29,7 @@ async fn main() -> Result<(), AppError> {
                 .unwrap(),
         )
         .init();
+
     let cli = config::Cli::parse();
     let openapi = api_doc::ApiDoc::openapi();
     let admin_api = api_doc::AdminApiDoc::openapi();
@@ -122,9 +123,9 @@ async fn main() -> Result<(), AppError> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
-    .await
-    .unwrap();
+        .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
+        .await
+        .unwrap();
     match deletion_task.await {
         Ok(_) => tracing::info!("Session deletion task completed normally"),
         Err(e) if e.is_cancelled() => {

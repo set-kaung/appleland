@@ -8,7 +8,6 @@ use crate::sales::model::{AdminSale, AdminSaleDetails};
 use crate::auth::password::{Admin, LoginRequest};
 
 use super::category;
-use super::inventory;
 use super::pagination::*;
 use super::product;
 use super::sales;
@@ -49,7 +48,6 @@ pub struct ApiDoc;
         product::handler::delete_product,
         product::handler::find_products_admin_advanced,
         product::handler::find_products_admin,
-        inventory::handler::update_inventory,
         password::admin_login_handler,
         password::admin_logout_handler,
         category::handler::create_category,

@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into inventory (product_id, quantity_received,quantity_remaining,unit_cost, created_by, updated_by)\n        VALUES ($1, $2, $3,$4, $5,$5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Int4",
+        "Numeric",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7c094167d2aa6b2a9cc2aed2dc9a59b126066859daa6391d1c2b9f278b6473db"
+}

@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS categories(
-    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+CREATE TABLE IF NOT EXISTS categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
     name text NOT NULL,
     created_by UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

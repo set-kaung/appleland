@@ -12,12 +12,12 @@ pub struct AdminProduct {
     pub barcode: String,
     pub name: String,
     pub description: Option<String>,
-    pub category_id: Uuid,
-    pub category: String,
+    pub category_id: Option<Uuid>,
+    pub category: Option<String>,
     pub sub_category_id: Option<Uuid>,
     pub sub_category: Option<String>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub selling_price: Decimal,
     pub quantity_in_stock: i32,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
@@ -31,9 +31,9 @@ pub struct UserProduct {
     pub barcode: String,
     pub name: String,
     pub description: Option<String>,
-    pub category: String,
+    pub category: Option<String>,
     pub sub_category: Option<String>,
-    pub price: Decimal,
+    pub selling_price: Decimal,
     pub quantity_in_stock: i32,
 }
 
@@ -42,7 +42,8 @@ pub struct CreateProductPayload {
     pub name: String,
     pub barcode: String,
     pub description: Option<String>,
-    pub category_id: Uuid,
+    pub category_id: Option<Uuid>,
+    pub selling_price: Decimal,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
     pub price: Decimal,
@@ -53,10 +54,10 @@ pub struct InsertProduct {
     pub name: String,
     pub barcode: String,
     pub description: Option<String>,
-    pub category_id: Uuid,
+    pub category_id: Option<Uuid>,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub selling_price: Decimal,
     pub created_by: Uuid,
     pub updated_by: Uuid,
 }
@@ -81,7 +82,7 @@ pub struct UpdateProduct {
     pub category_id: Uuid,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub selling_price: Decimal,
     pub updated_by: Uuid,
 }
 
@@ -91,12 +92,12 @@ pub struct ProductRow {
     pub barcode: String,
     pub name: String,
     pub description: Option<String>,
-    pub category_id: Uuid,
-    pub category: String,
+    pub category_id: Option<Uuid>,
+    pub category: Option<String>,
     pub sub_category_id: Option<Uuid>,
     pub sub_category: Option<String>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub selling_price: Decimal,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub created_by: Uuid,
@@ -113,7 +114,7 @@ impl From<ProductRow> for UserProduct {
             description: row.description,
             category: row.category,
             sub_category: row.sub_category,
-            price: row.price,
+            selling_price: row.selling_price,
             quantity_in_stock: row.quantity_in_stock,
         }
     }
@@ -131,7 +132,7 @@ impl From<ProductRow> for AdminProduct {
             sub_category_id: row.sub_category_id,
             sub_category: row.sub_category,
             is_active: row.is_active,
-            price: row.price,
+            selling_price: row.selling_price,
             created_at: row.created_at,
             updated_at: row.updated_at,
             created_by: row.created_by,
@@ -179,12 +180,12 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
         }
 
         if let Some(max_price) = &self.max_price {
-            query_builder.push(" AND p.price <=");
+            query_builder.push(" AND p.selling_price <=");
             query_builder.push_bind(*max_price);
         }
 
         if let Some(min_price) = &self.max_price {
-            query_builder.push(" AND p.price >=");
+            query_builder.push(" AND p.selling_price >=");
             query_builder.push_bind(*min_price);
         }
         if let Some(sub_categories_id) = &self.sub_categories_id {

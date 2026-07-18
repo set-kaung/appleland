@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity AS \"quantity_in_stock!\"\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_active = $3\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity_remaining, 0) as \"quantity_in_stock!\"\n        FROM products p\n        LEFT JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -71,12 +71,12 @@
       },
       {
         "ordinal": 6,
-        "name": "price",
+        "name": "selling_price",
         "type_info": "Numeric",
         "origin": {
           "Table": {
             "table": "products",
-            "name": "price"
+            "name": "selling_price"
           }
         }
       },
@@ -161,19 +161,13 @@
         "ordinal": 14,
         "name": "quantity_in_stock!",
         "type_info": "Int4",
-        "origin": {
-          "Table": {
-            "table": "inventory",
-            "name": "quantity"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
-        "Int8",
-        "Bool"
+        "Int8"
       ]
     },
     "nullable": [
@@ -181,7 +175,7 @@
       false,
       false,
       true,
-      false,
+      true,
       true,
       false,
       false,
@@ -191,8 +185,8 @@
       false,
       false,
       false,
-      false
+      null
     ]
   },
-  "hash": "b0b9c8a1f1d68d7026fc6f548a55a3f4f07dc6455c618c4f8662406a67fbd766"
+  "hash": "1497b2d65e586cfefd4f75883aedef07acdf0ba2188a98ec0555a8ee5ce89acd"
 }

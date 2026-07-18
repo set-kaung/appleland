@@ -57,42 +57,6 @@ paths:
           description: ''
       security:
       - session_cookie: []
-  /admin/inventory/{product_id}:
-    put:
-      tags:
-      - Admin Inventory
-      operationId: update_inventory
-      parameters:
-      - name: product_id
-        in: path
-        description: Product UUID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateInventoryPayload'
-        required: true
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Inventory'
-        '400':
-          description: ''
-        '401':
-          description: ''
-        '404':
-          description: ''
-        '500':
-          description: ''
-      security:
-      - session_cookie: []
   /admin/login:
     post:
       tags:
@@ -470,10 +434,8 @@ components:
       - id
       - barcode
       - name
-      - category_id
-      - category
       - is_active
-      - price
+      - selling_price
       - quantity_in_stock
       - created_at
       - updated_at
@@ -483,9 +445,13 @@ components:
         barcode:
           type: string
         category:
-          type: string
+          type:
+          - string
+          - 'null'
         category_id:
-          type: string
+          type:
+          - string
+          - 'null'
           format: uuid
         created_at:
           type: string
@@ -504,11 +470,11 @@ components:
           type: boolean
         name:
           type: string
-        price:
-          type: string
         quantity_in_stock:
           type: integer
           format: int32
+        selling_price:
+          type: string
         sub_category:
           type:
           - string
@@ -577,14 +543,16 @@ components:
       required:
       - name
       - barcode
-      - category_id
+      - selling_price
       - is_active
       - price
       properties:
         barcode:
           type: string
         category_id:
-          type: string
+          type:
+          - string
+          - 'null'
           format: uuid
         description:
           type:
@@ -596,42 +564,12 @@ components:
           type: string
         price:
           type: string
+        selling_price:
+          type: string
         sub_category_id:
           type:
           - string
           - 'null'
-          format: uuid
-    Inventory:
-      type: object
-      required:
-      - id
-      - product_id
-      - quantity
-      - created_by
-      - updated_by
-      - created_at
-      - updated_at
-      properties:
-        created_at:
-          type: string
-          format: date-time
-        created_by:
-          type: string
-          format: uuid
-        id:
-          type: string
-          format: uuid
-        product_id:
-          type: string
-          format: uuid
-        quantity:
-          type: integer
-          format: int32
-        updated_at:
-          type: string
-          format: date-time
-        updated_by:
-          type: string
           format: uuid
     LoginRequest:
       type: object
@@ -662,10 +600,8 @@ components:
             - id
             - barcode
             - name
-            - category_id
-            - category
             - is_active
-            - price
+            - selling_price
             - quantity_in_stock
             - created_at
             - updated_at
@@ -675,9 +611,13 @@ components:
               barcode:
                 type: string
               category:
-                type: string
+                type:
+                - string
+                - 'null'
               category_id:
-                type: string
+                type:
+                - string
+                - 'null'
                 format: uuid
               created_at:
                 type: string
@@ -696,11 +636,11 @@ components:
                 type: boolean
               name:
                 type: string
-              price:
-                type: string
               quantity_in_stock:
                 type: integer
                 format: int32
+              selling_price:
+                type: string
               sub_category:
                 type:
                 - string
@@ -775,14 +715,15 @@ components:
             - id
             - barcode
             - name
-            - category
-            - price
+            - selling_price
             - quantity_in_stock
             properties:
               barcode:
                 type: string
               category:
-                type: string
+                type:
+                - string
+                - 'null'
               description:
                 type:
                 - string
@@ -792,11 +733,11 @@ components:
                 format: uuid
               name:
                 type: string
-              price:
-                type: string
               quantity_in_stock:
                 type: integer
                 format: int32
+              selling_price:
+                type: string
               sub_category:
                 type:
                 - string
@@ -907,14 +848,6 @@ components:
           format: uuid
         selling_price:
           type: string
-    UpdateInventoryPayload:
-      type: object
-      required:
-      - quantity
-      properties:
-        quantity:
-          type: integer
-          format: int32
     UpdateProductPayload:
       type: object
       required:
@@ -950,14 +883,15 @@ components:
       - id
       - barcode
       - name
-      - category
-      - price
+      - selling_price
       - quantity_in_stock
       properties:
         barcode:
           type: string
         category:
-          type: string
+          type:
+          - string
+          - 'null'
         description:
           type:
           - string
@@ -967,11 +901,11 @@ components:
           format: uuid
         name:
           type: string
-        price:
-          type: string
         quantity_in_stock:
           type: integer
           format: int32
+        selling_price:
+          type: string
         sub_category:
           type:
           - string

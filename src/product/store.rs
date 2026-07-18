@@ -9,10 +9,25 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
     let product_rows = sqlx::query_as!(
         ProductRow,
         r#"
-            SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity, 0) as "quantity_in_stock!"
+            SELECT
+                p.id as "id!",
+                p.barcode as "barcode!",
+                p.name as "name!",
+                p.description,
+                p.category_id,
+                c1.name as category,
+                p.sub_category_id,
+                c2.name as sub_category,
+                p.is_active as "is_active!",
+                p.selling_price as "selling_price!",
+                p.created_at as "created_at!",
+                p.updated_at as "updated_at!",
+                p.created_by as "created_by!",
+                p.updated_by as "updated_by!",
+                COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
             FROM products p
             LEFT JOIN inventory i on p.id = i.product_id
-            JOIN categories c1 on c1.id = p.category_id
+            LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
             "#
     )
@@ -31,7 +46,7 @@ pub async fn fetch_paged(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity AS "quantity_in_stock!"
+        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity_remaining AS "quantity_in_stock!"
         FROM products p
         JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
@@ -63,7 +78,7 @@ pub async fn fetch_paged_admin(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity, 0) as "quantity_in_stock!"
+        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
         FROM products p
         LEFT JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
@@ -89,7 +104,7 @@ where
     sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category,c2.name as sub_category, i.quantity as quantity_in_stock
+        SELECT p.*,c1.name as category,c2.name as sub_category, i.quantity_remaining as quantity_in_stock
         FROM products p
         JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
@@ -111,7 +126,7 @@ pub async fn create(
 ) -> Result<Uuid, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO products (barcode, name, description,category_id,sub_category_id,price,is_active,created_by,updated_by)
+        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,created_by,updated_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$8)
         RETURNING
             id
@@ -121,7 +136,7 @@ pub async fn create(
         payload.description,
         payload.category_id,
         payload.sub_category_id,
-        payload.price,
+        payload.selling_price,
         payload.is_active,
         payload.created_by
     )
@@ -136,7 +151,7 @@ pub async fn update(
 ) -> Result<ProductRow, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, price = $6, is_active = $7,updated_by= $8, updated_at = NOW()
+       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7,updated_by= $8, updated_at = NOW()
        WHERE id = $9
        RETURNING id
         "#,
@@ -145,7 +160,7 @@ pub async fn update(
         payload.description,
         payload.category_id,
         payload.sub_category_id,
-        payload.price,
+        payload.selling_price,
         payload.is_active,
         payload.updated_by,
         payload.id,
@@ -196,10 +211,10 @@ where
         p.updated_at,
         p.created_by,
         p.updated_by,
-        COALESCE(i.quantity, 0) AS quantity_in_stock
+        COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
     FROM products p
     LEFT JOIN inventory i on p.id = i.product_id
-    JOIN categories c1 on c1.id = p.category_id
+    LEFT JOIN categories c1 on c1.id = p.category_id
     LEFT JOIN categories c2 on c2.id = p.sub_category_id
     WHERE 1=1"#,
     );
@@ -241,15 +256,15 @@ pub async fn find_products_simple(
                     sub_category_id,
                     c2.name as sub_category,
                     is_active,
-                    price,
+                    p.selling_price,
                     p.created_at,
                     p.updated_at,
                     p.created_by,
                     p.updated_by,
-                    COALESCE(i.quantity, 0) AS quantity_in_stock
+                    COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
                 FROM products p
                 LEFT JOIN inventory i on p.id = i.product_id
-                JOIN categories c1 on c1.id = p.category_id
+                LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id
                 WHERE 1=1
             "#,

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category,c2.name as sub_category, i.quantity as quantity_in_stock\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1",
+  "query": "\n        SELECT p.*,c1.name as category,c2.name as sub_category, i.quantity_remaining as quantity_in_stock\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1",
   "describe": {
     "columns": [
       {
@@ -71,12 +71,12 @@
       },
       {
         "ordinal": 6,
-        "name": "price",
+        "name": "selling_price",
         "type_info": "Numeric",
         "origin": {
           "Table": {
             "table": "products",
-            "name": "price"
+            "name": "selling_price"
           }
         }
       },
@@ -164,7 +164,7 @@
         "origin": {
           "Table": {
             "table": "inventory",
-            "name": "quantity"
+            "name": "quantity_remaining"
           }
         }
       }
@@ -179,7 +179,7 @@
       false,
       false,
       true,
-      false,
+      true,
       true,
       false,
       false,
@@ -192,5 +192,5 @@
       false
     ]
   },
-  "hash": "7e086743294b957c5c80911158aa852ac5290425385831a7e8aabc431fac6b32"
+  "hash": "0bf5df402d4cefd20493eb98c392731bb9943df1f7304d88c85aa940cfa3d781"
 }

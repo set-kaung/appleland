@@ -130,14 +130,15 @@ components:
             - id
             - barcode
             - name
-            - category
-            - price
+            - selling_price
             - quantity_in_stock
             properties:
               barcode:
                 type: string
               category:
-                type: string
+                type:
+                - string
+                - 'null'
               description:
                 type:
                 - string
@@ -147,11 +148,11 @@ components:
                 format: uuid
               name:
                 type: string
-              price:
-                type: string
               quantity_in_stock:
                 type: integer
                 format: int32
+              selling_price:
+                type: string
               sub_category:
                 type:
                 - string
@@ -226,14 +227,15 @@ components:
       - id
       - barcode
       - name
-      - category
-      - price
+      - selling_price
       - quantity_in_stock
       properties:
         barcode:
           type: string
         category:
-          type: string
+          type:
+          - string
+          - 'null'
         description:
           type:
           - string
@@ -243,11 +245,11 @@ components:
           format: uuid
         name:
           type: string
-        price:
-          type: string
         quantity_in_stock:
           type: integer
           format: int32
+        selling_price:
+          type: string
         sub_category:
           type:
           - string

@@ -1,7 +1,6 @@
 use super::store;
 use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SaleAdminRole, ValidatedJson};
-use crate::inventory::store as inventory_store;
 use crate::{pagination, ApiResult, PaginatedApiResult};
 use axum::extract::Path;
 use tower_sessions::Session;
@@ -189,14 +188,14 @@ pub async fn create_product(
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
-        price: payload.price,
+        selling_price: payload.price,
         created_by: admin_id,
         updated_by: admin_id,
     };
 
     let product_id = store::create(&mut tx, insert_payload).await?;
 
-    inventory_store::insert_new_inventory_record(product_id, admin_id, 0, &mut tx).await?;
+    // inventory_store::insert_new_inventory_record(product_id, admin_id, 0, &mut tx).await?;
 
     tx.commit().await.map_err(|e| {
         error!("failed to create transaction: {e}");
@@ -247,7 +246,7 @@ pub async fn update_product(
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
-        price: payload.price,
+        selling_price: payload.price,
         updated_by: admin_id,
     };
 
