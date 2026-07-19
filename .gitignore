@@ -3,3 +3,4 @@
 .idea/
 *.sh
 *dump*.sql
+!run.sh
