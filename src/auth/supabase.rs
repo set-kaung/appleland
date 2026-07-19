@@ -36,12 +36,9 @@ pub struct SupabaseAuth {
 impl SupabaseAuth {
     pub fn new(project_ref: String) -> Self {
         Self {
-            jwks_url: format!(
-                "https://{}.supabase.co/auth/v1/.well-known/jwks.json",
-                project_ref
-            ),
+            jwks_url: format!("https://{project_ref}.supabase.co/auth/v1/.well-known/jwks.json"),
             cache: Arc::new(RwLock::new(None)),
-            cache_ttl: Duration::from_secs(600),
+            cache_ttl: Duration::from_mins(10),
             http: reqwest::Client::new(),
         }
     }
@@ -84,7 +81,7 @@ impl AuthProvider for SupabaseAuth {
         let header: Header = match decode_header(token) {
             Ok(h) => h,
             Err(err) => {
-                println!("error decoding jwks header: {}", err);
+                println!("error decoding jwks header: {err}");
                 return Err(AuthError::InvalidToken);
             }
         };
@@ -111,13 +108,14 @@ impl AuthProvider for SupabaseAuth {
 
         match decode::<Claims>(token, &decoding_key, &validation) {
             Ok(data) => Ok(data.claims),
-            Err(e) => match e.kind() {
-                ErrorKind::ExpiredSignature => Err(AuthError::Expired),
-                _ => {
-                    println!("decode error: {:?}", e); // add this
+            Err(e) => {
+                if let ErrorKind::ExpiredSignature = e.kind() {
+                    Err(AuthError::Expired)
+                } else {
+                    println!("decode error: {e:?}");
                     Err(AuthError::InvalidToken)
                 }
-            },
+            }
         }
     }
 }

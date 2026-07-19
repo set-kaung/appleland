@@ -3,16 +3,16 @@ use crate::product::model::{
 };
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload};
-use crate::sales::model::{AdminSale, AdminSaleDetails};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
+use crate::sales::model::{AdminSale, AdminSaleDetails};
 
 use crate::auth::password::{Admin, LoginRequest};
 
 use super::category;
-use super::pagination::*;
+use super::inventory;
+use super::pagination::{PaginatedResponse, PaginationQuery};
 use super::product;
 use super::sales;
-use super::inventory;
 use crate::auth::password;
 use utoipa::OpenApi;
 

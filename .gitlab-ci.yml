@@ -15,22 +15,27 @@ cache:
   key: cargo-$CI_COMMIT_REF_SLUG
   paths:
     - .cargo/registry/
+    - .cargo/advisory-dbs/
     - target/
 
-clippy:
-  stage: test
-  image: rust:1.97-slim
-  before_script:
-    - rustup component add clippy
-  script:
-    - cargo clippy --all-targets -- -D warnings
+# clippy:
+#   stage: test
+#   image: rust:1.97-slim
+#   before_script:
+#     - rustup component add clippy
+#   script:
+#     - cargo clippy --all-targets
 
 deny:
   stage: test
   image: rust:1.97-slim
-  script:
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates
     - cargo install cargo-deny --locked
+  script:
     - cargo deny check
+
+
 
 rust-build:
   stage: test

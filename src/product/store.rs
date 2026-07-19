@@ -210,28 +210,28 @@ where
     F: DBQueryFilter<Postgres>,
 {
     let mut data_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"
-    SELECT
-        p.id,
-        barcode,
-        p.name,
-        description,
-        category_id,
-        c1.name as category,
-        sub_category_id,
-        c2.name as sub_category,
-        is_active,
-        price,
-        p.created_at,
-        p.updated_at,
-        p.created_by,
-        p.updated_by,
-        COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
-    FROM products p
-    LEFT JOIN inventory i on p.id = i.product_id
-    LEFT JOIN categories c1 on c1.id = p.category_id
-    LEFT JOIN categories c2 on c2.id = p.sub_category_id
-    WHERE 1=1"#,
+        r"
+            SELECT
+                p.id,
+                barcode,
+                p.name,
+                description,
+                category_id,
+                c1.name as category,
+                sub_category_id,
+                c2.name as sub_category,
+                is_active,
+                price,
+                p.created_at,
+                p.updated_at,
+                p.created_by,
+                p.updated_by,
+                COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
+            FROM products p
+            LEFT JOIN inventory i on p.id = i.product_id
+            LEFT JOIN categories c1 on c1.id = p.category_id
+            LEFT JOIN categories c2 on c2.id = p.sub_category_id
+            WHERE 1=1",
     );
 
     filters.apply_filter(&mut data_builder);
@@ -260,7 +260,7 @@ pub async fn find_products_simple(
     let search_term = format!("%{}%", filter.query);
 
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"
+        r"
                 SELECT
                     p.id,
                     barcode,
@@ -282,7 +282,7 @@ pub async fn find_products_simple(
                 LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id
                 WHERE 1=1
-            "#,
+            ",
     );
 
     qb.push(" AND (p.name ILIKE ");

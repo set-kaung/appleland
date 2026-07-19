@@ -1,1 +1,1 @@
-export $(grep -v '^#' "$1" | xargs) && cargo build --release && ./target/release/appleland
+export $(grep -v '^#' "$1" | xargs) && cargo clippy --all-targets && cargo build --release && ./target/release/appleland

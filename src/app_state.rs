@@ -10,6 +10,6 @@ pub struct AppState {
 }
 impl AppState {
     pub fn new(auth: Arc<dyn AuthProvider>, db: PgPool) -> Self {
-        Self { auth, db }
+        Self { db, auth }
     }
 }
