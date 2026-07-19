@@ -1,13 +1,14 @@
 use crate::app_state::AppState;
+use axum::routing::post;
 use axum::Router;
 
-// use crate::inventory::handler::update_inventory;
 pub mod handler;
-mod model;
+pub mod model;
 pub mod store;
 
+use handler::insert_inventory;
+
 pub fn route_admin() -> Router<AppState> {
-    // Router::new().route("/{product_id}", put(update_inventory))
-    Router::new()
+    Router::new().route("/{product_id}", post(insert_inventory))
 }
 

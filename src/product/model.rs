@@ -1,4 +1,5 @@
 use crate::db::DBQueryFilter;
+use crate::inventory::model::NewInventoryPayload;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, QueryBuilder};
@@ -46,7 +47,7 @@ pub struct CreateProductPayload {
     pub selling_price: Decimal,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub inventory: Option<NewInventoryPayload>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,7 +71,7 @@ pub struct UpdateProductPayload {
     pub category_id: Uuid,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
-    pub price: Decimal,
+    pub selling_price: Decimal,
 }
 
 #[derive(Debug, Deserialize)]

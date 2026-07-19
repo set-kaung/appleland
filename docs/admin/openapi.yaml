@@ -57,6 +57,42 @@ paths:
           description: ''
       security:
       - session_cookie: []
+  /admin/inventory/{product_id}:
+    post:
+      tags:
+      - Admin Inventory
+      operationId: insert_inventory
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewInventoryPayload'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInventory'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '404':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
   /admin/login:
     post:
       tags:
@@ -428,6 +464,45 @@ components:
         updated_by:
           type: string
           format: uuid
+    AdminInventory:
+      type: object
+      required:
+      - id
+      - product_id
+      - quantity_received
+      - quantity_remaining
+      - unit_cost
+      - created_by
+      - updated_by
+      - created_at
+      - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        quantity_received:
+          type: integer
+          format: int32
+        quantity_remaining:
+          type: integer
+          format: int32
+        unit_cost:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
     AdminProduct:
       type: object
       required:
@@ -545,7 +620,6 @@ components:
       - barcode
       - selling_price
       - is_active
-      - price
       properties:
         barcode:
           type: string
@@ -558,11 +632,13 @@ components:
           type:
           - string
           - 'null'
+        inventory:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/NewInventoryPayload'
         is_active:
           type: boolean
         name:
-          type: string
-        price:
           type: string
         selling_price:
           type: string
@@ -580,6 +656,21 @@ components:
         password:
           type: string
         username:
+          type: string
+    NewInventoryPayload:
+      type: object
+      required:
+      - product_id
+      - quantity_received
+      - unit_cost
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity_received:
+          type: integer
+          format: int32
+        unit_cost:
           type: string
     PaginatedResponse_AdminProduct:
       type: object
@@ -855,7 +946,7 @@ components:
       - name
       - category_id
       - is_active
-      - price
+      - selling_price
       properties:
         barcode:
           type: string
@@ -870,7 +961,7 @@ components:
           type: boolean
         name:
           type: string
-        price:
+        selling_price:
           type: string
         sub_category_id:
           type:

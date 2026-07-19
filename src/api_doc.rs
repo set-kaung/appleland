@@ -4,6 +4,7 @@ use crate::product::model::{
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload};
 use crate::sales::model::{AdminSale, AdminSaleDetails};
+use crate::inventory::model::{AdminInventory, NewInventoryPayload};
 
 use crate::auth::password::{Admin, LoginRequest};
 
@@ -11,6 +12,7 @@ use super::category;
 use super::pagination::*;
 use super::product;
 use super::sales;
+use super::inventory;
 use crate::auth::password;
 use utoipa::OpenApi;
 
@@ -54,6 +56,7 @@ pub struct ApiDoc;
         category::handler::get_all_categories,
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
+        inventory::handler::insert_inventory,
     ),
     components(
         schemas(
@@ -70,6 +73,8 @@ pub struct ApiDoc;
             AdminSaleDetails,
             Admin,
             LoginRequest,
+            AdminInventory,
+            NewInventoryPayload,
         )
     ),
     tags(

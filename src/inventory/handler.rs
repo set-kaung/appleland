@@ -1,67 +1,47 @@
-// use crate::inventory::model::{Inventory, UpdateInventory, UpdateInventoryPayload};
+use crate::app_state::AppState;
+use crate::auth::password::session_admin_id;
+use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
+use crate::ApiResult;
+use axum::extract::{Path, State};
+use axum::Json;
+use tower_sessions::Session;
+use uuid::Uuid;
 
-// #[utoipa::path(
-//     put,
-//     path = "/admin/inventory/{product_id}",
-//     params(
-//         ("product_id" = Uuid, Path, description = "Product UUID")
-//     ),
-//     request_body = UpdateInventoryPayload,
-//     responses(
-//         (status = 200, body = Inventory),
-//         (status = 400),
-//         (status = 401),
-//         (status = 404),
-//         (status = 500)
-//     ),
-//     security(
-//         ("session_cookie" = [])
-//     ),
-//     tag = "Admin Inventory"
-// )]
-// pub async fn update_inventory(
-//     State(state): State<AppState>,
-//     session: Session,
-//     Path(product_id): Path<Uuid>,
-//     Json(payload): Json<UpdateInventoryPayload>,
-// ) -> Result<(StatusCode, Json<Inventory>), (StatusCode, String)> {
-//     let admin_id: Uuid = session
-//         .get::<Uuid>("id")
-//         .await
-//         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-//         .ok_or((StatusCode::UNAUTHORIZED, "no user_id in session".into()))?;
-//
-//     let mut tx = state.db.begin().await.map_err(|e| {
-//         error!("failed to create transaction: {e}");
-//         (
-//             StatusCode::INTERNAL_SERVER_ERROR,
-//             "something went wrong".to_string(),
-//         )
-//     })?;
-//
-//     let update_inventory_data = UpdateInventory {
-//         product_id,
-//         quantity: payload.quantity,
-//         update_by: admin_id,
-//     };
-//     match store::update(update_inventory_data, &mut tx).await {
-//         Ok(result) => {
-//             tx.commit().await.map_err(|e| {
-//                 error!("failed to commit to database in update_product: {e}");
-//                 (
-//                     StatusCode::INTERNAL_SERVER_ERROR,
-//                     "something went wrong".to_string(),
-//                 )
-//             })?;
-//
-//             Ok((StatusCode::OK, Json(result)))
-//         }
-//         Err(e) => {
-//             error!("failed to update inventory: {e}");
-//             Err((
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "internal server error".to_string(),
-//             ))
-//         }
-//     }
-// }
+#[utoipa::path(
+    post,
+    path = "/admin/inventory/{product_id}",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID")
+    ),
+    request_body = NewInventoryPayload,
+    responses(
+        (status = 200, body = AdminInventory),
+        (status = 400),
+        (status = 401),
+        (status = 404),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Inventory"
+)]
+pub async fn insert_inventory(
+    State(state): State<AppState>,
+    session: Session,
+    Path(product_id): Path<Uuid>,
+    Json(payload): Json<NewInventoryPayload>,
+) -> ApiResult<AdminInventory> {
+    let admin_id: Uuid = session_admin_id(session).await?;
+
+    let inventory_record = NewInventoryRecord {
+        product_id,
+        quantity_received: payload.quantity_received,
+        quantity_remaining: payload.quantity_received,
+        unit_cost: payload.unit_cost,
+        created_by: admin_id,
+        updated_by: admin_id,
+    };
+    let result = super::store::insert_new_inventory_record(inventory_record, &state.db).await?.into();
+    Ok(Json(result))
+}

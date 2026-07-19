@@ -1,21 +1,25 @@
-use sqlx::{Postgres, Transaction};
-
-
-use crate::app_error::StoreError;
+use crate::inventory::model::InventoryRow;
 use crate::{
     app_error,
     inventory::model::NewInventoryRecord,
 };
 
+use sqlx::{Executor, Postgres};
 
 // use when new products are created, to insert a record row
-pub async fn insert_new_inventory_record(
+pub async fn insert_new_inventory_record<'e, E>(
     new_inventory_record: NewInventoryRecord,
-    tx: &mut Transaction<'_, Postgres>,
-) -> Result<(), app_error::StoreError> {
-    let result = sqlx::query!(
-        r#"insert into inventory (product_id, quantity_received,quantity_remaining,unit_cost, created_by, updated_by)
-        VALUES ($1, $2, $3,$4, $5,$5)
+    executor: E,
+) -> Result<InventoryRow, app_error::StoreError>
+where
+    E: Executor<'e, Database=Postgres>,
+{
+    let result = sqlx::query_as!(
+        InventoryRow,
+        r#"
+        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)
+        VALUES ($1, $2, $3, $4, $5, $5)
+        RETURNING *
         "#,
         new_inventory_record.product_id,
         new_inventory_record.quantity_received,
@@ -23,11 +27,8 @@ pub async fn insert_new_inventory_record(
         new_inventory_record.unit_cost,
         new_inventory_record.created_by,
     )
-        .execute(&mut **tx)
+        .fetch_one(executor)
         .await?;
-    if result.rows_affected() != 1 {
-        return Err(StoreError::RecordNotFound);
-    }
-    Ok(())
-}
 
+    Ok(result)
+}

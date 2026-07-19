@@ -1,6 +1,7 @@
 use super::store;
 use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SaleAdminRole, ValidatedJson};
+use crate::inventory::store as inventory_store;
 use crate::{pagination, ApiResult, PaginatedApiResult};
 use axum::extract::Path;
 use tower_sessions::Session;
@@ -11,6 +12,7 @@ use crate::app_state::AppState;
 use crate::product::model::{AdminProduct, CreateProductPayload, InsertProduct, ProductFilter, ProductSearchParams, ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct};
 
 use crate::auth::password::session_admin_id;
+use crate::inventory::model::NewInventoryRecord;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -188,14 +190,24 @@ pub async fn create_product(
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
-        selling_price: payload.price,
+        selling_price: payload.selling_price,
         created_by: admin_id,
         updated_by: admin_id,
     };
 
     let product_id = store::create(&mut tx, insert_payload).await?;
+    if let Some(inventory_payload) = payload.inventory {
+        let inventory_record = NewInventoryRecord {
+            product_id,
+            quantity_received: inventory_payload.quantity_received,
+            quantity_remaining: inventory_payload.quantity_received,
+            unit_cost: inventory_payload.unit_cost,
+            created_by: admin_id,
+            updated_by: admin_id,
+        };
+        inventory_store::insert_new_inventory_record(inventory_record, &mut *tx).await?;
+    }
 
-    // inventory_store::insert_new_inventory_record(product_id, admin_id, 0, &mut tx).await?;
 
     tx.commit().await.map_err(|e| {
         error!("failed to create transaction: {e}");
@@ -246,7 +258,7 @@ pub async fn update_product(
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
-        selling_price: payload.price,
+        selling_price: payload.selling_price,
         updated_by: admin_id,
     };
 
