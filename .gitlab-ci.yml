@@ -1,25 +1,40 @@
 stages:
-- test
-- secret-detection
-- build
-
-sast:
-  stage: test
+  - test
 
 include:
-- template: Security/SAST.gitlab-ci.yml
-- template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
 
 variables:
   SECRET_DETECTION_ENABLED: 'true'
+  SQLX_OFFLINE: 'true'
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo
+  CARGO_BUILD_WARNINGS: deny
 
-secret_detection:
-  stage: secret-detection
+cache:
+  key: cargo-$CI_COMMIT_REF_SLUG
+  paths:
+    - .cargo/registry/
+    - target/
 
+clippy:
+  stage: test
+  image: rust:1.97-slim
+  before_script:
+    - rustup component add clippy
+  script:
+    - cargo clippy --all-targets -- -D warnings
 
-rust-latest:
-  stage: build
-  image: rust:latest
+deny:
+  stage: test
+  image: rust:1.97-slim
+  script:
+    - cargo install cargo-deny --locked
+    - cargo deny check
+
+rust-build:
+  stage: test
+  image: rust:1.97-slim
   script:
     - cargo build --verbose
     - cargo test --verbose

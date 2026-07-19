@@ -1,1 +1,1 @@
-export $(cat $1 | xargs) && cargo run --release
+export $(grep -v '^#' "$1" | xargs) && cargo build --release && ./target/release/appleland
