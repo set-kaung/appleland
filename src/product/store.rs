@@ -31,8 +31,8 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
             "#
     )
-        .fetch_all(pool)
-        .await?;
+    .fetch_all(pool)
+    .await?;
     tracing::info!("total product rows: {}", product_rows.len());
     Ok(product_rows)
 }
@@ -64,8 +64,8 @@ pub async fn fetch_paged(
         "SELECT COUNT(*) FROM products WHERE is_active = $1",
         is_active
     )
-        .fetch_one(pool)
-        .await?;
+    .fetch_one(pool)
+    .await?;
 
     Ok((products, total_items.unwrap_or(0)))
 }
@@ -99,25 +99,40 @@ pub async fn fetch_paged_admin(
 
 pub async fn fetch_by_id<'e, E>(executor: E, id: Uuid) -> Result<ProductRow, StoreError>
 where
-    E: Executor<'e, Database=Postgres>,
+    E: Executor<'e, Database = Postgres>,
 {
     sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category,c2.name as sub_category, i.quantity_remaining as quantity_in_stock
+        SELECT
+            p.id as "id!",
+            p.barcode as "barcode!",
+            p.name as "name!",
+            p.description,
+            p.category_id,
+            c1.name as category,
+            p.sub_category_id,
+            c2.name as sub_category,
+            p.is_active as "is_active!",
+            p.selling_price as "selling_price!",
+            p.created_at as "created_at!",
+            p.updated_at as "updated_at!",
+            p.created_by as "created_by!",
+            p.updated_by as "updated_by!",
+            COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
         FROM products p
-        JOIN inventory i on p.id = i.product_id
-        JOIN categories c1 on c1.id = p.category_id
+        LEFT JOIN inventory i on p.id = i.product_id
+        LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.id = $1"#,
         id
     )
-        .fetch_one(executor)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => StoreError::RecordNotFound,
-            e => StoreError::Database(e),
-        })
+    .fetch_one(executor)
+    .await
+    .map_err(|e| match e {
+        sqlx::Error::RowNotFound => StoreError::RecordNotFound,
+        e => StoreError::Database(e),
+    })
 }
 
 pub async fn create(
@@ -287,12 +302,10 @@ pub async fn find_products_simple(
     qb.push_bind(offset);
     let product_query = qb.build_query_as::<ProductRow>();
 
+    let result = product_query.fetch_all(pool).await?;
 
-    let result = product_query
-        .fetch_all(pool)
-        .await?;
-
-    let mut cqb: QueryBuilder<Postgres> = QueryBuilder::new("select COUNT(*) from products p where 1=1");
+    let mut cqb: QueryBuilder<Postgres> =
+        QueryBuilder::new("select COUNT(*) from products p where 1=1");
 
     cqb.push(" AND (p.name ILIKE ");
     cqb.push_bind(search_term.clone());
