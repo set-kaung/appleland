@@ -8,35 +8,13 @@ use crate::sales::model::{AdminSale, AdminSaleDetails};
 
 use crate::auth::password::{Admin, LoginRequest};
 
-use super::category;
-use super::inventory;
-use super::pagination::{PaginatedResponse, PaginationQuery};
-use super::product;
-use super::sales;
+use super::super::category;
+use super::super::inventory;
+use super::super::pagination::{PaginatedResponse, PaginationQuery};
+use super::super::product;
+use super::super::sales;
 use crate::auth::password;
 use utoipa::OpenApi;
-
-#[derive(OpenApi)]
-#[openapi(
-    info(description = "API to be consumed by user applications"),
-    paths(
-        product::handler::get_products_paginated,
-        product::handler::get_product_by_id,
-        product::handler::find_products,
-    ),
-    components(
-        schemas(
-            UserProduct,
-            PaginationQuery,
-            PaginatedResponse<UserProduct>,
-            product::model::ProductFilter,
-        )
-    ),
-    tags(
-        (name = "Products")
-    ),
-)]
-pub struct ApiDoc;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -58,7 +36,6 @@ pub struct ApiDoc;
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
         inventory::handler::insert_inventory,
-    
     ),
     components(
         schemas(

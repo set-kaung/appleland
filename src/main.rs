@@ -7,7 +7,7 @@ use appleland::middleware;
 use appleland::{api_doc, sales};
 use appleland::{category, inventory, product};
 use axum::middleware as axum_middleware;
-use axum::{http::StatusCode, Router};
+use axum::{Router, http::StatusCode};
 use clap::Parser;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -18,7 +18,6 @@ use tower_sessions::ExpiredDeletion;
 use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing_subscriber::EnvFilter;
-use utoipa::OpenApi;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -31,21 +30,7 @@ async fn main() -> Result<(), AppError> {
         .init();
 
     let cli = config::Cli::parse();
-    let openapi = api_doc::ApiDoc::openapi();
-    let admin_api = api_doc::AdminApiDoc::openapi();
-
-    let yaml = openapi.to_yaml().unwrap();
-    let admin_yaml = admin_api.to_yaml().unwrap();
-
-    match std::fs::write("docs/openapi.yaml", yaml) {
-        Ok(_) => tracing::info!("api docs generated to docs/openapi.yaml"),
-        Err(err) => tracing::error!("error generating api docs: {err}"),
-    }
-
-    match std::fs::write("docs/admin/openapi.yaml", admin_yaml) {
-        Ok(_) => tracing::info!("admin api docs generated to docs/admin/openapi.yaml"),
-        Err(err) => tracing::error!("error generating  admin api docs: {err}"),
-    }
+    api_doc::generate_docs();
     if cli.gen_docs_only {
         return Ok(());
     }
@@ -123,9 +108,9 @@ async fn main() -> Result<(), AppError> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-        .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
-        .await
-        .unwrap();
+    .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
+    .await
+    .unwrap();
     match deletion_task.await {
         Ok(_) => tracing::info!("Session deletion task completed normally"),
         Err(e) if e.is_cancelled() => {
