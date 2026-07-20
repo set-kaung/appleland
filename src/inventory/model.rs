@@ -36,7 +36,6 @@ pub struct InventoryRow {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct NewInventoryPayload {
-    pub product_id: Uuid,
     pub quantity_received: i32,
     pub unit_cost: Decimal,
 }

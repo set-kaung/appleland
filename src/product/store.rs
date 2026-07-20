@@ -24,15 +24,14 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
                 p.updated_at as "updated_at!",
                 p.created_by as "created_by!",
                 p.updated_by as "updated_by!",
-                COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
+                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as "quantity_in_stock!"
             FROM products p
-            LEFT JOIN inventory i on p.id = i.product_id
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
             "#
     )
-    .fetch_all(pool)
-    .await?;
+        .fetch_all(pool)
+        .await?;
     tracing::info!("total product rows: {}", product_rows.len());
     Ok(product_rows)
 }
@@ -46,9 +45,8 @@ pub async fn fetch_paged(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity_remaining AS "quantity_in_stock!"
+        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) AS "quantity_in_stock!"
         FROM products p
-        JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.is_active = $3
@@ -64,8 +62,8 @@ pub async fn fetch_paged(
         "SELECT COUNT(*) FROM products WHERE is_active = $1",
         is_active
     )
-    .fetch_one(pool)
-    .await?;
+        .fetch_one(pool)
+        .await?;
 
     Ok((products, total_items.unwrap_or(0)))
 }
@@ -78,9 +76,8 @@ pub async fn fetch_paged_admin(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
+        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!"
         FROM products p
-        LEFT JOIN inventory i on p.id = i.product_id
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         LIMIT $1 OFFSET $2"#,
@@ -99,7 +96,7 @@ pub async fn fetch_paged_admin(
 
 pub async fn fetch_by_id<'e, E>(executor: E, id: Uuid) -> Result<ProductRow, StoreError>
 where
-    E: Executor<'e, Database = Postgres>,
+    E: Executor<'e, Database=Postgres>,
 {
     sqlx::query_as!(
         ProductRow,
@@ -127,12 +124,12 @@ where
         WHERE p.id = $1"#,
         id
     )
-    .fetch_one(executor)
-    .await
-    .map_err(|e| match e {
-        sqlx::Error::RowNotFound => StoreError::RecordNotFound,
-        e => StoreError::Database(e),
-    })
+        .fetch_one(executor)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => StoreError::RecordNotFound,
+            e => StoreError::Database(e),
+        })
 }
 
 pub async fn create(
@@ -226,9 +223,8 @@ where
                 p.updated_at,
                 p.created_by,
                 p.updated_by,
-                COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
+                COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0) AS quantity_in_stock
             FROM products p
-            LEFT JOIN inventory i on p.id = i.product_id
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
             WHERE 1=1",
@@ -276,9 +272,8 @@ pub async fn find_products_simple(
                     p.updated_at,
                     p.created_by,
                     p.updated_by,
-                    COALESCE(i.quantity_remaining, 0) AS quantity_in_stock
+                    COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0) AS quantity_in_stock
                 FROM products p
-                LEFT JOIN inventory i on p.id = i.product_id
                 LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id
                 WHERE 1=1
