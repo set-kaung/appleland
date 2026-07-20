@@ -57,6 +57,34 @@ paths:
           description: ''
       security:
       - session_cookie: []
+  /admin/categories/{id}:
+    put:
+      tags:
+      - Admin Categories
+      operationId: update_category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryPayload'
+        required: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+        '400':
+          description: ''
+        '401':
+          description: ''
+        '409':
+          description: ''
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
   /admin/inventory/{product_id}:
     post:
       tags:
@@ -660,13 +688,9 @@ components:
     NewInventoryPayload:
       type: object
       required:
-      - product_id
       - quantity_received
       - unit_cost
       properties:
-        product_id:
-          type: string
-          format: uuid
         quantity_received:
           type: integer
           format: int32
@@ -939,6 +963,17 @@ components:
           format: uuid
         selling_price:
           type: string
+    UpdateCategoryPayload:
+      type: object
+      required:
+      - name
+      - updated_by
+      properties:
+        name:
+          type: string
+        updated_by:
+          type: string
+          format: uuid
     UpdateProductPayload:
       type: object
       required:

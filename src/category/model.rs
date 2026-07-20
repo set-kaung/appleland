@@ -26,7 +26,7 @@ pub struct CreateCategoryPayload {
     pub name: String,
 }
 
-#[derive(FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct AdminCategory {
     pub id: Uuid,
     pub name: String,
@@ -34,6 +34,19 @@ pub struct AdminCategory {
     pub created_at: OffsetDateTime,
     pub updated_by: Uuid,
     pub updated_at: OffsetDateTime,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+
+pub struct UpdateCategoryPayload {
+    pub name: String,
+    pub updated_by: Uuid,
+}
+
+pub struct UpdateCategory {
+    pub id: Uuid,
+    pub name: String,
+    pub updated_by: Uuid,
 }
 
 impl From<CategoryRow> for AdminCategory {

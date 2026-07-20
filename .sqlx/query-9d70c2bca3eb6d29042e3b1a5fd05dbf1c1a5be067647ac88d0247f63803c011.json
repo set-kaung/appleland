@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE(i.quantity_remaining, 0) as \"quantity_in_stock!\"\n            FROM products p\n            LEFT JOIN inventory i on p.id = i.product_id\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            ",
+  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            ",
   "describe": {
     "columns": [
       {
@@ -175,7 +175,7 @@
       true,
       true,
       true,
-      true,
+      false,
       true,
       true,
       true,
@@ -185,5 +185,5 @@
       null
     ]
   },
-  "hash": "e2385fdf25d5a91d53818ed5a3e2b709597026e95326c0f89b20d8ee5a04fa31"
+  "hash": "9d70c2bca3eb6d29042e3b1a5fd05dbf1c1a5be067647ac88d0247f63803c011"
 }

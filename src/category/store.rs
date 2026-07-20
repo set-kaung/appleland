@@ -1,5 +1,5 @@
 use crate::app_error::StoreError;
-use crate::category::model::{CategoryRow, InsertCategory};
+use crate::category::model::{CategoryRow, InsertCategory, UpdateCategory};
 use sqlx::{PgPool, Postgres, Transaction};
 
 pub async fn create_category(
@@ -26,4 +26,21 @@ pub async fn get_all_categories(pool: &PgPool) -> Result<Vec<CategoryRow>, Store
         .fetch_all(pool)
         .await
         .map_err(Into::into)
+}
+
+pub async fn update_category(
+    pool: &PgPool,
+    update_category: UpdateCategory,
+) -> Result<CategoryRow, StoreError> {
+    let result = sqlx::query_as!(
+        CategoryRow,
+        "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING *",
+        update_category.name,
+        update_category.updated_by,
+        update_category.id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(result)
 }

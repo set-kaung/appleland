@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, i.quantity_remaining AS \"quantity_in_stock!\"\n        FROM products p\n        JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_active = $3\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) AS \"quantity_in_stock!\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_active = $3\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -161,12 +161,7 @@
         "ordinal": 14,
         "name": "quantity_in_stock!",
         "type_info": "Int4",
-        "origin": {
-          "Table": {
-            "table": "inventory",
-            "name": "quantity_remaining"
-          }
-        }
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -191,8 +186,8 @@
       false,
       false,
       false,
-      false
+      null
     ]
   },
-  "hash": "366cb7b444c1936bea556d40fc5cd8dacee9ae1a21f08e412f41e473e1caae15"
+  "hash": "09009c3ba0ae5c36f080ea4b16639499221ad4a9969e583e5b4f802bf8ded4aa"
 }

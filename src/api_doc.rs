@@ -2,7 +2,7 @@ use crate::product::model::{
     AdminProduct, CreateProductPayload, UpdateProductPayload, UserProduct,
 };
 
-use crate::category::model::{AdminCategory, CreateCategoryPayload};
+use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
 use crate::sales::model::{AdminSale, AdminSaleDetails};
 
@@ -54,25 +54,28 @@ pub struct ApiDoc;
         password::admin_logout_handler,
         category::handler::create_category,
         category::handler::get_all_categories,
+        category::handler::update_category,
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
         inventory::handler::insert_inventory,
+    
     ),
     components(
         schemas(
+            LoginRequest,
+            Admin,
             AdminProduct,
+            PaginationQuery,
             CreateProductPayload,
             UpdateProductPayload,
-            PaginationQuery,
             product::model::ProductFilter,
             PaginatedResponse<UserProduct>,
             PaginatedResponse<AdminProduct>,
-            CreateCategoryPayload,
             AdminCategory,
+            CreateCategoryPayload,
+            UpdateCategoryPayload,
             AdminSale,
             AdminSaleDetails,
-            Admin,
-            LoginRequest,
             AdminInventory,
             NewInventoryPayload,
         )

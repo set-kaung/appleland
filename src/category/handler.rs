@@ -1,14 +1,18 @@
 use super::store;
+use crate::ApiResult;
 use crate::app_error::APIError;
 use crate::app_extractor::ValidatedJson;
 use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
-use crate::category::model::{AdminCategory, CreateCategoryPayload, InsertCategory};
+use crate::category::model::{
+    AdminCategory, CreateCategoryPayload, InsertCategory, UpdateCategory, UpdateCategoryPayload,
+};
 use axum::Json;
-use axum::extract::State;
+use axum::extract::{Path, State};
 use tower_sessions::Session;
 use tracing::error;
+use uuid::Uuid;
 
 #[utoipa::path(
     post,
@@ -78,4 +82,36 @@ pub async fn get_all_categories(
         .collect();
 
     Ok(Json(categories))
+}
+
+#[utoipa::path(
+    put, 
+    path = "/admin/categories/{id}",
+    request_body = UpdateCategoryPayload,
+    responses(
+        (status = 201, body = AdminCategory),
+        (status = 400),
+        (status = 401),
+        (status = 409),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Categories"
+)]
+pub async fn update_category(
+    State(s): State<AppState>,
+    session: Session,
+    Path(id): Path<Uuid>,
+    ValidatedJson(payload): ValidatedJson<UpdateCategoryPayload>,
+) -> ApiResult<AdminCategory> {
+    let admin_id = session_admin_id(session).await?;
+    let update_category = UpdateCategory {
+        id,
+        name: payload.name,
+        updated_by: admin_id,
+    };
+    let result = store::update_category(&s.db, update_category).await?.into();
+    Ok(Json(result))
 }

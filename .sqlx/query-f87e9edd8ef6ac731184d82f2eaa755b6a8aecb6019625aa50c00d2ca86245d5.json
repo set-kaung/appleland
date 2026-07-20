@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE(i.quantity_remaining, 0) as \"quantity_in_stock!\"\n        FROM products p\n        LEFT JOIN inventory i on p.id = i.product_id\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -188,5 +188,5 @@
       null
     ]
   },
-  "hash": "1497b2d65e586cfefd4f75883aedef07acdf0ba2188a98ec0555a8ee5ce89acd"
+  "hash": "f87e9edd8ef6ac731184d82f2eaa755b6a8aecb6019625aa50c00d2ca86245d5"
 }
