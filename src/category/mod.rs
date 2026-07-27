@@ -8,10 +8,10 @@ pub mod model;
 pub mod store;
 
 pub fn route_admin() -> Router<AppState> {
-    axum::Router::new().route(
-        "/",
-        get(get_all_categories)
-            .post(create_category)
-            .put(update_category),
-    )
+    axum::Router::new()
+        .route(
+            "/",
+            get(get_all_categories).post(create_category),
+        )
+        .route("/{id}", axum::routing::put(update_category))
 }

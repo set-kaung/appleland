@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id,total_amount,created_at from sales\n    ",
+  "query": "\n        SELECT id, total_amount, created_at FROM sales WHERE id = $1\n    ",
   "describe": {
     "columns": [
       {
@@ -38,7 +38,9 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -46,5 +48,5 @@
       false
     ]
   },
-  "hash": "8072e9c696689a8625b3c1cb7f1bca23ac975aef3733201202673f58f4661124"
+  "hash": "6ab06232d33b55b49292922561dbb84f2562bfab5a5897c904253a65f4fc523f"
 }

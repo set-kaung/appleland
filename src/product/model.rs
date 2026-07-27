@@ -194,7 +194,7 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
             query_builder.push_bind(*max_price);
         }
 
-        if let Some(min_price) = &self.max_price {
+        if let Some(min_price) = &self.min_price {
             query_builder.push(" AND p.selling_price >=");
             query_builder.push_bind(*min_price);
         }
@@ -222,4 +222,3 @@ impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin {
         }
     }
 }
-

@@ -20,7 +20,7 @@ pub async fn fetch_all_paginated(
     .fetch_all(pool)
     .await?;
 
-    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM products")
+    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM sales")
         .fetch_one(pool)
         .await?;
 
@@ -34,8 +34,9 @@ pub async fn fetch_sale_detail_by_id(
     let sale_row = sqlx::query_as!(
         SaleRow,
         r#"
-        SELECT id,total_amount,created_at from sales
-    "#
+        SELECT id, total_amount, created_at FROM sales WHERE id = $1
+    "#,
+        sale_id
     )
     .fetch_one(pool)
     .await?;

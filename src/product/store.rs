@@ -117,10 +117,9 @@ where
             p.updated_at as "updated_at!",
             p.created_by as "created_by!",
             p.updated_by as "updated_by!",
-            COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!",
+            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!",
             p.image_url
         FROM products p
-        LEFT JOIN inventory i on p.id = i.product_id
         LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.id = $1"#,
@@ -222,7 +221,7 @@ where
                 sub_category_id,
                 c2.name as sub_category,
                 is_active,
-                price,
+                p.selling_price,
                 p.created_at,
                 p.updated_at,
                 p.created_by,
