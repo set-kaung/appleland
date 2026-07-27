@@ -1,15 +1,19 @@
 use super::store;
 use crate::app_error::APIError;
 use crate::app_state::AppState;
-use crate::pagination;
-use crate::sales::model::{AdminSale, AdminSaleDetails};
+use crate::auth::password::session_admin_id;
+use crate::sales::model::{AdminSale, AdminSaleDetails, CreateSalePayload};
+use crate::sales::service;
+use crate::{ApiResultWithStatusCode, pagination};
 use axum::Json;
 use axum::extract::{Path, Query, State};
+use axum::http::StatusCode;
+use tower_sessions::Session;
 use uuid::Uuid;
 
 #[utoipa::path(
     get,
-    path = "/api/sales",
+    path = "/admin/sales",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of sale records", body = pagination::PaginatedResponse<AdminSale>),
@@ -37,7 +41,7 @@ pub async fn get_sales_paginated(
 
 #[utoipa::path(
     get,
-    path = "/api/products/{sale_id}",
+    path = "/admin/sales/{sale_id}",
     params(
         ("sale_id" = Uuid, Path, description = "Sale UUID")
     ),
@@ -54,4 +58,29 @@ pub async fn get_sale_detail_by_id(
 ) -> Result<Json<AdminSaleDetails>, APIError> {
     let data = store::fetch_sale_detail_by_id(&state.db, sale_id).await?;
     Ok(Json(data))
+}
+
+#[utoipa::path(
+    post,
+    path = "/admin/sales",
+    request_body = CreateSalePayload,
+    responses(
+        (status = 201, description = "Sale created", body = Uuid),
+        (status = 400, description = "Invalid request or insufficient inventory"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500)
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Sales"
+)]
+pub async fn create_sale(
+    State(state): State<AppState>,
+    session: Session,
+    Json(payload): Json<CreateSalePayload>,
+) -> ApiResultWithStatusCode<Uuid> {
+    let admin_id = session_admin_id(session).await?;
+    let sale_id = service::perform_sale_admin(&state.db, admin_id, payload).await?;
+    Ok((StatusCode::CREATED, Json(sale_id)))
 }

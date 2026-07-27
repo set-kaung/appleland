@@ -1,35 +1,42 @@
 use super::store as sale_store;
 use rust_decimal::Decimal;
-use sqlx::{Postgres, Transaction};
+use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::app_error::StoreError;
 use crate::inventory;
-use crate::sales::model::{SaleAdminPayload, SaleProduct, SaleProductDTO};
+use crate::sales::model::{CreateSalePayload, SaleProduct, SaleProductDTO};
 
 pub async fn perform_sale_admin(
-    tx: &mut Transaction<'_, Postgres>,
+    pool: &PgPool,
     admin_id: Uuid,
-    payload: SaleAdminPayload,
-) -> Result<(), StoreError> {
+    payload: CreateSalePayload,
+) -> Result<Uuid, StoreError> {
+    let mut tx = pool.begin().await?;
+
     let product_ids: Vec<Uuid> = payload.sale_products.iter().map(|p| p.product_id).collect();
 
-    let selling_prices: HashMap<Uuid, Decimal> = sale_store::fetch_selling_prices(tx, &product_ids)
-        .await?
-        .into_iter()
-        .collect();
+    let selling_prices: HashMap<Uuid, Decimal> =
+        sale_store::fetch_selling_prices(&mut tx, &product_ids)
+            .await?
+            .into_iter()
+            .collect();
 
-    let inventory_entries = inventory::store::fetch_inventory_fifo_batch(tx, &product_ids).await?;
+    let inventory_entries =
+        inventory::store::fetch_inventory_fifo_batch(&mut tx, &product_ids).await?;
 
     let (sale_products, deductions) =
         build_sale_items(&payload.sale_products, &selling_prices, &inventory_entries)?;
 
-    inventory::store::deduct_inventory_batch(tx, &deductions).await?;
+    inventory::store::deduct_inventory_batch(&mut tx, &deductions).await?;
 
-    let sale_id = insert_sale_data(tx, sale_products).await?;
-    sale_store::insert_admin_sale(tx, sale_id, admin_id).await?;
-    Ok(())
+    let sale_id = insert_sale_data(&mut tx, sale_products).await?;
+    sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
+
+    tx.commit().await?;
+
+    Ok(sale_id)
 }
 
 // check if there is enough inventory,
