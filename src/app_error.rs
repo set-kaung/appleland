@@ -17,6 +17,9 @@ pub enum StoreError {
 
     #[error("required field missing")]
     NullField(String),
+
+    #[error("insufficient inventory for product {0}: requested {1}, available {2}")]
+    InsufficientInventory(uuid::Uuid, i32, i32),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -112,6 +115,11 @@ impl From<StoreError> for APIError {
             }
             StoreError::UniqueKeyViolated(e) => APIError::BadRequest(format!("{e} must be unique")),
             StoreError::NullField(e) => APIError::BadRequest(format!("missing field: {e}")),
+            StoreError::InsufficientInventory(id, requested, available) => {
+                APIError::BadRequest(format!(
+                    "insufficient inventory for product {id}: requested {requested}, available {available}"
+                ))
+            }
         }
     }
 }

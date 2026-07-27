@@ -21,7 +21,7 @@ pub struct AdminInventory {
 
 
 #[allow(dead_code)]
-#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InventoryRow {
     pub id: Uuid,
     pub product_id: Uuid,

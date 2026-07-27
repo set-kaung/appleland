@@ -1,4 +1,4 @@
-## Tracking
+## Sale Tracking
 
 Each entry in the inventory table/store is each instance of stocking by the bussiness.
 Each entry has associated quantity stocked for that entry and the unit cost.

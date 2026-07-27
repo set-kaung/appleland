@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO admin_sales (sale_id,admin_id) VALUES ($1,$2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "edcbb738ecee361f37d3e7b8801ddaec9e1a5c916b4a8b1c93e4328bed659e94"
+}

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sales (total_amount) VALUES($1) RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Numeric"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3470886c6a8c72f06ff48a741dcf7c26eb7116e0a33c06f660d268aa07b6a54d"
+}

@@ -4,3 +4,4 @@
 *.sh
 *dump*.sql
 !run.sh
+drop.sql

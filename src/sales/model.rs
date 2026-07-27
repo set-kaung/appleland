@@ -1,3 +1,5 @@
+use core::str;
+
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -25,6 +27,26 @@ pub struct AdminSaleDetails {
     pub total_amount: Decimal,
     pub created_at: OffsetDateTime,
     pub sale_items: Vec<SaleItem>,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct SaleProduct {
+    pub product_id: Uuid,
+    pub quantity: i32,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct SaleAdminPayload {
+    pub sale_products: Vec<SaleProduct>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SaleProductDTO {
+    pub product_id: Uuid,
+    pub quantity: i32,
+    pub cost_price: Decimal,
+    pub inventory_id: Uuid,
+    pub selling_price: Decimal,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]

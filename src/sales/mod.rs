@@ -5,6 +5,7 @@ use axum::routing::get;
 
 pub mod handler;
 pub mod model;
+pub mod service;
 pub mod store;
 
 pub fn route_admin() -> Router<AppState> {
