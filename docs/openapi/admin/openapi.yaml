@@ -398,31 +398,7 @@ paths:
           description: ''
       security:
       - session_cookie: []
-  /api/products/{sale_id}:
-    get:
-      tags:
-      - Admin Sales
-      operationId: get_sale_detail_by_id
-      parameters:
-      - name: sale_id
-        in: path
-        description: Sale UUID
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminSaleDetails'
-        '404':
-          description: Sale Detail not found
-        '500':
-          description: ''
-  /api/sales:
+  /admin/sales:
     get:
       tags:
       - Admin Sales
@@ -449,6 +425,56 @@ paths:
                 $ref: '#/components/schemas/PaginatedResponse_AdminSale'
         '500':
           description: Internal server error
+    post:
+      tags:
+      - Admin Sales
+      operationId: admin_sale_pos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleAdminPayload'
+        required: true
+      responses:
+        '201':
+          description: Sale created
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        '400':
+          description: Invalid request or insufficient inventory
+        '401':
+          description: Unauthorized
+        '500':
+          description: ''
+      security:
+      - session_cookie: []
+  /admin/sales/{sale_id}:
+    get:
+      tags:
+      - Admin Sales
+      operationId: get_sale_detail_by_id
+      parameters:
+      - name: sale_id
+        in: path
+        description: Sale UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSaleDetails'
+        '404':
+          description: Sale Detail not found
+        '500':
+          description: ''
 components:
   schemas:
     Admin:
@@ -946,6 +972,15 @@ components:
             type:
             - boolean
             - 'null'
+    SaleAdminPayload:
+      type: object
+      required:
+      - sale_products
+      properties:
+        sale_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleProduct'
     SaleItem:
       type: object
       required:
@@ -979,6 +1014,18 @@ components:
           format: uuid
         selling_price:
           type: string
+    SaleProduct:
+      type: object
+      required:
+      - product_id
+      - quantity
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
     UpdateCategoryPayload:
       type: object
       required:
