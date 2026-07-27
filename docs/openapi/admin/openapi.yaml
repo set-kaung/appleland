@@ -569,6 +569,10 @@ components:
         id:
           type: string
           format: uuid
+        image_url:
+          type:
+          - string
+          - 'null'
         is_active:
           type: boolean
         name:
@@ -660,6 +664,10 @@ components:
           type:
           - string
           - 'null'
+        image_url:
+          type:
+          - string
+          - 'null'
         inventory:
           oneOf:
           - type: 'null'
@@ -747,6 +755,10 @@ components:
               id:
                 type: string
                 format: uuid
+              image_url:
+                type:
+                - string
+                - 'null'
               is_active:
                 type: boolean
               name:
@@ -846,6 +858,10 @@ components:
               id:
                 type: string
                 format: uuid
+              image_url:
+                type:
+                - string
+                - 'null'
               name:
                 type: string
               quantity_in_stock:
@@ -992,6 +1008,10 @@ components:
           type:
           - string
           - 'null'
+        image_url:
+          type:
+          - string
+          - 'null'
         is_active:
           type: boolean
         name:
@@ -1025,6 +1045,10 @@ components:
         id:
           type: string
           format: uuid
+        image_url:
+          type:
+          - string
+          - 'null'
         name:
           type: string
         quantity_in_stock:

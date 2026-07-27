@@ -146,6 +146,10 @@ components:
               id:
                 type: string
                 format: uuid
+              image_url:
+                type:
+                - string
+                - 'null'
               name:
                 type: string
               quantity_in_stock:
@@ -243,6 +247,10 @@ components:
         id:
           type: string
           format: uuid
+        image_url:
+          type:
+          - string
+          - 'null'
         name:
           type: string
         quantity_in_stock:
