@@ -10,6 +10,7 @@ use crate::category::model::{
 };
 use axum::Json;
 use axum::extract::{Path, State};
+use axum::http::StatusCode;
 use tower_sessions::Session;
 use tracing::error;
 use uuid::Uuid;
@@ -34,7 +35,7 @@ pub async fn create_category(
     State(state): State<app_state::AppState>,
     session: Session,
     ValidatedJson(payload): ValidatedJson<CreateCategoryPayload>,
-) -> Result<Json<AdminCategory>, APIError> {
+) -> Result<(StatusCode, Json<AdminCategory>), APIError> {
     let mut tx = state.db.begin().await.map_err(|e| {
         error!("failed to start transc: {e}");
         APIError::InternalErr
@@ -54,7 +55,7 @@ pub async fn create_category(
         error!("failed to commit transc: {e}");
         APIError::InternalErr
     })?;
-    Ok(Json(category))
+    Ok((StatusCode::CREATED, Json(category)))
 }
 
 #[utoipa::path(

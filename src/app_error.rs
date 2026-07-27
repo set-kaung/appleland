@@ -110,7 +110,7 @@ impl From<StoreError> for APIError {
                 tracing::error!(?e, "database error");
                 APIError::InternalErr
             }
-            StoreError::UniqueKeyViolated(e) => APIError::BadRequest(format!("{e} mut be unique")),
+            StoreError::UniqueKeyViolated(e) => APIError::BadRequest(format!("{e} must be unique")),
             StoreError::NullField(e) => APIError::BadRequest(format!("missing field: {e}")),
         }
     }
