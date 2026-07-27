@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            ",
+  "query": "\n        SELECT\n            p.id as \"id!\",\n            p.barcode as \"barcode!\",\n            p.name as \"name!\",\n            p.description,\n            p.category_id,\n            c1.name as category,\n            p.sub_category_id,\n            c2.name as sub_category,\n            p.is_active as \"is_active!\",\n            p.selling_price as \"selling_price!\",\n            p.created_at as \"created_at!\",\n            p.updated_at as \"updated_at!\",\n            p.created_by as \"created_by!\",\n            p.updated_by as \"updated_by!\",\n            COALESCE(i.quantity_remaining, 0) as \"quantity_in_stock!\",\n            p.image_url\n        FROM products p\n        LEFT JOIN inventory i on p.id = i.product_id\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1",
   "describe": {
     "columns": [
       {
@@ -162,28 +162,42 @@
         "name": "quantity_in_stock!",
         "type_info": "Int4",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 15,
+        "name": "image_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "image_url"
+          }
+        }
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
+      false,
+      false,
       false,
       true,
       true,
       true,
       true,
       true,
-      true,
-      null
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      true
     ]
   },
-  "hash": "9d70c2bca3eb6d29042e3b1a5fd05dbf1c1a5be067647ac88d0247f63803c011"
+  "hash": "0765f2123cc3f3020b15eb55b169d85951c78ece51be393835a2658b35f2e171"
 }
