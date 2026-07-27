@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 // use when new products are created, to insert a record row
 pub async fn insert_new_inventory_record<'e, E>(
-    new_inventory_record: NewInventoryRecord,
     executor: E,
+    new_inventory_record: NewInventoryRecord,
 ) -> Result<InventoryRow, app_error::StoreError>
 where
     E: Executor<'e, Database=Postgres>,
@@ -76,7 +76,7 @@ pub async fn deduct_inventory_batch(
     let result = qb.build().execute(&mut **tx).await?;
 
     if result.rows_affected() != deductions.len() as u64 {
-        return Err(app_error::StoreError::SafetyTrigger(result.rows_affected()));
+        return Err(app_error::StoreError::UnexpectedRowsAffected(result.rows_affected()));
     }
 
     Ok(())

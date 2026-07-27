@@ -26,7 +26,7 @@ use uuid::Uuid;
     ),
     tag = "Admin Inventory"
 )]
-pub async fn insert_inventory(
+pub async fn create_inventory(
     State(state): State<AppState>,
     session: Session,
     Path(product_id): Path<Uuid>,
@@ -42,6 +42,6 @@ pub async fn insert_inventory(
         created_by: admin_id,
         updated_by: admin_id,
     };
-    let result = super::store::insert_new_inventory_record(inventory_record, &state.db).await?.into();
+    let result = super::store::insert_new_inventory_record(&state.db, inventory_record).await?.into();
     Ok(Json(result))
 }

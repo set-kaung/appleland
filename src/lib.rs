@@ -3,6 +3,7 @@
 // #![deny(clippy::unwrap_used, clippy::expect_used)]
 
 use axum::Json;
+use reqwest::StatusCode;
 
 pub mod api_doc;
 
@@ -21,5 +22,6 @@ pub mod product;
 pub mod sales;
 
 pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;
+pub type ApiResultWithStatusCode<T> = Result<(StatusCode, Json<T>), app_error::APIError>;
 pub type PaginatedApiResult<T> =
     Result<Json<pagination::PaginatedResponse<T>>, app_error::APIError>;

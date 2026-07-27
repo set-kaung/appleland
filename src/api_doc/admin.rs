@@ -1,10 +1,10 @@
 use crate::product::model::{
-    AdminProduct, CreateProductPayload, UpdateProductPayload, UserProduct,
+    AdminProduct, CreateProductPayload, ProductSearchParamsAdmin, UpdateProductPayload, UserProduct,
 };
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
-use crate::sales::model::{AdminSale, AdminSaleDetails};
+use crate::sales::model::{AdminSale, AdminSaleDetails, CreateSalePayload, SaleItem, SaleProduct};
 
 use crate::auth::password::{Admin, LoginRequest};
 
@@ -26,8 +26,8 @@ use utoipa::OpenApi;
         product::handler::create_product,
         product::handler::update_product,
         product::handler::delete_product,
-        product::handler::find_products_admin_advanced,
-        product::handler::find_products_admin,
+        product::handler::search_products_admin_advanced,
+        product::handler::search_products_admin,
         password::admin_login_handler,
         password::admin_logout_handler,
         category::handler::create_category,
@@ -35,7 +35,8 @@ use utoipa::OpenApi;
         category::handler::update_category,
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
-        inventory::handler::insert_inventory,
+        sales::handler::create_sale,
+        inventory::handler::create_inventory,
     ),
     components(
         schemas(
@@ -53,6 +54,10 @@ use utoipa::OpenApi;
             UpdateCategoryPayload,
             AdminSale,
             AdminSaleDetails,
+            CreateSalePayload,
+            SaleItem,
+            SaleProduct,
+            ProductSearchParamsAdmin,
             AdminInventory,
             NewInventoryPayload,
         )

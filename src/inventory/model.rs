@@ -50,19 +50,9 @@ pub struct NewInventoryRecord {
     pub updated_by: Uuid,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct AddInventoryRecord {
-    pub product_id: Uuid,
-    pub quantity_remaining: i32,
-    pub quantity_received: i32,
-    pub unit_cost: Decimal,
-    pub update_by: Uuid,
-}
-
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct DeductInventoryPayload {
-    pub quantity_remaining_sub: i32,
+    pub quantity_to_deduct: i32,
 }
 
 

@@ -37,7 +37,7 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
     Ok(product_rows)
 }
 
-pub async fn fetch_paged(
+pub async fn fetch_paginated(
     pool: &PgPool,
     limit: i64,
     offset: i64,
@@ -69,7 +69,7 @@ pub async fn fetch_paged(
     Ok((products, total_items.unwrap_or(0)))
 }
 
-pub async fn fetch_paged_admin(
+pub async fn fetch_paginated_admin(
     pool: &PgPool,
     limit: i64,
     offset: i64,
@@ -192,7 +192,7 @@ pub async fn delete(tx: &mut Transaction<'_, Postgres>, id: Uuid) -> Result<(), 
     let affected = result.rows_affected();
 
     if affected > 1 {
-        return Err(StoreError::SafetyTrigger(affected));
+        return Err(StoreError::UnexpectedRowsAffected(affected));
     }
     if affected == 0 {
         return Err(StoreError::RecordNotFound);
@@ -200,7 +200,7 @@ pub async fn delete(tx: &mut Transaction<'_, Postgres>, id: Uuid) -> Result<(), 
     Ok(())
 }
 
-pub async fn find_products<F>(
+pub async fn fetch_products_filtered<F>(
     pool: &PgPool,
     filters: &F,
     limit: i64,
@@ -251,7 +251,7 @@ where
     Ok((product_rows, total))
 }
 
-pub async fn find_products_simple(
+pub async fn fetch_products_search(
     pool: &PgPool,
     filter: ProductFilter,
     limit: i64,

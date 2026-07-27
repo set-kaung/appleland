@@ -12,7 +12,7 @@ pub fn route() -> Router<AppState> {
     Router::new()
         .route("/", get(get_products_paginated))
         .route("/{product_id}", get(get_product_by_id))
-        .route("/search", get(find_products))
+        .route("/search", get(search_products))
 }
 
 pub fn route_admin() -> Router<AppState> {
@@ -25,6 +25,6 @@ pub fn route_admin() -> Router<AppState> {
                 .delete(delete_product)
                 .put(update_product),
         )
-        .route("/search", get(find_products_admin))
-        .route("/search/advanced", post(find_products_admin_advanced))
+        .route("/search", get(search_products_admin))
+        .route("/search/advanced", post(search_products_admin_advanced))
 }

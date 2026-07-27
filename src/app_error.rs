@@ -6,8 +6,8 @@ pub enum StoreError {
     #[error("Database error occurred: {0}")]
     Database(sqlx::Error),
 
-    #[error("Safety trigger: Query attempted to delete {0} rows instead of 1. Rolled back.")]
-    SafetyTrigger(u64),
+    #[error("Query affected {0} rows instead of the expected 1. Rolled back.")]
+    UnexpectedRowsAffected(u64),
 
     #[error("record not found")]
     RecordNotFound,
@@ -105,7 +105,7 @@ impl From<StoreError> for APIError {
     fn from(err: StoreError) -> Self {
         match err {
             StoreError::RecordNotFound => APIError::NotFound,
-            StoreError::SafetyTrigger(n) => {
+            StoreError::UnexpectedRowsAffected(n) => {
                 tracing::error!(rows = n, "unexpected row count");
                 APIError::InternalErr
             }

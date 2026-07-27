@@ -35,7 +35,7 @@ pub async fn get_products_paginated(
 ) -> PaginatedApiResult<UserProduct> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
-    store::fetch_paged(&state.db, limit, offset, true)
+    store::fetch_paginated(&state.db, limit, offset, true)
         .await
         .map(|(data, total_items)| {
             let data = data.into_iter().map(Into::into).collect();
@@ -69,7 +69,7 @@ pub async fn get_products_paginated_admin(
 ) -> PaginatedApiResult<AdminProduct> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
-    store::fetch_paged_admin(&state.db, limit, offset)
+    store::fetch_paginated_admin(&state.db, limit, offset)
         .await
         .map(|(data, total_items)| {
             let data = data.into_iter().map(Into::into).collect::<Vec<_>>();
@@ -206,7 +206,7 @@ pub async fn create_product(
             created_by: admin_id,
             updated_by: admin_id,
         };
-        inventory_store::insert_new_inventory_record(inventory_record, &mut *tx).await?;
+        inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 
 
@@ -333,7 +333,7 @@ pub async fn delete_product(
     ),
     tag = "Admin Products"
 )]
-pub async fn find_products_admin_advanced(
+pub async fn search_products_admin_advanced(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     ValidatedJson(search_params): ValidatedJson<ProductSearchParamsAdmin>,
@@ -342,7 +342,7 @@ pub async fn find_products_admin_advanced(
     tracing::debug!("{:?}",search_params);
 
     let (values, total_items) =
-        store::find_products(&state.db, &search_params, limit, offset).await?;
+        store::fetch_products_filtered(&state.db, &search_params, limit, offset).await?;
     let data = values.into_iter().map(|x| x.into()).collect();
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
     Ok(Json(pagination::PaginatedResponse {
@@ -377,7 +377,7 @@ pub async fn find_products_admin_advanced(
     ),
     tag = "Admin Products"
 )]
-pub async fn find_products_admin(
+pub async fn search_products_admin(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     Query(product_query): Query<ProductFilter>,
@@ -385,7 +385,7 @@ pub async fn find_products_admin(
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     let (values, total_items) =
-        store::find_products_simple(&state.db, product_query, limit, offset).await?;
+        store::fetch_products_search(&state.db, product_query, limit, offset).await?;
     let data = values.into_iter().map(|x| x.into()).collect();
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
     Ok(Json(pagination::PaginatedResponse {
@@ -421,7 +421,7 @@ pub async fn find_products_admin(
     ),
     tag = "Products"
 )]
-pub async fn find_products(
+pub async fn search_products(
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     Query(product_query): Query<ProductFilter>,
@@ -429,7 +429,7 @@ pub async fn find_products(
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
     let (values, total_items) =
-        store::find_products_simple(&state.db, product_query, limit, offset).await?;
+        store::fetch_products_search(&state.db, product_query, limit, offset).await?;
     let data = values.into_iter().map(|x| x.into()).collect();
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
     Ok(Json(pagination::PaginatedResponse {

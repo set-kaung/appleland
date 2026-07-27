@@ -36,7 +36,7 @@ pub struct SaleProduct {
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
-pub struct SaleAdminPayload {
+pub struct CreateSalePayload {
     pub sale_products: Vec<SaleProduct>,
 }
 

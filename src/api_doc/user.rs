@@ -10,7 +10,7 @@ use utoipa::OpenApi;
     paths(
         product::handler::get_products_paginated,
         product::handler::get_product_by_id,
-        product::handler::find_products,
+        product::handler::search_products,
     ),
     components(
         schemas(
