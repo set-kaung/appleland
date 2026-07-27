@@ -191,6 +191,7 @@ pub async fn create_product(
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
         selling_price: payload.selling_price,
+        image_url: payload.image_url,
         created_by: admin_id,
         updated_by: admin_id,
     };
@@ -259,6 +260,7 @@ pub async fn update_product(
         sub_category_id: payload.sub_category_id,
         is_active: payload.is_active,
         selling_price: payload.selling_price,
+        image_url: payload.image_url,
         updated_by: admin_id,
     };
 

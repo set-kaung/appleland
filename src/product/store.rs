@@ -24,7 +24,8 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
                 p.updated_at as "updated_at!",
                 p.created_by as "created_by!",
                 p.updated_by as "updated_by!",
-                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as "quantity_in_stock!"
+                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as "quantity_in_stock!",
+                p.image_url
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -116,7 +117,8 @@ where
             p.updated_at as "updated_at!",
             p.created_by as "created_by!",
             p.updated_by as "updated_by!",
-            COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!"
+            COALESCE(i.quantity_remaining, 0) as "quantity_in_stock!",
+            p.image_url
         FROM products p
         LEFT JOIN inventory i on p.id = i.product_id
         LEFT JOIN categories c1 on c1.id = p.category_id
@@ -138,8 +140,8 @@ pub async fn create(
 ) -> Result<Uuid, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,created_by,updated_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$8)
+        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9)
         RETURNING
             id
         "#,
@@ -150,6 +152,7 @@ pub async fn create(
         payload.sub_category_id,
         payload.selling_price,
         payload.is_active,
+        payload.image_url,
         payload.created_by
     )
         .fetch_one(&mut **tx)
@@ -163,8 +166,8 @@ pub async fn update(
 ) -> Result<ProductRow, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7,updated_by= $8, updated_at = NOW()
-       WHERE id = $9
+       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW()
+       WHERE id = $10
        RETURNING id
         "#,
         payload.barcode,
@@ -174,6 +177,7 @@ pub async fn update(
         payload.sub_category_id,
         payload.selling_price,
         payload.is_active,
+        payload.image_url,
         payload.updated_by,
         payload.id,
     )
@@ -223,7 +227,8 @@ where
                 p.updated_at,
                 p.created_by,
                 p.updated_by,
-                COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0) AS quantity_in_stock
+                COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS quantity_in_stock,
+                p.image_url
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -272,7 +277,8 @@ pub async fn find_products_simple(
                     p.updated_at,
                     p.created_by,
                     p.updated_by,
-                    COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0) AS quantity_in_stock
+                    COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS quantity_in_stock,
+                    p.image_url
                 FROM products p
                 LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id

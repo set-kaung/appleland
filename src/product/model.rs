@@ -18,6 +18,7 @@ pub struct AdminProduct {
     pub sub_category_id: Option<Uuid>,
     pub sub_category: Option<String>,
     pub is_active: bool,
+    pub image_url: Option<String>,
     pub selling_price: Decimal,
     pub quantity_in_stock: i32,
     pub created_at: OffsetDateTime,
@@ -36,6 +37,7 @@ pub struct UserProduct {
     pub sub_category: Option<String>,
     pub selling_price: Decimal,
     pub quantity_in_stock: i32,
+    pub image_url: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -47,6 +49,7 @@ pub struct CreateProductPayload {
     pub selling_price: Decimal,
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
+    pub image_url: Option<String>,
     pub inventory: Option<NewInventoryPayload>,
 }
 
@@ -59,6 +62,7 @@ pub struct InsertProduct {
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
     pub selling_price: Decimal,
+    pub image_url: Option<String>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
 }
@@ -72,6 +76,7 @@ pub struct UpdateProductPayload {
     pub sub_category_id: Option<Uuid>,
     pub is_active: bool,
     pub selling_price: Decimal,
+    pub image_url: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +90,7 @@ pub struct UpdateProduct {
     pub is_active: bool,
     pub selling_price: Decimal,
     pub updated_by: Uuid,
+    pub image_url: Option<String>,
 }
 
 #[derive(Debug, FromRow)]
@@ -104,6 +110,7 @@ pub struct ProductRow {
     pub created_by: Uuid,
     pub updated_by: Uuid,
     pub quantity_in_stock: i32,
+    pub image_url: Option<String>,
 }
 
 impl From<ProductRow> for UserProduct {
@@ -117,6 +124,7 @@ impl From<ProductRow> for UserProduct {
             sub_category: row.sub_category,
             selling_price: row.selling_price,
             quantity_in_stock: row.quantity_in_stock,
+            image_url: row.image_url,
         }
     }
 }
@@ -139,6 +147,7 @@ impl From<ProductRow> for AdminProduct {
             created_by: row.created_by,
             updated_by: row.updated_by,
             quantity_in_stock: row.quantity_in_stock,
+            image_url: row.image_url,
         }
     }
 }
