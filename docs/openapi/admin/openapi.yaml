@@ -175,7 +175,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_UserProduct'
+                $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
         '500':
           description: Internal server error
     post:
@@ -887,62 +887,6 @@ components:
         total_pages:
           type: integer
           format: int64
-    PaginatedResponse_UserProduct:
-      type: object
-      required:
-      - data
-      - total_items
-      - total_pages
-      - current_page
-      properties:
-        current_page:
-          type: integer
-          format: int64
-        data:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - barcode
-            - name
-            - selling_price
-            - quantity_in_stock
-            properties:
-              barcode:
-                type: string
-              category:
-                type:
-                - string
-                - 'null'
-              description:
-                type:
-                - string
-                - 'null'
-              id:
-                type: string
-                format: uuid
-              image_url:
-                type:
-                - string
-                - 'null'
-              name:
-                type: string
-              quantity_in_stock:
-                type: integer
-                format: int32
-              selling_price:
-                type: string
-              sub_category:
-                type:
-                - string
-                - 'null'
-        total_items:
-          type: integer
-          format: int64
-        total_pages:
-          type: integer
-          format: int64
     PaginationQuery:
       type: object
       properties:
@@ -1147,43 +1091,6 @@ components:
           - string
           - 'null'
           format: uuid
-    UserProduct:
-      type: object
-      required:
-      - id
-      - barcode
-      - name
-      - selling_price
-      - quantity_in_stock
-      properties:
-        barcode:
-          type: string
-        category:
-          type:
-          - string
-          - 'null'
-        description:
-          type:
-          - string
-          - 'null'
-        id:
-          type: string
-          format: uuid
-        image_url:
-          type:
-          - string
-          - 'null'
-        name:
-          type: string
-        quantity_in_stock:
-          type: integer
-          format: int32
-        selling_price:
-          type: string
-        sub_category:
-          type:
-          - string
-          - 'null'
 tags:
 - name: Admin Products
 - name: Admin Categories

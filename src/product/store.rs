@@ -46,7 +46,23 @@ pub async fn fetch_paginated(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) AS "quantity_in_stock!"
+        SELECT
+            p.id,
+            p.barcode,
+            p.name,
+            p.description,
+            p.category_id,
+            c1.name as "category?",
+            p.sub_category_id,
+            c2.name as "sub_category?",
+            p.is_active,
+            p.selling_price,
+            p.created_at,
+            p.updated_at,
+            p.created_by,
+            p.updated_by,
+            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS "quantity_in_stock!",
+            p.image_url as "image_url?"
         FROM products p
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -63,8 +79,8 @@ pub async fn fetch_paginated(
         "SELECT COUNT(*) FROM products WHERE is_active = $1",
         is_active
     )
-        .fetch_one(pool)
-        .await?;
+    .fetch_one(pool)
+    .await?;
 
     Ok((products, total_items.unwrap_or(0)))
 }
@@ -77,7 +93,23 @@ pub async fn fetch_paginated_admin(
     let products = sqlx::query_as!(
         ProductRow,
         r#"
-        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!"
+        SELECT
+            p.id,
+            p.barcode,
+            p.name,
+            p.description,
+            p.category_id,
+            c1.name as "category?",
+            p.sub_category_id,
+            c2.name as "sub_category?",
+            p.is_active,
+            p.selling_price,
+            p.created_at,
+            p.updated_at,
+            p.created_by,
+            p.updated_by,
+            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!",
+            p.image_url as "image_url?"
         FROM products p
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -97,7 +129,7 @@ pub async fn fetch_paginated_admin(
 
 pub async fn fetch_by_id<'e, E>(executor: E, id: Uuid) -> Result<ProductRow, StoreError>
 where
-    E: Executor<'e, Database=Postgres>,
+    E: Executor<'e, Database = Postgres>,
 {
     sqlx::query_as!(
         ProductRow,
@@ -108,9 +140,9 @@ where
             p.name as "name!",
             p.description,
             p.category_id,
-            c1.name as category,
+            c1.name as "category?",
             p.sub_category_id,
-            c2.name as sub_category,
+            c2.name as "sub_category?",
             p.is_active as "is_active!",
             p.selling_price as "selling_price!",
             p.created_at as "created_at!",

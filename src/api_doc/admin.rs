@@ -1,5 +1,5 @@
 use crate::product::model::{
-    AdminProduct, CreateProductPayload, ProductSearchParamsAdmin, UpdateProductPayload, UserProduct,
+    AdminProduct, CreateProductPayload, ProductSearchParamsAdmin, UpdateProductPayload,
 };
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
@@ -51,7 +51,6 @@ use utoipa::OpenApi;
             CreateProductPayload,
             UpdateProductPayload,
             product::model::ProductFilter,
-            PaginatedResponse<UserProduct>,
             PaginatedResponse<AdminProduct>,
             AdminCategory,
             CreateCategoryPayload,

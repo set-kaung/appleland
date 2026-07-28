@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT p.*,c1.name as category, c2.name as sub_category, COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT\n            p.id as \"id!\",\n            p.barcode as \"barcode!\",\n            p.name as \"name!\",\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active as \"is_active!\",\n            p.selling_price as \"selling_price!\",\n            p.created_at as \"created_at!\",\n            p.updated_at as \"updated_at!\",\n            p.created_by as \"created_by!\",\n            p.updated_by as \"updated_by!\",\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id",
+        "name": "id!",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -16,23 +16,23 @@
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "products",
-            "name": "name"
-          }
-        }
-      },
-      {
-        "ordinal": 2,
-        "name": "barcode",
+        "name": "barcode!",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "products",
             "name": "barcode"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "name"
           }
         }
       },
@@ -60,6 +60,17 @@
       },
       {
         "ordinal": 5,
+        "name": "category?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "sub_category_id",
         "type_info": "Uuid",
         "origin": {
@@ -70,19 +81,19 @@
         }
       },
       {
-        "ordinal": 6,
-        "name": "selling_price",
-        "type_info": "Numeric",
+        "ordinal": 7,
+        "name": "sub_category?",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "products",
-            "name": "selling_price"
+            "table": "categories",
+            "name": "name"
           }
         }
       },
       {
-        "ordinal": 7,
-        "name": "is_active",
+        "ordinal": 8,
+        "name": "is_active!",
         "type_info": "Bool",
         "origin": {
           "Table": {
@@ -92,19 +103,19 @@
         }
       },
       {
-        "ordinal": 8,
-        "name": "image_url",
-        "type_info": "Text",
+        "ordinal": 9,
+        "name": "selling_price!",
+        "type_info": "Numeric",
         "origin": {
           "Table": {
             "table": "products",
-            "name": "image_url"
+            "name": "selling_price"
           }
         }
       },
       {
-        "ordinal": 9,
-        "name": "created_at",
+        "ordinal": 10,
+        "name": "created_at!",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
@@ -114,8 +125,8 @@
         }
       },
       {
-        "ordinal": 10,
-        "name": "updated_at",
+        "ordinal": 11,
+        "name": "updated_at!",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
@@ -125,8 +136,8 @@
         }
       },
       {
-        "ordinal": 11,
-        "name": "created_by",
+        "ordinal": 12,
+        "name": "created_by!",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -136,8 +147,8 @@
         }
       },
       {
-        "ordinal": 12,
-        "name": "updated_by",
+        "ordinal": 13,
+        "name": "updated_by!",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -147,38 +158,26 @@
         }
       },
       {
-        "ordinal": 13,
-        "name": "category",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "categories",
-            "name": "name"
-          }
-        }
-      },
-      {
         "ordinal": 14,
-        "name": "sub_category",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "categories",
-            "name": "name"
-          }
-        }
-      },
-      {
-        "ordinal": 15,
         "name": "quantity_in_stock!",
         "type_info": "Int4",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 15,
+        "name": "image_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "image_url"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -188,8 +187,7 @@
       true,
       true,
       true,
-      false,
-      false,
+      true,
       true,
       false,
       false,
@@ -197,8 +195,9 @@
       false,
       false,
       false,
-      null
+      null,
+      true
     ]
   },
-  "hash": "f87e9edd8ef6ac731184d82f2eaa755b6a8aecb6019625aa50c00d2ca86245d5"
+  "hash": "467a1d7c2eb49abdca5c18bb96f48a558fffc9c7fe2fa704ba7576423cdff097"
 }

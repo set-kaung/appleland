@@ -2,21 +2,24 @@ use super::store;
 use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SaleAdminRole, ValidatedJson};
 use crate::inventory::store as inventory_store;
-use crate::{pagination, ApiResult, PaginatedApiResult};
+use crate::{ApiResult, PaginatedApiResult, pagination};
 use axum::extract::Path;
 use tower_sessions::Session;
 use tracing::error;
 use uuid::Uuid;
 
 use crate::app_state::AppState;
-use crate::product::model::{AdminProduct, CreateProductPayload, InsertProduct, ProductFilter, ProductSearchParams, ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct};
+use crate::product::model::{
+    AdminProduct, CreateProductPayload, InsertProduct, ProductFilter, ProductSearchParams,
+    ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct,
+};
 
 use crate::auth::password::session_admin_id;
 use crate::inventory::model::NewInventoryRecord;
 use axum::{
+    Json,
     extract::{Query, State},
     http::StatusCode,
-    Json,
 };
 
 #[utoipa::path(
@@ -58,7 +61,7 @@ pub async fn get_products_paginated(
     path = "/admin/products",
     params(pagination::PaginationQuery),
     responses(
-        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<UserProduct>),
+        (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<AdminProduct>),
         (status = 500, description = "Internal server error")
     ),
     tag = "Admin Products"
@@ -209,7 +212,6 @@ pub async fn create_product(
         inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 
-
     tx.commit().await.map_err(|e| {
         error!("failed to create transaction: {e}");
         APIError::InternalErr
@@ -339,7 +341,6 @@ pub async fn search_products_admin_advanced(
     ValidatedJson(search_params): ValidatedJson<ProductSearchParamsAdmin>,
 ) -> PaginatedApiResult<AdminProduct> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
-    tracing::debug!("{:?}",search_params);
 
     let (values, total_items) =
         store::fetch_products_filtered(&state.db, &search_params, limit, offset).await?;
