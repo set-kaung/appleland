@@ -1,5 +1,5 @@
 use crate::app_state::AppState;
-use crate::sales::handler::{create_sale, get_sale_detail_by_id, get_sales_paginated};
+use crate::sales::handler::{create_sale, get_sale_detail_by_id, get_sales_paginated, sale_summary};
 use axum::Router;
 use axum::routing::get;
 
@@ -11,5 +11,6 @@ pub mod store;
 pub fn route_admin() -> Router<AppState> {
     Router::new()
         .route("/", get(get_sales_paginated).post(create_sale))
+        .route("/summary", get(sale_summary))
         .route("/{sale_id}", get(get_sale_detail_by_id))
 }

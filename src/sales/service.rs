@@ -8,6 +8,9 @@ use crate::app_error::StoreError;
 use crate::inventory;
 use crate::sales::model::{CreateSalePayload, SaleProduct, SaleProductDTO};
 
+type InventoryDeduction = (Uuid, i32);
+type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
+
 pub async fn perform_sale_admin(
     pool: &PgPool,
     admin_id: Uuid,
@@ -45,7 +48,7 @@ fn build_sale_items(
     sale_products: &[SaleProduct],
     selling_prices: &HashMap<Uuid, Decimal>,
     inventory_entries: &[inventory::model::InventoryRow],
-) -> Result<(Vec<SaleProductDTO>, Vec<(Uuid, i32)>), StoreError> {
+) -> Result<SaleItemsWithDeductions, StoreError> {
     let mut inventory_by_product: HashMap<Uuid, Vec<&inventory::model::InventoryRow>> =
         HashMap::new();
 

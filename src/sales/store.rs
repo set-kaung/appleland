@@ -1,5 +1,8 @@
 use crate::app_error::StoreError;
-use crate::sales::model::{AdminSaleDetails, SaleItem, SaleProductDTO, SaleRow};
+use crate::db::DBQueryFilter;
+use crate::sales::model::{
+    AdminSaleDetails, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter, SaleSummaryRow,
+};
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
 use uuid::Uuid;
@@ -97,8 +100,8 @@ pub async fn fetch_selling_prices(
         "SELECT id, selling_price FROM products WHERE id = ANY($1)",
         product_ids
     )
-        .fetch_all(&mut **tx)
-        .await?;
+    .fetch_all(&mut **tx)
+    .await?;
 
     Ok(rows.into_iter().map(|r| (r.id, r.selling_price)).collect())
 }
@@ -129,4 +132,52 @@ pub async fn insert_sale_items(
 
     qb.build().execute(&mut **tx).await?;
     Ok(())
+}
+
+pub async fn get_sale_summary(
+    pool: &PgPool,
+    filter: SaleSummaryFilter,
+) -> Result<Vec<SaleSummaryRow>, StoreError> {
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
+        "
+        WITH filtered_sales AS (
+            SELECT
+                s.id,
+                s.created_at::date AS sale_date,
+                s.total_amount,
+                (a.id IS NULL) AS is_online_sale
+            FROM sales s
+            LEFT JOIN admin_sales a ON a.sale_id = s.id
+            WHERE 1=1",
+    );
+    filter.apply_filter(&mut qb);
+    qb.push(
+        "
+        ),
+        item_counts AS (
+            SELECT
+                sale_id,
+                COUNT(*)::INT4 AS items_sold,
+                SUM(quantity * cost_price) AS total_cost
+            FROM sale_items
+            GROUP BY sale_id
+        )
+        SELECT
+            fs.sale_date,
+            SUM(fs.total_amount) AS total_sale,
+            fs.is_online_sale,
+            COUNT(*)::INT4 AS transactions,
+            COALESCE(SUM(ic.items_sold), 0)::INT4 AS items_sold,
+            COALESCE(SUM(ic.total_cost), 0) AS total_cost,
+            SUM(fs.total_amount) - COALESCE(SUM(ic.total_cost), 0) AS margin
+        FROM filtered_sales fs
+        LEFT JOIN item_counts ic ON ic.sale_id = fs.id
+        GROUP BY fs.sale_date, fs.is_online_sale
+        ",
+    );
+    let query = qb.build_query_as::<SaleSummaryRow>();
+
+    let result = query.fetch_all(pool).await?;
+
+    Ok(result)
 }

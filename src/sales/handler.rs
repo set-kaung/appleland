@@ -2,9 +2,11 @@ use super::store;
 use crate::app_error::APIError;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
-use crate::sales::model::{AdminSale, AdminSaleDetails, CreateSalePayload};
+use crate::sales::model::{
+    AdminSale, AdminSaleDetails, CreateSalePayload, SaleSummary, SaleSummaryFilter,
+};
 use crate::sales::service;
-use crate::{ApiResultWithStatusCode, pagination};
+use crate::{ApiResult, ApiResultWithStatusCode, pagination};
 use axum::Json;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
@@ -83,4 +85,22 @@ pub async fn create_sale(
     let admin_id = session_admin_id(session).await?;
     let sale_id = service::perform_sale_admin(&state.db, admin_id, payload).await?;
     Ok((StatusCode::CREATED, Json(sale_id)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/sales/summary",
+    params(SaleSummaryFilter),
+    responses(
+        (status = 200, body = Vec<SaleSummary>),
+        (status = 500)
+    ),
+    tag = "Admin Sales"
+)]
+pub async fn sale_summary(
+    State(state): State<AppState>,
+    Query(filter): Query<SaleSummaryFilter>,
+) -> ApiResult<Vec<SaleSummary>> {
+    let rows = store::get_sale_summary(&state.db, filter).await?;
+    Ok(Json(rows.into_iter().map(|row| row.into()).collect()))
 }
