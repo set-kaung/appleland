@@ -85,6 +85,9 @@ async fn main() -> Result<(), AppError> {
         .route("/logout", axum::routing::post(auth::admin_logout_handler))
         .merge(admin_protected_routes)
         .layer(session_layer)
+        .layer(axum::middleware::from_fn(
+            middleware::partitioned_cookie_middleware,
+        ))
         .with_state(state.clone());
 
     let app_router = Router::new()

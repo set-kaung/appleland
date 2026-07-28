@@ -78,6 +78,27 @@ pub async fn debug_log_middleware(request: Request<axum::body::Body>, next: Next
     response
 }
 
+pub async fn partitioned_cookie_middleware(
+    request: Request<axum::body::Body>,
+    next: Next,
+) -> Response {
+    let mut response = next.run(request).await;
+
+    if let Some(set_cookie) = response.headers().get(header::SET_COOKIE) {
+        if let Ok(val) = set_cookie.to_str() {
+            if val.starts_with("id=") && !val.contains("Partitioned") {
+                let patched = format!("{}; Partitioned", val);
+                response.headers_mut().insert(
+                    header::SET_COOKIE,
+                    HeaderValue::from_str(&patched).unwrap(),
+                );
+            }
+        }
+    }
+
+    response
+}
+
 pub fn with_global_middleware(
     router: Router,
     allowed_origins: Vec<HeaderValue>,
