@@ -37,7 +37,7 @@ paths:
     post:
       tags:
       - Products
-      operationId: find_products
+      operationId: search_products
       parameters:
       - name: page
         in: query

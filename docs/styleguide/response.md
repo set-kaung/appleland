@@ -7,3 +7,5 @@ pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;
 pub type PaginatedApiResult<T> =
     Result<Json<pagination::PaginatedResponse<T>>, app_error::APIError>;
 ```
+
+The value from the store should implement From trait where convenient.

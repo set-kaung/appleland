@@ -89,7 +89,7 @@ paths:
     post:
       tags:
       - Admin Inventory
-      operationId: insert_inventory
+      operationId: create_inventory
       parameters:
       - name: product_id
         in: path
@@ -229,7 +229,7 @@ paths:
     get:
       tags:
       - Admin Products
-      operationId: find_products_admin
+      operationId: search_products_admin
       parameters:
       - name: page
         in: query
@@ -275,7 +275,7 @@ paths:
     post:
       tags:
       - Admin Products
-      operationId: find_products_admin_advanced
+      operationId: search_products_admin_advanced
       parameters:
       - name: page
         in: query
@@ -428,12 +428,12 @@ paths:
     post:
       tags:
       - Admin Sales
-      operationId: admin_sale_pos
+      operationId: create_sale
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SaleAdminPayload'
+              $ref: '#/components/schemas/CreateSalePayload'
         required: true
       responses:
         '201':
@@ -451,6 +451,35 @@ paths:
           description: ''
       security:
       - session_cookie: []
+  /admin/sales/summary:
+    get:
+      tags:
+      - Admin Sales
+      operationId: sale_summary
+      parameters:
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SaleSummary'
+        '500':
+          description: ''
   /admin/sales/{sale_id}:
     get:
       tags:
@@ -709,6 +738,15 @@ components:
           - string
           - 'null'
           format: uuid
+    CreateSalePayload:
+      type: object
+      required:
+      - sale_products
+      properties:
+        sale_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleProduct'
     LoginRequest:
       type: object
       required:
@@ -972,15 +1010,6 @@ components:
             type:
             - boolean
             - 'null'
-    SaleAdminPayload:
-      type: object
-      required:
-      - sale_products
-      properties:
-        sale_products:
-          type: array
-          items:
-            $ref: '#/components/schemas/SaleProduct'
     SaleItem:
       type: object
       required:
@@ -1026,6 +1055,54 @@ components:
         quantity:
           type: integer
           format: int32
+    SaleSummary:
+      type: object
+      required:
+      - sale_date
+      - total_sale
+      - is_online_sale
+      - transactions
+      - items_sold
+      - total_cost
+      - margin
+      - margin_percentage
+      - avg_basket
+      properties:
+        avg_basket:
+          type: string
+        is_online_sale:
+          type: boolean
+        items_sold:
+          type: integer
+          format: int32
+        margin:
+          type: string
+        margin_percentage:
+          type: number
+          format: double
+        sale_date:
+          type: string
+          format: date
+        total_cost:
+          type: string
+        total_sale:
+          type: string
+        transactions:
+          type: integer
+          format: int32
+    SaleSummaryFilter:
+      type: object
+      properties:
+        end_date:
+          type:
+          - string
+          - 'null'
+          format: date
+        start_date:
+          type:
+          - string
+          - 'null'
+          format: date
     UpdateCategoryPayload:
       type: object
       required:

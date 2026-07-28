@@ -4,7 +4,10 @@ use crate::product::model::{
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
-use crate::sales::model::{AdminSale, AdminSaleDetails, CreateSalePayload, SaleItem, SaleProduct};
+use crate::sales::model::{
+    AdminSale, AdminSaleDetails, CreateSalePayload, SaleItem, SaleProduct, SaleSummary,
+    SaleSummaryFilter,
+};
 
 use crate::auth::password::{Admin, LoginRequest};
 
@@ -36,6 +39,7 @@ use utoipa::OpenApi;
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
         sales::handler::create_sale,
+        sales::handler::sale_summary,
         inventory::handler::create_inventory,
     ),
     components(
@@ -57,6 +61,8 @@ use utoipa::OpenApi;
             CreateSalePayload,
             SaleItem,
             SaleProduct,
+            SaleSummary,
+            SaleSummaryFilter,
             ProductSearchParamsAdmin,
             AdminInventory,
             NewInventoryPayload,
