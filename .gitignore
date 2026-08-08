@@ -5,3 +5,5 @@
 *dump*.sql
 !run.sh
 drop.sql
+*.md
+!docs/*.d
