@@ -7,12 +7,18 @@ pub use user::ApiDoc;
 use std::path::Path;
 use utoipa::OpenApi;
 
-pub fn generate_docs() {
+use crate::app_error::AppError;
+
+pub fn generate_docs() -> Result<(), AppError> {
     let openapi = ApiDoc::openapi();
     let admin_api = AdminApiDoc::openapi();
 
-    let yaml = openapi.to_yaml().unwrap();
-    let admin_yaml = admin_api.to_yaml().unwrap();
+    let yaml = openapi
+        .to_yaml()
+        .map_err(|e| AppError::DocumentGenerationError(e.to_string()))?;
+    let admin_yaml = admin_api
+        .to_yaml()
+        .map_err(|e| AppError::DocumentGenerationError(e.to_string()))?;
 
     let base_path = Path::new("docs/openapi");
     let admin_dir = base_path.join("admin");
@@ -35,4 +41,5 @@ pub fn generate_docs() {
         Ok(_) => tracing::info!("admin api docs generated to {}", admin_dir.display()),
         Err(err) => tracing::error!("error generating admin api docs: {err}"),
     }
+    Ok(())
 }

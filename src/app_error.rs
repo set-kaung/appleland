@@ -33,6 +33,9 @@ pub enum AppError {
     #[error("session store error")]
     SessionStoreErr,
 
+    #[error("doc gen error")]
+    DocumentGenerationError(String),
+
     #[error("general error")]
     GeneralErr,
 }

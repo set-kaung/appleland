@@ -30,7 +30,9 @@ async fn main() -> Result<(), AppError> {
         .init();
 
     let cli = config::Cli::parse();
-    api_doc::generate_docs();
+    if let Err(e) = api_doc::generate_docs() {
+        tracing::error!("failed to generate docs: {e}");
+    };
     if cli.gen_docs_only {
         return Ok(());
     }
