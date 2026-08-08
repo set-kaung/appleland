@@ -84,16 +84,15 @@ pub async fn partitioned_cookie_middleware(
 ) -> Response {
     let mut response = next.run(request).await;
 
-    if let Some(set_cookie) = response.headers().get(header::SET_COOKIE) {
-        if let Ok(val) = set_cookie.to_str() {
-            if val.starts_with("id=") && !val.contains("Partitioned") {
-                let patched = format!("{}; Partitioned", val);
-                response.headers_mut().insert(
-                    header::SET_COOKIE,
-                    HeaderValue::from_str(&patched).unwrap(),
-                );
-            }
-        }
+    if let Some(set_cookie) = response.headers().get(header::SET_COOKIE)
+        && let Ok(val) = set_cookie.to_str()
+        && val.starts_with("id=")
+        && !val.contains("Partitioned")
+    {
+        let patched = format!("{}; Partitioned", val);
+        response
+            .headers_mut()
+            .insert(header::SET_COOKIE, HeaderValue::from_str(&patched).unwrap());
     }
 
     response
