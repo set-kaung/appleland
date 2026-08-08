@@ -1,9 +1,9 @@
+use crate::ApiResult;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
-use crate::ApiResult;
-use axum::extract::{Path, State};
 use axum::Json;
+use axum::extract::{Path, State};
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -34,14 +34,9 @@ pub async fn create_inventory(
 ) -> ApiResult<AdminInventory> {
     let admin_id: Uuid = session_admin_id(session).await?;
 
-    let inventory_record = NewInventoryRecord {
-        product_id,
-        quantity_received: payload.quantity_received,
-        quantity_remaining: payload.quantity_received,
-        unit_cost: payload.unit_cost,
-        created_by: admin_id,
-        updated_by: admin_id,
-    };
-    let result = super::store::insert_new_inventory_record(&state.db, inventory_record).await?.into();
+    let inventory_record = NewInventoryRecord::new(product_id, admin_id, payload)?;
+    let result = super::store::insert_new_inventory_record(&state.db, inventory_record)
+        .await?
+        .into();
     Ok(Json(result))
 }

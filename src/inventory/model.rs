@@ -5,6 +5,7 @@ use time::OffsetDateTime;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::app_error::APIError;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AdminInventory {
@@ -18,7 +19,6 @@ pub struct AdminInventory {
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
 }
-
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -50,11 +50,39 @@ pub struct NewInventoryRecord {
     pub updated_by: Uuid,
 }
 
+impl NewInventoryRecord {
+    pub fn new(
+        product_id: Uuid,
+        admin_id: Uuid,
+        payload: NewInventoryPayload,
+    ) -> Result<Self, APIError> {
+        if payload.quantity_received <= 0 {
+            return Err(APIError::BadRequest(
+                "quantity received must be greater than 0".to_string(),
+            ));
+        }
+
+        if payload.unit_cost <= 0.into() {
+            return Err(APIError::BadRequest(
+                "unit cost must be greater than 0".to_string(),
+            ));
+        }
+
+        Ok(NewInventoryRecord {
+            product_id,
+            quantity_received: payload.quantity_received,
+            quantity_remaining: payload.quantity_received,
+            unit_cost: payload.unit_cost,
+            created_by: admin_id,
+            updated_by: admin_id,
+        })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct DeductInventoryPayload {
     pub quantity_to_deduct: i32,
 }
-
 
 impl From<InventoryRow> for AdminInventory {
     fn from(value: InventoryRow) -> Self {
