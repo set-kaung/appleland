@@ -3,7 +3,7 @@
 // #![deny(clippy::unwrap_used, clippy::expect_used)]
 
 use axum::Json;
-use reqwest::StatusCode;
+use axum::http::StatusCode;
 
 pub mod api_doc;
 

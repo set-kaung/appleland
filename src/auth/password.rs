@@ -1,6 +1,6 @@
 use crate::{app_error::APIError, app_state::AppState};
+use axum::http::StatusCode;
 use axum::{Json, extract::State};
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
 use std::str::FromStr;

@@ -1,5 +1,5 @@
+use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use reqwest::StatusCode;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
