@@ -20,6 +20,9 @@ pub enum StoreError {
 
     #[error("insufficient inventory for product {0}: requested {1}, available {2}")]
     InsufficientInventory(uuid::Uuid, i32, i32),
+
+    #[error("invalid input: {0}")]
+    InvalidInput(String),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -123,6 +126,7 @@ impl From<StoreError> for APIError {
                     "insufficient inventory for product {id}: requested {requested}, available {available}"
                 ))
             }
+            StoreError::InvalidInput(e) => APIError::BadRequest(e),
         }
     }
 }

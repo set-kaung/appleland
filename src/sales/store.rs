@@ -5,6 +5,7 @@ use crate::sales::model::{
 };
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 pub async fn fetch_all_paginated(
@@ -94,7 +95,7 @@ pub async fn insert_admin_sale(
 pub async fn fetch_selling_prices(
     tx: &mut Transaction<'_, Postgres>,
     product_ids: &[Uuid],
-) -> Result<Vec<(Uuid, Decimal)>, StoreError> {
+) -> Result<HashMap<Uuid, Decimal>, StoreError> {
     let rows = sqlx::query_as!(
         PriceRow,
         "SELECT id, selling_price FROM products WHERE id = ANY($1)",
@@ -103,7 +104,31 @@ pub async fn fetch_selling_prices(
     .fetch_all(&mut **tx)
     .await?;
 
-    Ok(rows.into_iter().map(|r| (r.id, r.selling_price)).collect())
+    let found: HashMap<Uuid, Decimal> = rows.into_iter().map(|r| (r.id, r.selling_price)).collect();
+
+    // for all client requestd product ids
+    // check if any is missing in products returned from db
+    let missing: Vec<Uuid> = product_ids
+        .iter()
+        .filter(|id| !found.contains_key(id))
+        .copied()
+        .collect();
+
+    // if missing is not empty
+    // invalid product ids present, return error
+    // else, all good, return the result
+    if !missing.is_empty() {
+        return Err(StoreError::InvalidInput(format!(
+            "products not found: {}",
+            missing
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )));
+    }
+
+    Ok(found)
 }
 
 #[derive(sqlx::FromRow)]

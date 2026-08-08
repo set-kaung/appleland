@@ -21,10 +21,7 @@ pub async fn perform_sale_admin(
     let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
 
     let selling_prices: HashMap<Uuid, Decimal> =
-        sale_store::fetch_selling_prices(&mut tx, &product_ids)
-            .await?
-            .into_iter()
-            .collect();
+        sale_store::fetch_selling_prices(&mut tx, &product_ids).await?;
 
     let inventory_entries =
         inventory::store::fetch_inventory_fifo_batch(&mut tx, &product_ids).await?;
