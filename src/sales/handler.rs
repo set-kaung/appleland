@@ -83,7 +83,8 @@ pub async fn create_sale(
     Json(payload): Json<CreateSalePayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
     let admin_id = session_admin_id(session).await?;
-    let sale_id = service::perform_sale_admin(&state.db, admin_id, payload).await?;
+    let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
+    let sale_id = service::perform_sale_admin(&state.db, admin_id, &aggregated_products).await?;
     Ok((StatusCode::CREATED, Json(sale_id)))
 }
 

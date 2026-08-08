@@ -30,7 +30,7 @@ pub struct AdminSaleDetails {
     pub sale_items: Vec<SaleItem>,
 }
 
-#[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct SaleProduct {
     pub product_id: Uuid,
     pub quantity: i32,

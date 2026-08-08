@@ -4,9 +4,9 @@ use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::app_error::StoreError;
+use crate::app_error::{APIError, StoreError};
 use crate::inventory;
-use crate::sales::model::{CreateSalePayload, SaleProduct, SaleProductDTO};
+use crate::sales::model::{SaleProduct, SaleProductDTO};
 
 type InventoryDeduction = (Uuid, i32);
 type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
@@ -14,11 +14,11 @@ type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
 pub async fn perform_sale_admin(
     pool: &PgPool,
     admin_id: Uuid,
-    payload: CreateSalePayload,
+    products: &[SaleProduct],
 ) -> Result<Uuid, StoreError> {
     let mut tx = pool.begin().await?;
 
-    let product_ids: Vec<Uuid> = payload.sale_products.iter().map(|p| p.product_id).collect();
+    let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
 
     let selling_prices: HashMap<Uuid, Decimal> =
         sale_store::fetch_selling_prices(&mut tx, &product_ids)
@@ -29,17 +29,50 @@ pub async fn perform_sale_admin(
     let inventory_entries =
         inventory::store::fetch_inventory_fifo_batch(&mut tx, &product_ids).await?;
 
-    let (sale_products, deductions) =
-        build_sale_items(&payload.sale_products, &selling_prices, &inventory_entries)?;
+    let (sale_product_dtos, deductions) =
+        build_sale_items(products, &selling_prices, &inventory_entries)?;
 
     inventory::store::deduct_inventory_batch(&mut tx, &deductions).await?;
 
-    let sale_id = insert_sale_data(&mut tx, sale_products).await?;
+    let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
     sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
 
     tx.commit().await?;
 
     Ok(sale_id)
+}
+
+pub fn validate_aggregate_sale_products(
+    products: &[SaleProduct],
+) -> Result<Vec<SaleProduct>, APIError> {
+    if products.is_empty() {
+        return Err(APIError::BadRequest(
+            "sale must contain at least one product".to_string(),
+        ));
+    }
+
+    let mut aggregated: HashMap<Uuid, i32> = HashMap::new();
+
+    for product in products {
+        if product.quantity <= 0 {
+            return Err(APIError::BadRequest(
+                "quantity must be greater than 0".to_string(),
+            ));
+        }
+
+        let total = aggregated.entry(product.product_id).or_insert(0);
+        *total = total
+            .checked_add(product.quantity)
+            .ok_or_else(|| APIError::BadRequest("quantity overflow".to_string()))?;
+    }
+
+    Ok(aggregated
+        .into_iter()
+        .map(|(product_id, quantity)| SaleProduct {
+            product_id,
+            quantity,
+        })
+        .collect())
 }
 
 // check if there is enough inventory,
