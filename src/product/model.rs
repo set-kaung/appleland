@@ -1,3 +1,4 @@
+use crate::app_error::APIError;
 use crate::db::DBQueryFilter;
 use crate::inventory::model::NewInventoryPayload;
 use rust_decimal::Decimal;
@@ -53,6 +54,27 @@ pub struct CreateProductPayload {
     pub inventory: Option<NewInventoryPayload>,
 }
 
+impl CreateProductPayload {
+    pub fn validate(&self) -> Result<(), APIError> {
+        if self.name.trim().is_empty() {
+            return Err(APIError::BadRequest(
+                "product name must not be empty".to_string(),
+            ));
+        }
+        if self.barcode.trim().is_empty() {
+            return Err(APIError::BadRequest(
+                "barcode must not be empty".to_string(),
+            ));
+        }
+        if self.selling_price < Decimal::ZERO {
+            return Err(APIError::BadRequest(
+                "selling price must not be negative".to_string(),
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct InsertProduct {
     pub name: String,
@@ -77,6 +99,27 @@ pub struct UpdateProductPayload {
     pub is_active: bool,
     pub selling_price: Decimal,
     pub image_url: Option<String>,
+}
+
+impl UpdateProductPayload {
+    pub fn validate(&self) -> Result<(), APIError> {
+        if self.name.trim().is_empty() {
+            return Err(APIError::BadRequest(
+                "product name must not be empty".to_string(),
+            ));
+        }
+        if self.barcode.trim().is_empty() {
+            return Err(APIError::BadRequest(
+                "barcode must not be empty".to_string(),
+            ));
+        }
+        if self.selling_price < Decimal::ZERO {
+            return Err(APIError::BadRequest(
+                "selling price must not be negative".to_string(),
+            ));
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize)]

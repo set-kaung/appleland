@@ -179,6 +179,7 @@ pub async fn create_product(
     session: Session,
     ValidatedJson(payload): ValidatedJson<CreateProductPayload>,
 ) -> Result<(StatusCode, Json<AdminProduct>), APIError> {
+    payload.validate()?;
     let admin_id: Uuid = session_admin_id(session).await?;
 
     let mut tx = state.db.begin().await.map_err(|e| {
@@ -201,14 +202,7 @@ pub async fn create_product(
 
     let product_id = store::create(&mut tx, insert_payload).await?;
     if let Some(inventory_payload) = payload.inventory {
-        let inventory_record = NewInventoryRecord {
-            product_id,
-            quantity_received: inventory_payload.quantity_received,
-            quantity_remaining: inventory_payload.quantity_received,
-            unit_cost: inventory_payload.unit_cost,
-            created_by: admin_id,
-            updated_by: admin_id,
-        };
+        let inventory_record = NewInventoryRecord::new(product_id, admin_id, inventory_payload)?;
         inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 
@@ -246,6 +240,7 @@ pub async fn update_product(
     Path(product_id): Path<Uuid>,
     Json(payload): Json<UpdateProductPayload>,
 ) -> Result<(StatusCode, Json<AdminProduct>), APIError> {
+    payload.validate()?;
     let admin_id: Uuid = session_admin_id(session).await?;
 
     let mut tx = state.db.begin().await.map_err(|e| {
