@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: appleland
-  description: API to be consumed by user applications
+  title: Appleland User API
+  description: 'Public API for storefront/user applications. All endpoints require a valid Supabase JWT supplied via the `Authorization: Bearer <token>` header.'
   license:
     name: ''
   version: 0.1.0
@@ -10,6 +10,7 @@ paths:
     get:
       tags:
       - Products
+      description: List all active products with pagination.
       operationId: get_products_paginated
       parameters:
       - name: page
@@ -31,12 +32,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_UserProduct'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '403':
+          description: Forbidden - Insufficient privileges
         '500':
           description: Internal server error
+      security:
+      - bearer: []
   /api/products/search:
-    post:
+    get:
       tags:
       - Products
+      description: Search the public product catalog by name, barcode, category, sub-category, and price range.
       operationId: search_products
       parameters:
       - name: page
@@ -62,33 +70,28 @@ paths:
         schema:
           type: string
           format: uuid
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductSearchParams'
-        required: true
       responses:
         '200':
-          description: Successfully retrieved paginated admin products
+          description: Paginated list of matching products
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_UserProduct'
         '400':
-          description: Invalid query parameters or JSON payload validation failed
+          description: Invalid query parameters
         '401':
-          description: Unauthorized - Missing or invalid session
+          description: Unauthorized - Missing or invalid JWT
         '403':
-          description: Forbidden - Requires admin privileges
+          description: Forbidden - Insufficient privileges
         '500':
           description: Internal database error
       security:
-      - session_cookie: []
+      - bearer: []
   /api/products/{product_id}:
     get:
       tags:
       - Products
+      description: Get a single product by its UUID.
       operationId: get_product_by_id
       parameters:
       - name: product_id
@@ -100,15 +103,21 @@ paths:
           format: uuid
       responses:
         '200':
-          description: ''
+          description: Product details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProduct'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '403':
+          description: Forbidden - Insufficient privileges
         '404':
           description: Product not found
         '500':
-          description: ''
+          description: Internal server error
+      security:
+      - bearer: []
 components:
   schemas:
     PaginatedResponse_UserProduct:
@@ -192,39 +201,6 @@ components:
           format: uuid
         query:
           type: string
-    ProductSearchParams:
-      type: object
-      properties:
-        barcode:
-          type:
-          - string
-          - 'null'
-        categories_id:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-            format: uuid
-        max_price:
-          type:
-          - string
-          - 'null'
-        min_price:
-          type:
-          - string
-          - 'null'
-        name:
-          type:
-          - string
-          - 'null'
-        sub_categories_id:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-            format: uuid
     UserProduct:
       type: object
       required:
@@ -262,5 +238,10 @@ components:
           type:
           - string
           - 'null'
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
 tags:
 - name: Products
+  description: Browse and search the product catalog

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at\n        FROM inventory\n        WHERE product_id = ANY($1) AND quantity_remaining > 0\n        ORDER BY product_id, created_at ASC\n        ",
+  "query": "\n        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at\n        FROM inventory\n        WHERE product_id = ANY($1) AND quantity_remaining > 0\n        ORDER BY product_id, created_at ASC, id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -120,5 +120,5 @@
       false
     ]
   },
-  "hash": "2b0503a07c9d7244509e5d975ef32a69c7aabb56b0715be564a770e54c250997"
+  "hash": "331cef2f1455cb9f472722b22524630849ad4705c11f347b5b23181c104cc6c7"
 }

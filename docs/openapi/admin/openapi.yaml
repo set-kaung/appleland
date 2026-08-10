@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: appleland
-  description: API to be consumed by admin dashboard
+  title: Appleland Admin API
+  description: API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`).
   license:
     name: ''
   version: 0.1.0
@@ -10,29 +10,27 @@ paths:
     get:
       tags:
       - Admin Categories
+      description: Fetch every product category.
       operationId: get_all_categories
       responses:
-        '201':
-          description: ''
+        '200':
+          description: List of all categories
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/AdminCategory'
-        '400':
-          description: ''
-        '401':
-          description: ''
-        '409':
-          description: ''
+        '403':
+          description: Forbidden - Missing or invalid session
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
     post:
       tags:
       - Admin Categories
+      description: Create a new product category.
       operationId: create_category
       requestBody:
         content:
@@ -42,26 +40,32 @@ paths:
         required: true
       responses:
         '201':
-          description: ''
+          description: Category created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminCategory'
         '400':
-          description: ''
+          description: Bad request
         '401':
-          description: ''
-        '409':
-          description: ''
+          description: Unauthorized - Missing or invalid session
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/categories/{id}:
     put:
       tags:
       - Admin Categories
+      description: Update a product category name.
       operationId: update_category
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         content:
           application/json:
@@ -69,26 +73,25 @@ paths:
               $ref: '#/components/schemas/UpdateCategoryPayload'
         required: true
       responses:
-        '201':
-          description: ''
+        '200':
+          description: Category updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminCategory'
         '400':
-          description: ''
+          description: Bad request
         '401':
-          description: ''
-        '409':
-          description: ''
+          description: Unauthorized - Missing or invalid session
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/inventory/{product_id}:
     post:
       tags:
       - Admin Inventory
+      description: Add inventory stock to an existing product.
       operationId: create_inventory
       parameters:
       - name: product_id
@@ -106,25 +109,26 @@ paths:
         required: true
       responses:
         '200':
-          description: ''
+          description: Inventory record created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminInventory'
         '400':
-          description: ''
+          description: Bad request
         '401':
-          description: ''
+          description: Unauthorized - Missing or invalid session
         '404':
-          description: ''
+          description: Product not found
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/login:
     post:
       tags:
       - Authentication
+      description: Authenticate an admin and establish a session cookie.
       operationId: admin_login_handler
       requestBody:
         content:
@@ -134,27 +138,35 @@ paths:
         required: true
       responses:
         '200':
-          description: ''
+          description: Authenticated admin details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Admin'
         '401':
-          description: ''
+          description: Invalid credentials
+        '500':
+          description: Internal server error
   /admin/logout:
     post:
       tags:
       - Authentication
+      description: Destroy the current admin session.
       operationId: admin_logout_handler
       responses:
         '200':
-          description: ''
+          description: Session destroyed
+        '403':
+          description: Forbidden - Missing or invalid session
+        '500':
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/products:
     get:
       tags:
       - Admin Products
+      description: List all products (active and inactive) with pagination.
       operationId: get_products_paginated_admin
       parameters:
       - name: page
@@ -176,11 +188,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
+        '403':
+          description: Forbidden - Missing or invalid session
         '500':
           description: Internal server error
+      security:
+      - session_cookie: []
     post:
       tags:
       - Admin Products
+      description: Create a new product and optionally seed its initial inventory.
       operationId: create_product
       requestBody:
         content:
@@ -190,45 +207,47 @@ paths:
         required: true
       responses:
         '201':
-          description: ''
+          description: Product created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminProduct'
         '400':
-          description: ''
+          description: Bad request
         '401':
-          description: ''
+          description: Unauthorized - Missing or invalid session
         '409':
-          description: ''
+          description: Conflict - Product already exists
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/products/all:
     get:
       tags:
       - Admin Products
+      description: Fetch every product record without pagination.
       operationId: get_all_products
       responses:
         '200':
-          description: ''
+          description: List of all products
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/AdminProduct'
-        '401':
-          description: ''
         '403':
-          description: ''
+          description: Forbidden - Missing or invalid session
+        '500':
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/products/search:
     get:
       tags:
       - Admin Products
+      description: Simple admin product search by query string and optional category filter.
       operationId: search_products_admin
       parameters:
       - name: page
@@ -256,17 +275,15 @@ paths:
           format: uuid
       responses:
         '200':
-          description: Successfully retrieved paginated admin products
+          description: Paginated list of matching products
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
         '400':
-          description: Invalid query parameters or JSON payload validation failed
-        '401':
-          description: Unauthorized - Missing or invalid session
+          description: Invalid query parameters
         '403':
-          description: Forbidden - Requires admin privileges
+          description: Forbidden - Missing or invalid session
         '500':
           description: Internal database error
       security:
@@ -275,24 +292,21 @@ paths:
     post:
       tags:
       - Admin Products
+      description: Advanced product search for admins with full filter support.
       operationId: search_products_admin_advanced
       parameters:
       - name: page
         in: query
-        description: The page number to retrieve (1-indexed)
         required: false
         schema:
           type: integer
           format: int64
-        example: 1
-      - name: limit
+      - name: page_size
         in: query
-        description: Number of items per page
         required: false
         schema:
           type: integer
           format: int64
-        example: 10
       requestBody:
         content:
           application/json:
@@ -301,17 +315,15 @@ paths:
         required: true
       responses:
         '200':
-          description: Successfully retrieved paginated admin products
+          description: Paginated list of matching products
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_AdminProduct'
         '400':
-          description: Invalid query parameters or JSON payload validation failed
-        '401':
-          description: Unauthorized - Missing or invalid session
+          description: Invalid query parameters
         '403':
-          description: Forbidden - Requires admin privileges
+          description: Forbidden - Missing or invalid session
         '500':
           description: Internal database error
       security:
@@ -320,6 +332,7 @@ paths:
     get:
       tags:
       - Admin Products
+      description: Get a single product (admin view) by its UUID.
       operationId: get_product_by_id_admin
       parameters:
       - name: product_id
@@ -331,18 +344,23 @@ paths:
           format: uuid
       responses:
         '200':
-          description: ''
+          description: Product details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminProduct'
+        '403':
+          description: Forbidden - Missing or invalid session
         '404':
           description: Product not found
         '500':
-          description: ''
+          description: Internal server error
+      security:
+      - session_cookie: []
     put:
       tags:
       - Admin Products
+      description: Update an existing product.
       operationId: update_product
       parameters:
       - name: product_id
@@ -360,24 +378,25 @@ paths:
         required: true
       responses:
         '200':
-          description: ''
+          description: Product updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminProduct'
         '400':
-          description: ''
+          description: Bad request
         '401':
-          description: ''
+          description: Unauthorized - Missing or invalid session
         '404':
-          description: ''
+          description: Product not found
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
     delete:
       tags:
       - Admin Products
+      description: Soft-delete a product by its UUID.
       operationId: delete_product
       parameters:
       - name: product_id
@@ -389,19 +408,20 @@ paths:
           format: uuid
       responses:
         '204':
-          description: ''
+          description: Product deleted
         '404':
-          description: ''
+          description: Product not found
         '409':
-          description: ''
+          description: Conflict - Product has dependent records
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/sales:
     get:
       tags:
       - Admin Sales
+      description: List all sales with pagination.
       operationId: get_sales_paginated
       parameters:
       - name: page
@@ -423,11 +443,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResponse_AdminSale'
+        '403':
+          description: Forbidden - Missing or invalid session
         '500':
           description: Internal server error
+      security:
+      - session_cookie: []
     post:
       tags:
       - Admin Sales
+      description: Create a new sale (POS checkout) with FIFO inventory deduction.
       operationId: create_sale
       requestBody:
         content:
@@ -446,15 +471,18 @@ paths:
         '400':
           description: Invalid request or insufficient inventory
         '401':
-          description: Unauthorized
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Missing or invalid session
         '500':
-          description: ''
+          description: Internal server error
       security:
       - session_cookie: []
   /admin/sales/summary:
     get:
       tags:
       - Admin Sales
+      description: Aggregated daily sales summary with margin and basket metrics.
       operationId: sale_summary
       parameters:
       - name: start_date
@@ -471,19 +499,24 @@ paths:
           format: date
       responses:
         '200':
-          description: ''
+          description: Daily sales summary
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/SaleSummary'
+        '403':
+          description: Forbidden - Missing or invalid session
         '500':
-          description: ''
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/sales/{sale_id}:
     get:
       tags:
       - Admin Sales
+      description: Get full details of a single sale including its line items.
       operationId: get_sale_detail_by_id
       parameters:
       - name: sale_id
@@ -495,15 +528,19 @@ paths:
           format: uuid
       responses:
         '200':
-          description: ''
+          description: Sale details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminSaleDetails'
+        '403':
+          description: Forbidden - Missing or invalid session
         '404':
-          description: Sale Detail not found
+          description: Sale not found
         '500':
-          description: ''
+          description: Internal server error
+      security:
+      - session_cookie: []
 components:
   schemas:
     Admin:
@@ -1091,9 +1128,19 @@ components:
           - string
           - 'null'
           format: uuid
+  securitySchemes:
+    session_cookie:
+      type: apiKey
+      in: cookie
+      name: id
 tags:
 - name: Admin Products
+  description: Product CRUD and search
 - name: Admin Categories
+  description: Product category management
 - name: Admin Sales
+  description: Sales records, checkout, and reporting
 - name: Admin Inventory
+  description: Stock replenishment
 - name: Authentication
+  description: Admin login and logout
