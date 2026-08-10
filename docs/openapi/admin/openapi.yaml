@@ -59,6 +59,14 @@ paths:
       - Admin Categories
       description: Update a product category name.
       operationId: update_category
+      parameters:
+      - name: id
+        in: path
+        description: Category UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         content:
           application/json:

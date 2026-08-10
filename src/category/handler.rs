@@ -88,6 +88,9 @@ pub async fn get_all_categories(
     put,
     path = "/admin/categories/{id}",
     description = "Update a product category name.",
+    params(
+        ("id" = Uuid, Path, description = "Category UUID")
+    ),
     request_body = UpdateCategoryPayload,
     responses(
         (status = 200, description = "Category updated", body = AdminCategory),

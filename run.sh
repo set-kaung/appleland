@@ -8,7 +8,7 @@ set +a
 
 cargo sqlx prepare --workspace &&
 cargo clippy --all-targets &&
-cargo build --release -v || exit 1
+cargo build --release || exit 1
 
 read -p "Build successful. Run application? [y/N] " answer
 
