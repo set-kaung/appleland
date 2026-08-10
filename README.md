@@ -59,7 +59,7 @@ For more specifics, refer to openapi.yaml files under docs folder.
 
 ## Database
 
-PostgreSQL with 12 migrations in `db/migrations/`. Full schema at `db/schema.sql`.
+PostgreSQL with 14 migrations in `db/migrations/`. Full schema at `db/schema.sql`.
 
 **Tables**: `admins`, `categories`, `products`, `inventory`, `sales`, `sale_items`, `orders`, `shipping_addresses`
 
@@ -80,7 +80,6 @@ Required env vars
 | `SESSION_DELETE_INTERVAL` | Session cleanup interval       |
 | `RUST_LOG`                | Log level                      |
 | `SQLX_OFFLINE`            | sqlx offline mode              |
-| `API_VERSION`             | API version identifier         |
 
 ## Run
 
