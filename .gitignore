@@ -10,3 +10,4 @@ drop.sql
 *.log
 scripts/
 notes
+.cargo
