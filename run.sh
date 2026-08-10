@@ -2,10 +2,13 @@
 
 exec > >(tee build.log) 2>&1
 
-export $(grep -v '^#' "$1" | xargs) &&
+set -a
+source "$1"
+set +a
+
 cargo sqlx prepare --workspace &&
 cargo clippy --all-targets &&
-cargo build --release || exit 1
+cargo build --release -v || exit 1
 
 read -p "Build successful. Run application? [y/N] " answer
 
