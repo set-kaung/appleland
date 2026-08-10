@@ -20,7 +20,7 @@ where
         r#"
         INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)
         VALUES ($1, $2, $3, $4, $5, $5)
-        RETURNING *
+        RETURNING id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at
         "#,
         new_inventory_record.product_id,
         new_inventory_record.quantity_received,

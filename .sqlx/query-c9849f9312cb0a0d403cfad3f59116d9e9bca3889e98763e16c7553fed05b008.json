@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING *\n        ",
+  "query": "\n        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -60,28 +60,6 @@
       },
       {
         "ordinal": 5,
-        "name": "created_at",
-        "type_info": "Timestamptz",
-        "origin": {
-          "Table": {
-            "table": "inventory",
-            "name": "created_at"
-          }
-        }
-      },
-      {
-        "ordinal": 6,
-        "name": "updated_at",
-        "type_info": "Timestamptz",
-        "origin": {
-          "Table": {
-            "table": "inventory",
-            "name": "updated_at"
-          }
-        }
-      },
-      {
-        "ordinal": 7,
         "name": "created_by",
         "type_info": "Uuid",
         "origin": {
@@ -92,13 +70,35 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "updated_by",
         "type_info": "Uuid",
         "origin": {
           "Table": {
             "table": "inventory",
             "name": "updated_by"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "updated_at"
           }
         }
       }
@@ -124,5 +124,5 @@
       false
     ]
   },
-  "hash": "18f0d39be950b4f597ea0e2b675c99fda3677aae759a45f3c113483897297369"
+  "hash": "c9849f9312cb0a0d403cfad3f59116d9e9bca3889e98763e16c7553fed05b008"
 }

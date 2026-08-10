@@ -22,7 +22,7 @@ pub async fn create_category(
     Ok(category_row)
 }
 pub async fn get_all_categories(pool: &PgPool) -> Result<Vec<CategoryRow>, StoreError> {
-    sqlx::query_as!(CategoryRow, "SELECT * FROM categories")
+    sqlx::query_as!(CategoryRow, "SELECT id, name, created_by, created_at, updated_by, updated_at FROM categories")
         .fetch_all(pool)
         .await
         .map_err(Into::into)
@@ -34,7 +34,7 @@ pub async fn update_category(
 ) -> Result<CategoryRow, StoreError> {
     let result = sqlx::query_as!(
         CategoryRow,
-        "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING *",
+        "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING id, name, created_by, created_at, updated_by, updated_at",
         update_category.name,
         update_category.updated_by,
         update_category.id

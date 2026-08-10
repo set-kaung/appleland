@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING *",
+  "query": "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING id, name, created_by, created_at, updated_by, updated_at",
   "describe": {
     "columns": [
       {
@@ -86,5 +86,5 @@
       false
     ]
   },
-  "hash": "bac282f0b6063805aabc9d3173ca250e304fa17e30007591d2dd03dab01f7e62"
+  "hash": "5a5e29b28bb83c45f5ae8defcd79aadf504497cc20fb361256ebcf74c7776424"
 }
