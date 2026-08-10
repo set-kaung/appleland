@@ -9,6 +9,7 @@ use crate::sales::model::{
     SaleSummaryFilter,
 };
 
+use crate::auth::password;
 use crate::auth::password::{Admin, LoginRequest};
 
 use super::super::category;
@@ -16,12 +17,16 @@ use super::super::inventory;
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
 use super::super::product;
 use super::super::sales;
-use crate::auth::password;
+use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
-    info(description = "API to be consumed by admin dashboard"),
+    info(
+        title = "Appleland Admin API",
+        description = "API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`)."
+    ),
+    modifiers(&SessionCookieSecurityAddon),
     paths(
         product::handler::get_all_products,
         product::handler::get_products_paginated_admin,
@@ -68,11 +73,11 @@ use utoipa::OpenApi;
         )
     ),
     tags(
-        (name = "Admin Products"),
-        (name = "Admin Categories"),
-        (name = "Admin Sales"),
-        (name = "Admin Inventory"),
-        (name = "Authentication"),
+        (name = "Admin Products", description = "Product CRUD and search"),
+        (name = "Admin Categories", description = "Product category management"),
+        (name = "Admin Sales", description = "Sales records, checkout, and reporting"),
+        (name = "Admin Inventory", description = "Stock replenishment"),
+        (name = "Authentication", description = "Admin login and logout"),
     )
 )]
 pub struct AdminApiDoc;

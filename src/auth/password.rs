@@ -131,10 +131,12 @@ async fn get_admin_by_username(
 #[utoipa::path(
     post,
     path = "/admin/login",
+    description = "Authenticate an admin and establish a session cookie.",
     request_body = LoginRequest,
     responses(
-        (status = 200, body= Admin),
-        (status = 401)
+        (status = 200, description = "Authenticated admin details", body = Admin),
+        (status = 401, description = "Invalid credentials"),
+        (status = 500, description = "Internal server error")
     ),
     tag = "Authentication"
 )]
@@ -184,8 +186,11 @@ pub async fn admin_login_handler(
 #[utoipa::path(
     post,
     path = "/admin/logout",
+    description = "Destroy the current admin session.",
     responses(
-        (status = 200)
+        (status = 200, description = "Session destroyed"),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])

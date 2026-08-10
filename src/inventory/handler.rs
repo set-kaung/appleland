@@ -10,16 +10,17 @@ use uuid::Uuid;
 #[utoipa::path(
     post,
     path = "/admin/inventory/{product_id}",
+    description = "Add inventory stock to an existing product.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     request_body = NewInventoryPayload,
     responses(
-        (status = 200, body = AdminInventory),
-        (status = 400),
-        (status = 401),
-        (status = 404),
-        (status = 500)
+        (status = 200, description = "Inventory record created", body = AdminInventory),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Product not found"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])

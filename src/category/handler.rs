@@ -18,13 +18,13 @@ use uuid::Uuid;
 #[utoipa::path(
     post,
     path = "/admin/categories",
+    description = "Create a new product category.",
     request_body = CreateCategoryPayload,
     responses(
-        (status = 201, body = AdminCategory),
-        (status = 400),
-        (status = 401),
-        (status = 409),
-        (status = 500)
+        (status = 201, description = "Category created", body = AdminCategory),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -61,12 +61,11 @@ pub async fn create_category(
 #[utoipa::path(
     get,
     path = "/admin/categories",
+    description = "Fetch every product category.",
     responses(
-    (status = 201, body = Vec<AdminCategory>),
-        (status = 400),
-        (status = 401),
-        (status = 409),
-        (status = 500)
+        (status = 200, description = "List of all categories", body = Vec<AdminCategory>),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -86,15 +85,15 @@ pub async fn get_all_categories(
 }
 
 #[utoipa::path(
-    put, 
+    put,
     path = "/admin/categories/{id}",
+    description = "Update a product category name.",
     request_body = UpdateCategoryPayload,
     responses(
-        (status = 201, body = AdminCategory),
-        (status = 400),
-        (status = 401),
-        (status = 409),
-        (status = 500)
+        (status = 200, description = "Category updated", body = AdminCategory),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])

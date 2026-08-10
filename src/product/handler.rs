@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::product::model::{
-    AdminProduct, CreateProductPayload, InsertProduct, ProductFilter, ProductSearchParams,
+    AdminProduct, CreateProductPayload, InsertProduct, ProductFilter,
     ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct,
 };
 
@@ -25,10 +25,16 @@ use axum::{
 #[utoipa::path(
     get,
     path = "/api/products",
+    description = "List all active products with pagination.",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<UserProduct>),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
         (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
     ),
     tag = "Products"
 )]
@@ -59,10 +65,15 @@ pub async fn get_products_paginated(
 #[utoipa::path(
     get,
     path = "/admin/products",
+    description = "List all products (active and inactive) with pagination.",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<AdminProduct>),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
         (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
     ),
     tag = "Admin Products"
 )]
@@ -93,10 +104,11 @@ pub async fn get_products_paginated_admin(
 #[utoipa::path(
     get,
     path = "/admin/products/all",
+    description = "Fetch every product record without pagination.",
     responses(
-        (status = 200, body = Vec<AdminProduct>),
-        (status = 401),
-        (status = 403)
+        (status = 200, description = "List of all products", body = Vec<AdminProduct>),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -119,13 +131,19 @@ pub async fn get_all_products(
 #[utoipa::path(
     get,
     path = "/api/products/{product_id}",
+    description = "Get a single product by its UUID.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     responses(
-        (status = 200, body = UserProduct),
+        (status = 200, description = "Product details", body = UserProduct),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
         (status = 404, description = "Product not found"),
-        (status = 500)
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
     ),
     tag = "Products"
 )]
@@ -140,13 +158,18 @@ pub async fn get_product_by_id(
 #[utoipa::path(
     get,
     path = "/admin/products/{product_id}",
+    description = "Get a single product (admin view) by its UUID.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     responses(
-        (status = 200, body = AdminProduct),
+        (status = 200, description = "Product details", body = AdminProduct),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
         (status = 404, description = "Product not found"),
-        (status = 500)
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
     ),
     tag = "Admin Products"
 )]
@@ -161,13 +184,14 @@ pub async fn get_product_by_id_admin(
 #[utoipa::path(
     post,
     path = "/admin/products",
+    description = "Create a new product and optionally seed its initial inventory.",
     request_body = CreateProductPayload,
     responses(
-        (status = 201, body = AdminProduct),
-        (status = 400),
-        (status = 401),
-        (status = 409),
-        (status = 500)
+        (status = 201, description = "Product created", body = AdminProduct),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 409, description = "Conflict - Product already exists"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -218,16 +242,17 @@ pub async fn create_product(
 #[utoipa::path(
     put,
     path = "/admin/products/{product_id}",
+    description = "Update an existing product.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     request_body = UpdateProductPayload,
     responses(
-        (status = 200, body = AdminProduct),
-        (status = 400),
-        (status = 401),
-        (status = 404),
-        (status = 500)
+        (status = 200, description = "Product updated", body = AdminProduct),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Product not found"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -272,14 +297,15 @@ pub async fn update_product(
 #[utoipa::path(
     delete,
     path = "/admin/products/{product_id}",
+    description = "Soft-delete a product by its UUID.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     responses(
-        (status = 204),
-        (status = 404),
-        (status = 409),
-        (status = 500)
+        (status = 204, description = "Product deleted"),
+        (status = 404, description = "Product not found"),
+        (status = 409, description = "Conflict - Product has dependent records"),
+        (status = 500, description = "Internal server error")
     ),
     security(
         ("session_cookie" = [])
@@ -308,21 +334,17 @@ pub async fn delete_product(
 #[utoipa::path(
     post,
     path = "/admin/products/search/advanced",
+    description = "Advanced product search for admins with full filter support.",
     request_body = ProductSearchParamsAdmin,
-    params(
-        ("page" = Option<i64>, Query, description = "The page number to retrieve (1-indexed)", example = 1),
-        ("limit" = Option<i64>, Query, description = "Number of items per page", example = 10)
-    ),
+    params(pagination::PaginationQuery),
     responses(
         (
             status = 200,
-            description = "Successfully retrieved paginated admin products",
-            body =
-            pagination::PaginatedResponse<AdminProduct>
+            description = "Paginated list of matching products",
+            body = pagination::PaginatedResponse<AdminProduct>
         ),
-        (status = 400, description = "Invalid query parameters or JSON payload validation failed"),
-        (status = 401, description = "Unauthorized - Missing or invalid session"),
-        (status = 403, description = "Forbidden - Requires admin privileges"),
+        (status = 400, description = "Invalid query parameters"),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
         (status = 500, description = "Internal database error")
     ),
     security(
@@ -352,6 +374,7 @@ pub async fn search_products_admin_advanced(
 #[utoipa::path(
     get,
     path = "/admin/products/search",
+    description = "Simple admin product search by query string and optional category filter.",
     params(
         pagination::PaginationQuery,
         ProductFilter
@@ -359,13 +382,11 @@ pub async fn search_products_admin_advanced(
     responses(
         (
             status = 200,
-            description = "Successfully retrieved paginated admin products",
-            body =
-            pagination::PaginatedResponse<AdminProduct>
+            description = "Paginated list of matching products",
+            body = pagination::PaginatedResponse<AdminProduct>
         ),
-        (status = 400, description = "Invalid query parameters or JSON payload validation failed"),
-        (status = 401, description = "Unauthorized - Missing or invalid session"),
-        (status = 403, description = "Forbidden - Requires admin privileges"),
+        (status = 400, description = "Invalid query parameters"),
+        (status = 403, description = "Forbidden - Missing or invalid session"),
         (status = 500, description = "Internal database error")
     ),
     security(
@@ -393,9 +414,9 @@ pub async fn search_products_admin(
 }
 
 #[utoipa::path(
-    post,
+    get,
     path = "/api/products/search",
-    request_body = ProductSearchParams,
+    description = "Search the public product catalog by name, barcode, category, sub-category, and price range.",
     params(
         pagination::PaginationQuery,
         ProductFilter
@@ -403,17 +424,16 @@ pub async fn search_products_admin(
     responses(
         (
             status = 200,
-            description = "Successfully retrieved paginated admin products",
-            body =
-            pagination::PaginatedResponse<UserProduct>
+            description = "Paginated list of matching products",
+            body = pagination::PaginatedResponse<UserProduct>
         ),
-        (status = 400, description = "Invalid query parameters or JSON payload validation failed"),
-        (status = 401, description = "Unauthorized - Missing or invalid session"),
-        (status = 403, description = "Forbidden - Requires admin privileges"),
+        (status = 400, description = "Invalid query parameters"),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
         (status = 500, description = "Internal database error")
     ),
     security(
-        ("session_cookie" = [])
+        ("bearer" = [])
     ),
     tag = "Products"
 )]

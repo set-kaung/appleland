@@ -5,9 +5,35 @@ pub use admin::AdminApiDoc;
 pub use user::ApiDoc;
 
 use std::path::Path;
-use utoipa::OpenApi;
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
+use utoipa::openapi::Components;
+use utoipa::{Modify, OpenApi};
 
 use crate::app_error::AppError;
+
+pub struct BearerSecurityAddon;
+
+impl Modify for BearerSecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Components::new);
+        components.security_schemes.insert(
+            "bearer".to_string(),
+            SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+        );
+    }
+}
+
+pub struct SessionCookieSecurityAddon;
+
+impl Modify for SessionCookieSecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Components::new);
+        components.security_schemes.insert(
+            "session_cookie".to_string(),
+            SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new("id"))),
+        );
+    }
+}
 
 pub fn generate_docs() -> Result<(), AppError> {
     let openapi = ApiDoc::openapi();

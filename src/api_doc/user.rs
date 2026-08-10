@@ -2,11 +2,16 @@ use crate::product::model::UserProduct;
 
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
 use super::super::product;
+use super::BearerSecurityAddon;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
-    info(description = "API to be consumed by user applications"),
+    info(
+        title = "Appleland User API",
+        description = "Public API for storefront/user applications. All endpoints require a valid Supabase JWT supplied via the `Authorization: Bearer <token>` header."
+    ),
+    modifiers(&BearerSecurityAddon),
     paths(
         product::handler::get_products_paginated,
         product::handler::get_product_by_id,
@@ -21,7 +26,7 @@ use utoipa::OpenApi;
         )
     ),
     tags(
-        (name = "Products")
+        (name = "Products", description = "Browse and search the product catalog")
     ),
 )]
 pub struct ApiDoc;
