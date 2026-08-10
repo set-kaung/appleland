@@ -44,7 +44,7 @@ pub async fn fetch_inventory_fifo_batch(
         SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at
         FROM inventory
         WHERE product_id = ANY($1) AND quantity_remaining > 0
-        ORDER BY product_id, created_at ASC
+        ORDER BY product_id, created_at ASC, id ASC
         "#,
         product_ids
     )
