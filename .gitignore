@@ -8,3 +8,5 @@ drop.sql
 *.md
 !docs/*.d
 *.log
+scripts/
+notes
