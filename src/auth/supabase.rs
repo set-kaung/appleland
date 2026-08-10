@@ -34,7 +34,7 @@ pub struct SupabaseAuth {
 }
 
 impl SupabaseAuth {
-    pub fn new(project_ref: String) -> Self {
+    pub fn new(project_ref: &str) -> Self {
         Self {
             jwks_url: format!("https://{project_ref}.supabase.co/auth/v1/.well-known/jwks.json"),
             cache: Arc::new(RwLock::new(None)),

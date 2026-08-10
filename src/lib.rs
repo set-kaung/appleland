@@ -1,6 +1,21 @@
 // #![warn(clippy::pedantic)]
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![warn(
+    clippy::dbg_macro,
+    clippy::todo,
+    clippy::unimplemented,
+    clippy::redundant_clone,
+    clippy::needless_collect,
+    clippy::inefficient_to_string,
+    clippy::large_futures,
+    clippy::await_holding_lock
+)]
 // #![allow(clippy::module_name_repetitions, clippy::missing_errors_doc)]
-// #![deny(clippy::unwrap_used, clippy::expect_used)]
 
 use axum::Json;
 use axum::http::StatusCode;

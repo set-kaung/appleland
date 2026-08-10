@@ -41,6 +41,9 @@ pub enum AppError {
 
     #[error("general error")]
     GeneralErr,
+
+    #[error("starup setup error")]
+    StartupErr(String),
 }
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {

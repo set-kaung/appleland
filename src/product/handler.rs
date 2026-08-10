@@ -202,7 +202,7 @@ pub async fn create_product(
 
     let product_id = store::create(&mut tx, insert_payload).await?;
     if let Some(inventory_payload) = payload.inventory {
-        let inventory_record = NewInventoryRecord::new(product_id, admin_id, inventory_payload)?;
+        let inventory_record = NewInventoryRecord::new(product_id, admin_id, &inventory_payload)?;
         inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 

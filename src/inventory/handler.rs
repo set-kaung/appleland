@@ -34,7 +34,7 @@ pub async fn create_inventory(
 ) -> ApiResult<AdminInventory> {
     let admin_id: Uuid = session_admin_id(session).await?;
 
-    let inventory_record = NewInventoryRecord::new(product_id, admin_id, payload)?;
+    let inventory_record = NewInventoryRecord::new(product_id, admin_id, &payload)?;
     let result = super::store::insert_new_inventory_record(&state.db, inventory_record)
         .await?
         .into();

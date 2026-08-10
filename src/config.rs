@@ -42,7 +42,7 @@ impl std::fmt::Display for Config {
             database_host(&self.database_url),
             self.allowed_origins
                 .iter()
-                .map(|x| x.to_str().unwrap().to_string())
+                .map(|x| x.to_str().unwrap_or("<invalid>").to_string())
                 .collect::<Vec<String>>()
                 .join(" "),
             self.burst_size,

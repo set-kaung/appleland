@@ -1,3 +1,10 @@
+#![warn(clippy::pedantic)]
+#![deny(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
 use appleland::app_error::AppError;
 use appleland::app_state::AppState;
 use appleland::auth;
@@ -25,14 +32,14 @@ async fn main() -> Result<(), AppError> {
         .with_env_filter(
             EnvFilter::try_from_default_env()
                 .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
-                .unwrap(),
+                .map_err(|e| AppError::StartupErr(format!("failed to set up tracing: {e}")))?,
         )
         .init();
 
     let cli = config::Cli::parse();
     if let Err(e) = api_doc::generate_docs() {
         tracing::error!("failed to generate docs: {e}");
-    };
+    }
     if cli.gen_docs_only {
         return Ok(());
     }
@@ -47,7 +54,7 @@ async fn main() -> Result<(), AppError> {
     let pool = db::connect_db(conf.database_url).await?;
 
     let state = AppState::new(
-        Arc::new(auth::SupabaseAuth::new(conf.supabase_ref)),
+        Arc::new(auth::SupabaseAuth::new(&conf.supabase_ref)),
         pool.clone(),
     );
 
@@ -98,28 +105,30 @@ async fn main() -> Result<(), AppError> {
         .nest("/admin", admin_routes)
         .with_state(state.clone());
 
-    let app = middleware::with_global_middleware(
+    let app: Router = middleware::with_global_middleware(
         app_router,
         conf.allowed_origins,
         conf.burst_size,
         conf.per_sec,
-    );
+    )?;
 
     tracing::info!("Starting api server on port :{}", conf.port);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", conf.port))
         .await
-        .unwrap();
+        .map_err(|e| AppError::StartupErr(format!("failed to listen: {e}")))?;
+
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
     .with_graceful_shutdown(shutdown_signal(abort_handle.clone()))
     .await
-    .unwrap();
+    .map_err(|_| AppError::GeneralErr)?;
+
     match deletion_task.await {
         Ok(_) => tracing::info!("Session deletion task completed normally"),
         Err(e) if e.is_cancelled() => {
-            tracing::info!("Session deletion task cancelled via shutdown")
+            tracing::info!("Session deletion task cancelled via shutdown");
         }
         Err(e) => tracing::error!("Session deletion task failed: {}", e),
     }
@@ -132,24 +141,28 @@ async fn health() -> Result<(StatusCode, String), ()> {
 
 async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
     let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
+        if let Err(e) = signal::ctrl_c().await {
+            tracing::error!("failed to install Ctrl+C handler: {e}");
+        }
     };
 
     #[cfg(unix)]
     let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
+        match signal::unix::signal(signal::unix::SignalKind::terminate()) {
+            Ok(mut sig) => {
+                sig.recv().await;
+            }
+            Err(e) => {
+                tracing::error!("failed to install signal handler: {e}");
+            }
+        }
     };
 
     #[cfg(not(unix))]
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => { deletion_task_abort_handle.abort() },
-        _ = terminate => { deletion_task_abort_handle.abort() },
+        () = ctrl_c => { deletion_task_abort_handle.abort() },
+        () = terminate => { deletion_task_abort_handle.abort() },
     }
 }

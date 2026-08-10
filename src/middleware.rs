@@ -1,5 +1,6 @@
 use super::auth::{AdminRole, AuthError, Claims};
 use crate::app_error::APIError;
+use crate::app_error::AppError;
 use crate::app_state::AppState;
 use axum::Router;
 use axum::error_handling::HandleErrorLayer;
@@ -90,9 +91,17 @@ pub async fn partitioned_cookie_middleware(
         && !val.contains("Partitioned")
     {
         let patched = format!("{}; Partitioned", val);
-        response
-            .headers_mut()
-            .insert(header::SET_COOKIE, HeaderValue::from_str(&patched).unwrap());
+        match HeaderValue::from_str(&patched) {
+            Ok(header_val) => {
+                response
+                    .headers_mut()
+                    .insert(header::SET_COOKIE, header_val);
+            }
+            Err(e) => {
+                tracing::error!("failed to build Partitioned cookie header: {e}");
+                return APIError::InternalErr.into_response();
+            }
+        }
     }
 
     response
@@ -103,17 +112,18 @@ pub fn with_global_middleware(
     allowed_origins: Vec<HeaderValue>,
     burst_size: u32,
     per_sec: u64,
-) -> Router {
+) -> Result<Router, AppError> {
     let governor_conf = GovernorConfigBuilder::default()
         .per_second(per_sec)
         .burst_size(burst_size)
         .finish()
-        .unwrap();
+        .ok_or_else(|| AppError::StartupErr("failed to setup governor middleware".to_string()))?;
+
     let rate_limit_layer = GovernorLayer::new(governor_conf);
 
     let cors_layer = CorsLayer::new().allow_origin(allowed_origins);
 
-    router.layer(
+    Ok(router.layer(
         ServiceBuilder::new()
             .layer(rate_limit_layer)
             .layer(HandleErrorLayer::new(|err: BoxError| async move {
@@ -146,7 +156,7 @@ pub fn with_global_middleware(
                     tracing::error!("Request failed: {:?}", error);
                 },
             )),
-    )
+    ))
 }
 
 pub async fn admin_auth_middleware(

@@ -54,7 +54,7 @@ impl NewInventoryRecord {
     pub fn new(
         product_id: Uuid,
         admin_id: Uuid,
-        payload: NewInventoryPayload,
+        payload: &NewInventoryPayload,
     ) -> Result<Self, APIError> {
         if payload.quantity_received <= 0 {
             return Err(APIError::BadRequest(
