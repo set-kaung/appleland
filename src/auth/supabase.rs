@@ -6,7 +6,9 @@ use reqwest;
 use serde::Deserialize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock, broadcast};
+
+pub type InflightJwks = Arc<Mutex<Option<broadcast::Sender<Result<Jwks, AuthError>>>>>;
 
 #[derive(Clone, Deserialize)]
 pub struct Jwk {
@@ -31,6 +33,7 @@ pub struct SupabaseAuth {
     cache: Arc<RwLock<Option<CachedJwks>>>,
     cache_ttl: Duration,
     http: reqwest::Client,
+    inflight: InflightJwks,
 }
 
 impl SupabaseAuth {
@@ -40,6 +43,7 @@ impl SupabaseAuth {
             cache: Arc::new(RwLock::new(None)),
             cache_ttl: Duration::from_mins(10),
             http: reqwest::Client::new(),
+            inflight: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -53,7 +57,24 @@ impl SupabaseAuth {
             }
         }
 
-        let jwks = self
+        let mut inflight = self.inflight.lock().await;
+
+        if let Some(tx) = inflight.as_ref() {
+            let mut rx = tx.subscribe();
+            drop(inflight);
+            match rx.recv().await {
+                Ok(result) => return result,
+                Err(_) => {
+                    return Err(AuthError::Provider("JWKS fetch aborted".to_string()));
+                }
+            }
+        }
+
+        let (tx, _) = broadcast::channel(1);
+        *inflight = Some(tx.clone());
+        drop(inflight);
+
+        let result = self
             .http
             .get(&self.jwks_url)
             .send()
@@ -61,9 +82,9 @@ impl SupabaseAuth {
             .map_err(|e| AuthError::Provider(e.to_string()))?
             .json::<Jwks>()
             .await
-            .map_err(|e| AuthError::Provider(e.to_string()))?;
+            .map_err(|e| AuthError::Provider(e.to_string()));
 
-        {
+        if let Ok(ref jwks) = result {
             let mut cache = self.cache.write().await;
             *cache = Some(CachedJwks {
                 jwks: jwks.clone(),
@@ -71,7 +92,12 @@ impl SupabaseAuth {
             });
         }
 
-        Ok(jwks)
+        let _ = tx.send(result.clone());
+
+        let mut inflight = self.inflight.lock().await;
+        *inflight = None;
+
+        result
     }
 }
 

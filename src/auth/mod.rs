@@ -20,7 +20,7 @@ pub struct Claims {
     pub aud: String,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum AuthError {
     #[error("invalid token")]
     InvalidToken,
