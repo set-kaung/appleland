@@ -80,14 +80,14 @@ where
             .get("role")
             .await
             .map_err(|_| APIError::InternalErr)?
-            .ok_or(APIError::AdminInvalidCreds)?;
+            .ok_or(APIError::Forbidden)?;
 
         let required = T::get_role();
 
         if role == required || role == AdminRole::SuperAdmin {
             Ok(RequiresRole(role, std::marker::PhantomData))
         } else {
-            Err(APIError::AdminInvalidCreds)
+            Err(APIError::Forbidden)
         }
     }
 }
