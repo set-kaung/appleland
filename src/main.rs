@@ -5,6 +5,7 @@
     clippy::panic,
     clippy::indexing_slicing
 )]
+
 use appleland::app_error::AppError;
 use appleland::app_state::AppState;
 use appleland::auth;
@@ -13,9 +14,14 @@ use appleland::db;
 use appleland::middleware;
 use appleland::{api_doc, sales};
 use appleland::{category, inventory, product};
+use axum::Json;
+use axum::extract::State;
 use axum::middleware as axum_middleware;
 use axum::{Router, http::StatusCode};
 use clap::Parser;
+use serde::Serialize;
+use sqlx::Connection;
+use sqlx::PgPool;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use time::Duration;
@@ -73,7 +79,9 @@ async fn main() -> Result<(), AppError> {
         .with_same_site(tower_sessions::cookie::SameSite::None)
         .with_expiry(Expiry::OnInactivity(Duration::hours(24)));
 
-    let root_routes = Router::new().route("/health", axum::routing::get(health));
+    let root_routes = Router::new()
+        .route("/health", axum::routing::get(health))
+        .with_state(pool);
 
     let api_routes = Router::new().nest("/products", product::route()).layer(
         axum_middleware::from_fn_with_state(state.clone(), middleware::user_auth_middleware),
@@ -135,8 +143,31 @@ async fn main() -> Result<(), AppError> {
     Ok(())
 }
 
-async fn health() -> Result<(StatusCode, String), ()> {
-    Ok((StatusCode::OK, "service is up".to_string()))
+#[derive(Serialize)]
+struct HealthResponse<'a> {
+    server: &'a str,
+    database: &'a str,
+}
+
+async fn health(State(pool): State<PgPool>) -> (StatusCode, Json<HealthResponse<'static>>) {
+    let database = match pool.acquire().await {
+        Ok(mut conn) => {
+            if conn.ping().await.is_ok() {
+                "ok"
+            } else {
+                "error"
+            }
+        }
+        Err(_) => "error",
+    };
+
+    (
+        StatusCode::OK,
+        Json(HealthResponse {
+            server: "ok",
+            database,
+        }),
+    )
 }
 
 async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
