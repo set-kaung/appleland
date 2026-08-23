@@ -94,7 +94,7 @@ fn default_expiry_interval() -> String {
 }
 
 fn default_playground_cleanup_interval() -> String {
-    "10m".to_string()
+    "30m".to_string()
 }
 
 pub fn load_config() -> Result<Config, AppError> {

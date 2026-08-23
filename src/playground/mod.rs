@@ -19,13 +19,13 @@ pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::t
         let mut ticker = tokio::time::interval(interval);
         loop {
             ticker.tick().await;
-            match store::delete_expired_tokens(&pool).await {
-                Ok(n) if n > 0 => {
-                    tracing::debug!(deleted = n, "cleaned up expired playground tokens");
+            match store::sweep_expired_tokens(&pool).await {
+                Ok((deleted, marked)) if deleted > 0 || marked > 0 => {
+                    tracing::debug!(deleted, marked, "playground token sweep");
                 }
                 Ok(_) => {}
                 Err(e) => {
-                    tracing::error!(error = ?e, "playground token cleanup failed");
+                    tracing::error!(error = ?e, "playground token sweep failed");
                 }
             }
         }
