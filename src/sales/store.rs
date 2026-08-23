@@ -37,6 +37,8 @@ pub async fn fetch_sale_detail_by_id(
     pool: &PgPool,
     sale_id: Uuid,
 ) -> Result<AdminSaleDetails, StoreError> {
+    let mut tx = pool.begin().await?;
+
     let sale_row = sqlx::query_as!(
         SaleRow,
         r#"
@@ -44,7 +46,7 @@ pub async fn fetch_sale_detail_by_id(
     "#,
         sale_id
     )
-    .fetch_one(pool)
+    .fetch_one(&mut *tx)
     .await?;
     let sale_items = sqlx::query_as!(
         SaleItem,
@@ -54,8 +56,11 @@ pub async fn fetch_sale_detail_by_id(
            WHERE sale_id = $1"#,
         sale_id
     )
-        .fetch_all(pool)
+        .fetch_all(&mut *tx)
         .await?;
+
+    tx.commit().await?;
+
     Ok(AdminSaleDetails {
         id: sale_row.id,
         total_amount: sale_row.total_amount,

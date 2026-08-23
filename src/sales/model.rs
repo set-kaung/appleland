@@ -1,5 +1,4 @@
 use rust_decimal::Decimal;
-use rust_decimal::prelude::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres};
 use time::{Date, OffsetDateTime};
@@ -112,7 +111,7 @@ pub struct SaleSummary {
     pub items_sold: i32,
     pub total_cost: Decimal,
     pub margin: Decimal,
-    pub margin_percentage: f64,
+    pub margin_percentage: Decimal,
     pub avg_basket: Decimal,
 }
 
@@ -124,11 +123,9 @@ impl From<SaleSummaryRow> for SaleSummary {
             value.total_sale / Decimal::from(value.transactions)
         };
         let margin_percentage = if value.total_sale == Decimal::ZERO {
-            0.0
+            Decimal::ZERO
         } else {
-            ((value.margin / value.total_sale) * Decimal::from(100))
-                .to_f64()
-                .unwrap_or(0.0)
+            (value.margin / value.total_sale) * Decimal::from(100)
         };
         Self {
             sale_date: value.sale_date,
