@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select user_id, tickets_purchased, free_tickets_redeemed, created_at,updated_at from playground_accounts where user_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "playground_accounts",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "tickets_purchased",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "playground_accounts",
+            "name": "tickets_purchased"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "free_tickets_redeemed",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "playground_accounts",
+            "name": "free_tickets_redeemed"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "playground_accounts",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "playground_accounts",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1691b3f3b3cd2b010ed8ac7fd1db36df08c47659933c1ca848674c8be0db7a28"
+}
