@@ -10,8 +10,12 @@ use utoipa::ToSchema;
 
 use argon2::{
     Argon2,
-    password_hash::{PasswordHash, PasswordVerifier},
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt},
 };
+
+/// Fixed 16-byte zero salt encoded as base64, used only to burn time on unknown usernames
+/// so that login attempts take roughly the same duration regardless of whether the user exists.
+const DUMMY_SALT_B64: &str = "AAAAAAAAAAAAAAAAAAAAAA==";
 use tracing::error;
 use uuid::Uuid;
 
@@ -171,13 +175,30 @@ pub async fn admin_login_handler(
                     APIError::InternalErr
                 })?;
 
+                // Rotate the session ID after privilege escalation to prevent session fixation.
+                session.cycle_id().await.map_err(|e| {
+                    tracing::error!("failed to rotate session id: {}", e);
+                    APIError::InternalErr
+                })?;
+
                 Ok((StatusCode::OK, Json(admin_resp)))
             }
         }
         Err(e) => {
             tracing::debug!("err admin: {}", e);
             match e {
-                RecordNotFound => Err(APIError::AdminInvalidCreds),
+                RecordNotFound => {
+                    // Avoid timing side channel attacks
+                    let dummy_salt = Salt::from_b64(DUMMY_SALT_B64).map_err(|e| {
+                        tracing::error!("failed to build dummy salt: {}", e);
+                        APIError::InternalErr
+                    })?;
+                    let _ = Argon2::default().hash_password(b"dummy", dummy_salt).map_err(|e| {
+                        tracing::error!("failed to hash dummy password: {}", e);
+                        APIError::InternalErr
+                    })?;
+                    Err(APIError::AdminInvalidCreds)
+                }
                 _ => Err(APIError::InternalErr),
             }
         }

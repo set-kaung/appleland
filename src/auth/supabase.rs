@@ -92,10 +92,15 @@ impl SupabaseAuth {
             });
         }
 
-        let _ = tx.send(result.clone());
+        // Clear the inflight channel *before* broadcasting so a late caller cannot subscribe
+        // after the value has already been sent. Such a caller will see `None`, hit the cache
+        // (populated above for successful fetches), and retry on its own if needed.
+        {
+            let mut inflight = self.inflight.lock().await;
+            *inflight = None;
+        }
 
-        let mut inflight = self.inflight.lock().await;
-        *inflight = None;
+        let _ = tx.send(result.clone());
 
         result
     }
