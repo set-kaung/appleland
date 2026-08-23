@@ -17,6 +17,7 @@ pub async fn fetch_all_paginated(
         SaleRow,
         r#"
     SELECT id,total_amount,created_at from sales
+    ORDER BY created_at DESC, id DESC
     LIMIT $1 OFFSET $2
     "#,
         limit,

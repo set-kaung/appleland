@@ -68,6 +68,7 @@ pub async fn fetch_paginated(
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.is_active = $3 AND p.is_deleted IS FALSE
+        ORDER BY p.created_at DESC, p.id DESC
         LIMIT $1 OFFSET $2"#,
         limit,
         offset,
@@ -115,6 +116,7 @@ pub async fn fetch_paginated_admin(
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.is_deleted IS FALSE
+        ORDER BY p.created_at DESC, p.id DESC
         LIMIT $1 OFFSET $2"#,
         limit,
         offset,
@@ -281,6 +283,7 @@ where
 
     filters.apply_filter(&mut data_builder);
 
+    data_builder.push(" ORDER BY p.created_at DESC, p.id DESC ");
     data_builder.push(" LIMIT ");
     data_builder.push_bind(limit);
     data_builder.push(" OFFSET ");
@@ -341,6 +344,7 @@ pub async fn fetch_products_search(
         qb.push(" AND p.category_id =");
         qb.push_bind(category_id);
     }
+    qb.push(" ORDER BY p.created_at DESC, p.id DESC ");
     qb.push(" LIMIT ");
     qb.push_bind(limit);
     qb.push(" OFFSET ");
