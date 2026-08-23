@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM playground_purchase_tokens WHERE status = 'expired'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "83be6b36ed482b517346df9848aa8bd3b14a9b3655a0cad9417d3e07a54141c0"
+}
