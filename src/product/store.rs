@@ -29,6 +29,7 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
+            WHERE p.is_deleted IS FALSE
             "#
     )
         .fetch_all(pool)
@@ -66,7 +67,7 @@ pub async fn fetch_paginated(
         FROM products p
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
-        WHERE p.is_active = $3
+        WHERE p.is_active = $3 AND p.is_deleted IS FALSE
         LIMIT $1 OFFSET $2"#,
         limit,
         offset,
@@ -76,7 +77,7 @@ pub async fn fetch_paginated(
         .await?;
 
     let total_items = sqlx::query_scalar!(
-        "SELECT COUNT(*) FROM products WHERE is_active = $1",
+        "SELECT COUNT(*) FROM products WHERE is_active = $1 AND is_deleted IS FALSE",
         is_active
     )
     .fetch_one(pool)
@@ -113,6 +114,7 @@ pub async fn fetch_paginated_admin(
         FROM products p
         JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
+        WHERE p.is_deleted IS FALSE
         LIMIT $1 OFFSET $2"#,
         limit,
         offset,
@@ -120,7 +122,7 @@ pub async fn fetch_paginated_admin(
         .fetch_all(pool)
         .await?;
 
-    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM products")
+    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM products WHERE is_deleted IS FALSE")
         .fetch_one(pool)
         .await?;
 
@@ -154,7 +156,7 @@ where
         FROM products p
         LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
-        WHERE p.id = $1"#,
+        WHERE p.id = $1 AND p.is_deleted IS FALSE"#,
         id
     )
         .fetch_one(executor)
@@ -198,7 +200,7 @@ pub async fn update(
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
        SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW()
-       WHERE id = $10
+       WHERE id = $10 AND is_deleted IS FALSE
        RETURNING id
         "#,
         payload.barcode,
@@ -217,15 +219,22 @@ pub async fn update(
     fetch_by_id(&mut **tx, product_id).await
 }
 
-pub async fn delete(tx: &mut Transaction<'_, Postgres>, id: Uuid) -> Result<(), StoreError> {
-    let result = sqlx::query!(r#"DELETE from products WHERE id = $1"#, id)
-        .execute(&mut **tx)
-        .await?;
+pub async fn delete(
+    tx: &mut Transaction<'_, Postgres>,
+    id: Uuid,
+    deleted_by: Uuid,
+) -> Result<(), StoreError> {
+    let result = sqlx::query!(
+        r#"UPDATE products
+           SET is_deleted = TRUE, deleted_at = NOW(), deleted_by = $2
+           WHERE id = $1 AND is_deleted IS FALSE"#,
+        id,
+        deleted_by
+    )
+    .execute(&mut **tx)
+    .await?;
     let affected = result.rows_affected();
 
-    if affected > 1 {
-        return Err(StoreError::UnexpectedRowsAffected(affected));
-    }
     if affected == 0 {
         return Err(StoreError::RecordNotFound);
     }
@@ -263,7 +272,7 @@ where
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
-            WHERE 1=1",
+            WHERE p.is_deleted IS FALSE",
     );
 
     filters.apply_filter(&mut data_builder);
@@ -276,7 +285,7 @@ where
     let query = data_builder.build_query_as::<ProductRow>();
     let product_rows = query.fetch_all(pool).await?;
 
-    let mut count_qb = QueryBuilder::<Postgres>::new("SELECT COUNT(*) FROM products p WHERE 1=1");
+    let mut count_qb = QueryBuilder::<Postgres>::new("SELECT COUNT(*) FROM products p WHERE p.is_deleted IS FALSE");
     filters.apply_filter(&mut count_qb);
     let total: i64 = count_qb.build_query_scalar().fetch_one(pool).await?;
 
@@ -313,7 +322,7 @@ pub async fn fetch_products_search(
                 FROM products p
                 LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id
-                WHERE 1=1
+                WHERE p.is_deleted IS FALSE
             ",
     );
 
@@ -337,7 +346,7 @@ pub async fn fetch_products_search(
     let result = product_query.fetch_all(pool).await?;
 
     let mut cqb: QueryBuilder<Postgres> =
-        QueryBuilder::new("select COUNT(*) from products p where 1=1");
+        QueryBuilder::new("select COUNT(*) from products p where p.is_deleted IS FALSE");
 
     cqb.push(" AND (p.name ILIKE ");
     cqb.push_bind(search_term.clone());

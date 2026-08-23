@@ -302,9 +302,8 @@ pub async fn update_product(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
     responses(
-        (status = 204, description = "Product deleted"),
+        (status = 204, description = "Product soft-deleted"),
         (status = 404, description = "Product not found"),
-        (status = 409, description = "Conflict - Product has dependent records"),
         (status = 500, description = "Internal server error")
     ),
     security(
@@ -315,15 +314,16 @@ pub async fn update_product(
 
 pub async fn delete_product(
     State(state): State<AppState>,
-    _session: Session,
+    session: Session,
     Path(product_id): Path<Uuid>,
 ) -> Result<StatusCode, APIError> {
+    let admin_id = session_admin_id(session).await?;
     let mut tx = state.db.begin().await.map_err(|e| {
         error!("failed to create transaction: {e}");
         APIError::InternalErr
     })?;
 
-    store::delete(&mut tx, product_id).await?;
+    store::delete(&mut tx, product_id, admin_id).await?;
     tx.commit().await.map_err(|e| {
         error!("failed to commit transaction: {e}");
         APIError::InternalErr
