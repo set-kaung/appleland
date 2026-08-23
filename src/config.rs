@@ -20,6 +20,9 @@ pub struct Config {
     #[serde(default = "default_expiry_interval")]
     pub session_delete_interval: String,
 
+    #[serde(default = "default_playground_cleanup_interval")]
+    pub playground_token_cleanup_interval: String,
+
     #[serde(default)]
     pub rust_log: Option<String>,
 }
@@ -36,6 +39,7 @@ impl std::fmt::Display for Config {
                 burst_size: {}
                 per_sec: {}
                 session_delete_interval: {}
+                playground_token_cleanup_interval: {}
                 rust_log: {}",
             self.port,
             self.supabase_ref,
@@ -48,6 +52,7 @@ impl std::fmt::Display for Config {
             self.burst_size,
             self.per_sec,
             self.session_delete_interval,
+            self.playground_token_cleanup_interval,
             self.rust_log.clone().unwrap_or("NONE".to_string()),
         )
     }
@@ -86,6 +91,10 @@ fn default_burst_size() -> u32 {
 
 fn default_expiry_interval() -> String {
     "1m".to_string()
+}
+
+fn default_playground_cleanup_interval() -> String {
+    "10m".to_string()
 }
 
 pub fn load_config() -> Result<Config, AppError> {
