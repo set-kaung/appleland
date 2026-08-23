@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url as \"image_url?\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url as \"image_url?\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_deleted IS FALSE\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -200,5 +200,5 @@
       true
     ]
   },
-  "hash": "0d3702471de99b6f5174192ce311c95818caa2938b8b14c56e2f494177de9022"
+  "hash": "54efeb1d12ea821da2ee2632d0eeada281e0b758740796867c489e2ff49b7c67"
 }

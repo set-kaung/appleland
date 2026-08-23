@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT COUNT(*) FROM products WHERE is_active = $1",
+  "query": "SELECT COUNT(*) FROM products WHERE is_active = $1 AND is_deleted IS FALSE",
   "describe": {
     "columns": [
       {
@@ -19,5 +19,5 @@
       null
     ]
   },
-  "hash": "eef4c9c955c3638eeed384eef5a7d71c31534ccaee2ce92ca3840570084ee1b6"
+  "hash": "2aed832b8f7fe68060269a1dcb3f6a20d2f58872188d9decdbc609c0bfeb151c"
 }

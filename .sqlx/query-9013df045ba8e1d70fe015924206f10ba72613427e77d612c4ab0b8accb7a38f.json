@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, selling_price FROM products WHERE id = ANY($1)",
+  "query": "SELECT id, selling_price FROM products WHERE id = ANY($1) AND is_deleted IS FALSE",
   "describe": {
     "columns": [
       {
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "a9f1c1ee0d5873c5e837991a99aa0f6a03c071a96ea3cd7dd1bf97dd1fc86a0b"
+  "hash": "9013df045ba8e1d70fe015924206f10ba72613427e77d612c4ab0b8accb7a38f"
 }

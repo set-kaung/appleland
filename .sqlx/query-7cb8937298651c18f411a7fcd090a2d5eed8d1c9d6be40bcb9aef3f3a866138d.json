@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            ",
+  "query": "\n        SELECT\n            p.id as \"id!\",\n            p.barcode as \"barcode!\",\n            p.name as \"name!\",\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active as \"is_active!\",\n            p.selling_price as \"selling_price!\",\n            p.created_at as \"created_at!\",\n            p.updated_at as \"updated_at!\",\n            p.created_by as \"created_by!\",\n            p.updated_by as \"updated_by!\",\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1 AND p.is_deleted IS FALSE",
   "describe": {
     "columns": [
       {
@@ -60,7 +60,7 @@
       },
       {
         "ordinal": 5,
-        "name": "category",
+        "name": "category?",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -82,7 +82,7 @@
       },
       {
         "ordinal": 7,
-        "name": "sub_category",
+        "name": "sub_category?",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -176,7 +176,9 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -197,5 +199,5 @@
       true
     ]
   },
-  "hash": "a7b6da99793e9b1fd40d37c688f584e3ebae1f485db43481639fea640cd5203b"
+  "hash": "7cb8937298651c18f411a7fcd090a2d5eed8d1c9d6be40bcb9aef3f3a866138d"
 }

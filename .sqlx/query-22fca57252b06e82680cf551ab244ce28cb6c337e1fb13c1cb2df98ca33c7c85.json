@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE products\n           SET is_deleted = TRUE, deleted_at = NOW(), deleted_by = $2\n           WHERE id = $1 AND is_deleted IS FALSE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "22fca57252b06e82680cf551ab244ce28cb6c337e1fb13c1cb2df98ca33c7c85"
+}

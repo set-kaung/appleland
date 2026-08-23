@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT (expires_at < NOW()) AS \"expired!\", status::text AS \"status!\"\n           FROM playground_purchase_tokens WHERE id = $1",
+  "query": "SELECT (expires_at < NOW()) AS \"expired!\", status::text AS \"status!\"\n           FROM playground_purchase_tokens WHERE id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -26,5 +26,5 @@
       null
     ]
   },
-  "hash": "674348f1b06b378b4023543fa65de81f640638ece269bbea585da30aef281120"
+  "hash": "199f0a2d0402bd9b2e73ae0bea68d81359f6e56df85770dd4b6c152114398c10"
 }
