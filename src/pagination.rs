@@ -19,7 +19,7 @@ impl PaginationQuery {
     pub fn get_limit_and_offset(&self) -> (i64, i64, i64) {
         let page_size = self.page_size.unwrap_or(10).clamp(1, 100);
         let page = self.page.unwrap_or(1).max(1);
-        let offset = (page - 1) * page_size;
+        let offset = (page - 1).saturating_mul(page_size);
 
         (page_size, offset, page)
     }
