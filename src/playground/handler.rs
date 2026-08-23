@@ -37,6 +37,9 @@ pub async fn creat_playground_token(
     session: Session,
     Json(payload): Json<CreateClaimTokenPayload>,
 ) -> ApiResult<Uuid> {
+    if payload.quantity < 0{
+        return Err(APIError::BadRequest("ticket quantity must be greater than 0".to_string()))
+    }
     let admin_id = session_admin_id(session).await?;
     let token = store::create_claim_token(&state.db, admin_id, payload.quantity).await?;
     Ok(Json(token))
