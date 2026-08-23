@@ -21,11 +21,21 @@ pub async fn create_claim_token(
     Ok(result)
 }
 
-pub async fn delete_expired_tokens(pool: &PgPool) -> Result<u64, StoreError> {
-    let result = sqlx::query!("DELETE FROM playground_purchase_tokens WHERE expires_at < NOW()")
+pub async fn sweep_expired_tokens(pool: &PgPool) -> Result<(u64, u64), StoreError> {
+    let deleted = sqlx::query!("DELETE FROM playground_purchase_tokens WHERE status = 'expired'")
         .execute(pool)
-        .await?;
-    Ok(result.rows_affected())
+        .await?
+        .rows_affected();
+
+    let marked = sqlx::query!(
+        "UPDATE playground_purchase_tokens SET status = 'expired'
+         WHERE status = 'pending' AND expires_at < NOW()"
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    Ok((deleted, marked))
 }
 
 
@@ -65,6 +75,13 @@ pub async fn claim_token(
     match row {
         None => Err(StoreError::RecordNotFound),
         Some(r) if r.expired || r.status == "expired" => {
+            sqlx::query!(
+                "UPDATE playground_purchase_tokens SET status = 'expired'
+                 WHERE id = $1 AND status = 'pending'",
+                token
+            )
+            .execute(pool)
+            .await?;
             Err(StoreError::TokenExpired(token.to_string()))
         }
         Some(_) => Err(StoreError::InvalidInput("token already claimed".to_string())),
