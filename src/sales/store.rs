@@ -98,7 +98,7 @@ pub async fn fetch_selling_prices(
 ) -> Result<HashMap<Uuid, Decimal>, StoreError> {
     let rows = sqlx::query_as!(
         PriceRow,
-        "SELECT id, selling_price FROM products WHERE id = ANY($1)",
+        "SELECT id, selling_price FROM products WHERE id = ANY($1) AND is_deleted IS FALSE",
         product_ids
     )
     .fetch_all(&mut **tx)
