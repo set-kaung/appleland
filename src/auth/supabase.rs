@@ -107,7 +107,7 @@ impl AuthProvider for SupabaseAuth {
         let header: Header = match decode_header(token) {
             Ok(h) => h,
             Err(err) => {
-                println!("error decoding jwks header: {err}");
+                tracing::error!("error decoding jwks header: {err}");
                 return Err(AuthError::InvalidToken);
             }
         };
@@ -138,7 +138,7 @@ impl AuthProvider for SupabaseAuth {
                 if let ErrorKind::ExpiredSignature = e.kind() {
                     Err(AuthError::Expired)
                 } else {
-                    println!("decode error: {e:?}");
+                    tracing::error!("decode error: {e:?}");
                     Err(AuthError::InvalidToken)
                 }
             }
