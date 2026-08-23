@@ -23,6 +23,9 @@ pub enum StoreError {
 
     #[error("invalid input: {0}")]
     InvalidInput(String),
+
+    #[error("expire: {0}")]
+    TokenExpired(String),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -64,6 +67,9 @@ pub enum APIError {
 
     #[error("not found")]
     NotFound,
+
+    #[error("token expired")]
+    TokenExpired,
 }
 
 impl IntoResponse for APIError {
@@ -79,6 +85,7 @@ impl IntoResponse for APIError {
             APIError::BadRequest(e) => (StatusCode::BAD_REQUEST, e).into_response(),
             APIError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized").into_response(),
             APIError::NotFound => (StatusCode::NOT_FOUND, "not found").into_response(),
+            APIError::TokenExpired => (StatusCode::GONE, "purchase token expired").into_response(),
         }
     }
 }
@@ -130,6 +137,10 @@ impl From<StoreError> for APIError {
                 ))
             }
             StoreError::InvalidInput(e) => APIError::BadRequest(e),
+            StoreError::TokenExpired(id) => {
+                tracing::warn!(token = %id, "claim attempted on expired token");
+                APIError::TokenExpired
+            }
         }
     }
 }
