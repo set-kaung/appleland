@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    SELECT id,total_amount,created_at from sales\n    LIMIT $1 OFFSET $2\n    ",
+  "query": "\n    SELECT id,total_amount,created_at from sales\n    ORDER BY created_at DESC, id DESC\n    LIMIT $1 OFFSET $2\n    ",
   "describe": {
     "columns": [
       {
@@ -49,5 +49,5 @@
       false
     ]
   },
-  "hash": "b454efa5393912830443410eb28ae9e1a9f9d71a1fc03237dc756aed9e8b1e5a"
+  "hash": "4445afefa9b3af62e2d0716b6e53b0dc4cfd4813769b070f8345eee12f69b570"
 }
