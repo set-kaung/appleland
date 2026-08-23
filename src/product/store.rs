@@ -215,7 +215,11 @@ pub async fn update(
         payload.id,
     )
         .fetch_one(&mut **tx)
-        .await.map_err(StoreError::Database)?;
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => StoreError::RecordNotFound,
+            e => StoreError::Database(e),
+        })?;
     fetch_by_id(&mut **tx, product_id).await
 }
 
