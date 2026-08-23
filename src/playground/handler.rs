@@ -55,7 +55,7 @@ pub async fn creat_playground_token(
     ),
     tag = "User Playground"
     )]
-pub async fn get_user_ticket(
+pub async fn get_user_tickets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResult<UserPlaygroundTickets> {

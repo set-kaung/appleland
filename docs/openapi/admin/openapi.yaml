@@ -184,13 +184,13 @@ paths:
                 type: string
                 format: uuid
         '401':
-          description: Unauthorized - Missing or invalid JWT
+          description: Unauthorized - Missing or invalid Session Cookie
         '403':
           description: Forbidden - Insufficient privileges
         '500':
           description: Internal server error
       security:
-      - bearer: []
+      - session_cookie: []
   /admin/products:
     get:
       tags:

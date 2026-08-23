@@ -6,6 +6,47 @@ info:
     name: ''
   version: 0.1.0
 paths:
+  /api/playground/tickets/{user_id}:
+    get:
+      tags:
+      - User Playground
+      description: Get Tickets History of a User
+      operationId: get_user_tickets
+      responses:
+        '200':
+          description: Ticket History
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPlaygroundTickets'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
+  /api/playground/tokens/{token_id}:
+    patch:
+      tags:
+      - User Playground
+      description: Claim a ticket sale token by a user
+      operationId: claim_token
+      responses:
+        '200':
+          description: Ticket Token Claimed
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '410':
+          description: Token Expired
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/products:
     get:
       tags:
@@ -201,6 +242,26 @@ components:
           format: uuid
         query:
           type: string
+    UserPlaygroundTickets:
+      type: object
+      required:
+      - user_id
+      - tickets_purchased
+      - free_tickets_redeemed
+      - to_redeem
+      properties:
+        free_tickets_redeemed:
+          type: integer
+          format: int32
+        tickets_purchased:
+          type: integer
+          format: int32
+        to_redeem:
+          type: integer
+          format: int32
+        user_id:
+          type: string
+          format: uuid
     UserProduct:
       type: object
       required:

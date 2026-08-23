@@ -1,7 +1,7 @@
 use crate::product::model::UserProduct;
 
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
-use super::super::product;
+use crate::{product,playground};
 use super::BearerSecurityAddon;
 use utoipa::OpenApi;
 
@@ -16,6 +16,8 @@ use utoipa::OpenApi;
         product::handler::get_products_paginated,
         product::handler::get_product_by_id,
         product::handler::search_products,
+        playground::handler::claim_token,
+        playground::handler::get_user_tickets
     ),
     components(
         schemas(
@@ -23,6 +25,7 @@ use utoipa::OpenApi;
             PaginationQuery,
             PaginatedResponse<UserProduct>,
             product::model::ProductFilter,
+            playground::model::UserPlaygroundTickets
         )
     ),
     tags(
