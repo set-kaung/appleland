@@ -12,16 +12,9 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
-use appleland::middleware;
-use appleland::{category, inventory, playground, product, sales};
-use axum::Json;
-use axum::extract::State;
-use axum::middleware as axum_middleware;
-use axum::{Router, http::StatusCode};
+use appleland::playground;
+use appleland::routes;
 use clap::Parser;
-use serde::Serialize;
-use sqlx::Connection;
-use sqlx::PgPool;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use time::Duration;
@@ -87,47 +80,10 @@ async fn main() -> Result<(), AppError> {
         .with_same_site(tower_sessions::cookie::SameSite::None)
         .with_expiry(Expiry::OnInactivity(Duration::hours(24)));
 
-    let root_routes = Router::new()
-        .route("/health", axum::routing::get(health))
-        .with_state(pool);
-
-    let api_routes = Router::new()
-        .nest("/products", product::route())
-        .nest("/playground", playground::route())
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            middleware::user_auth_middleware,
-        ));
-
-    let admin_protected_routes = Router::new()
-        .nest("/products", product::route_admin())
-        .nest("/inventory", inventory::route_admin())
-        .nest("/categories", category::route_admin())
-        .nest("/sales", sales::route_admin())
-        .nest("/playground", playground::route_admin())
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            middleware::admin_auth_middleware,
-        ));
-
-    let admin_routes = Router::new()
-        .route("/login", axum::routing::post(auth::admin_login_handler))
-        .route("/logout", axum::routing::post(auth::admin_logout_handler))
-        .merge(admin_protected_routes)
-        .layer(session_layer)
-        .layer(axum::middleware::from_fn(
-            middleware::partitioned_cookie_middleware,
-        ))
-        .with_state(state.clone());
-
-    let app_router = Router::new()
-        .merge(root_routes)
-        .nest("/api", api_routes)
-        .nest("/admin", admin_routes)
-        .with_state(state.clone());
-
-    let app: Router = middleware::with_global_middleware(
-        app_router,
+    let app = routes::create_app(
+        state.clone(),
+        pool,
+        session_layer,
         conf.allowed_origins,
         conf.burst_size,
         conf.per_sec,
@@ -157,33 +113,6 @@ async fn main() -> Result<(), AppError> {
         Err(e) => tracing::error!("Session deletion task failed: {}", e),
     }
     Ok(())
-}
-
-#[derive(Serialize)]
-struct HealthResponse<'a> {
-    server: &'a str,
-    database: &'a str,
-}
-
-async fn health(State(pool): State<PgPool>) -> (StatusCode, Json<HealthResponse<'static>>) {
-    let database = match pool.acquire().await {
-        Ok(mut conn) => {
-            if conn.ping().await.is_ok() {
-                "ok"
-            } else {
-                "error"
-            }
-        }
-        Err(_) => "error",
-    };
-
-    (
-        StatusCode::OK,
-        Json(HealthResponse {
-            server: "ok",
-            database,
-        }),
-    )
 }
 
 async fn shutdown_signal(
