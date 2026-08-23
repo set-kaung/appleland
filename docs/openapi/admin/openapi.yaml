@@ -163,6 +163,34 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/playground/tokens:
+    get:
+      tags:
+      - Admin Playground
+      description: Create a claim token for the frontend
+      operationId: creat_playground_token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClaimTokenPayload'
+        required: true
+      responses:
+        '200':
+          description: Claim token
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '403':
+          description: Forbidden - Insufficient privileges
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /admin/products:
     get:
       tags:
@@ -738,6 +766,14 @@ components:
       properties:
         name:
           type: string
+    CreateClaimTokenPayload:
+      type: object
+      required:
+      - quantity
+      properties:
+        quantity:
+          type: integer
+          format: int32
     CreateProductPayload:
       type: object
       required:
