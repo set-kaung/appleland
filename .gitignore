@@ -6,7 +6,7 @@
 !run.sh
 drop.sql
 *.md
-!docs/*.d
+!docs/*.md
 *.log
 scripts/
 notes
