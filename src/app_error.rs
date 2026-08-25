@@ -104,6 +104,7 @@ impl From<sqlx::Error> for StoreError {
                             pg.constraint()
                                 .map_or("missing field".to_string(), |s| s.to_string()),
                         ),
+                        "23503" => StoreError::RecordNotFound,
                         _ => StoreError::Database(e),
                     };
                 }
