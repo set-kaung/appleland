@@ -204,7 +204,7 @@ paths:
       security:
       - session_cookie: []
   /admin/playground/tokens:
-    get:
+    post:
       tags:
       - Admin Playground
       description: Create a claim token for the frontend
@@ -671,6 +671,11 @@ components:
         created_by:
           type: string
           format: uuid
+        expiry_date:
+          type:
+          - string
+          - 'null'
+          format: date-time
         id:
           type: string
           format: uuid
@@ -707,6 +712,7 @@ components:
       - updated_at
       - created_by
       - updated_by
+      - is_perishable
       properties:
         barcode:
           type: string
@@ -737,6 +743,8 @@ components:
           - string
           - 'null'
         is_active:
+          type: boolean
+        is_perishable:
           type: boolean
         name:
           type: string
@@ -811,9 +819,13 @@ components:
     CreateClaimTokenPayload:
       type: object
       required:
-      - quantity
+      - purchased_quantity
+      - free_quantity
       properties:
-        quantity:
+        free_quantity:
+          type: integer
+          format: int32
+        purchased_quantity:
           type: integer
           format: int32
     CreateProductPayload:
@@ -823,6 +835,7 @@ components:
       - barcode
       - selling_price
       - is_active
+      - is_perishable
       properties:
         barcode:
           type: string
@@ -844,6 +857,8 @@ components:
           - type: 'null'
           - $ref: '#/components/schemas/NewInventoryPayload'
         is_active:
+          type: boolean
+        is_perishable:
           type: boolean
         name:
           type: string
@@ -879,6 +894,11 @@ components:
       - quantity_received
       - unit_cost
       properties:
+        expiry_date:
+          type:
+          - string
+          - 'null'
+          format: date-time
         quantity_received:
           type: integer
           format: int32
@@ -922,6 +942,11 @@ components:
               created_by:
                 type: string
                 format: uuid
+              expiry_date:
+                type:
+                - string
+                - 'null'
+                format: date-time
               id:
                 type: string
                 format: uuid
@@ -977,6 +1002,7 @@ components:
             - updated_at
             - created_by
             - updated_by
+            - is_perishable
             properties:
               barcode:
                 type: string
@@ -1007,6 +1033,8 @@ components:
                 - string
                 - 'null'
               is_active:
+                type: boolean
+              is_perishable:
                 type: boolean
               name:
                 type: string
@@ -1248,6 +1276,7 @@ components:
       - category_id
       - is_active
       - selling_price
+      - is_perishable
       properties:
         barcode:
           type: string
@@ -1263,6 +1292,8 @@ components:
           - string
           - 'null'
         is_active:
+          type: boolean
+        is_perishable:
           type: boolean
         name:
           type: string
