@@ -89,11 +89,51 @@ paths:
       security:
       - session_cookie: []
   /admin/inventory/{product_id}:
+    get:
+      tags:
+      - Admin Inventory
+      description: List paginated inventory records for a product.
+      operationId: get_product_inventory_records
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated inventory records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_AdminInventory'
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
     post:
       tags:
       - Admin Inventory
       description: Add inventory stock to an existing product.
-      operationId: create_inventory
+      operationId: insert_inventory_record
       parameters:
       - name: product_id
         in: path
@@ -623,6 +663,7 @@ components:
       - updated_by
       - created_at
       - updated_at
+      - received_at
       properties:
         created_at:
           type: string
@@ -642,6 +683,9 @@ components:
         quantity_remaining:
           type: integer
           format: int32
+        received_at:
+          type: string
+          format: date-time
         unit_cost:
           type: string
         updated_at:
@@ -838,8 +882,75 @@ components:
         quantity_received:
           type: integer
           format: int32
+        received_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
         unit_cost:
           type: string
+    PaginatedResponse_AdminInventory:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - product_id
+            - quantity_received
+            - quantity_remaining
+            - unit_cost
+            - created_by
+            - updated_by
+            - created_at
+            - updated_at
+            - received_at
+            properties:
+              created_at:
+                type: string
+                format: date-time
+              created_by:
+                type: string
+                format: uuid
+              id:
+                type: string
+                format: uuid
+              product_id:
+                type: string
+                format: uuid
+              quantity_received:
+                type: integer
+                format: int32
+              quantity_remaining:
+                type: integer
+                format: int32
+              received_at:
+                type: string
+                format: date-time
+              unit_cost:
+                type: string
+              updated_at:
+                type: string
+                format: date-time
+              updated_by:
+                type: string
+                format: uuid
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginatedResponse_AdminProduct:
       type: object
       required:
@@ -1094,8 +1205,7 @@ components:
         margin:
           type: string
         margin_percentage:
-          type: number
-          format: double
+          type: string
         sale_date:
           type: string
           format: date

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at\n        ",
+  "query": "\n        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at, received_at\n        FROM inventory\n        WHERE product_id = ANY($1) AND quantity_remaining > 0\n        ORDER BY product_id, received_at ASC, id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -101,15 +101,22 @@
             "name": "updated_at"
           }
         }
+      },
+      {
+        "ordinal": 9,
+        "name": "received_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "received_at"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Int4",
-        "Int4",
-        "Numeric",
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -121,8 +128,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "c9849f9312cb0a0d403cfad3f59116d9e9bca3889e98763e16c7553fed05b008"
+  "hash": "5f96354447901b67de91f39f3c1ea7f78de71ef22c37d9a7f0785c7719f84491"
 }

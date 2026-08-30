@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at\n        FROM inventory\n        WHERE product_id = ANY($1) AND quantity_remaining > 0\n        ORDER BY product_id, created_at ASC, id ASC\n        ",
+  "query": "SELECT id, product_id, quantity_received, quantity_remaining,unit_cost,created_by,updated_by,created_at, updated_at,received_at FROM inventory WHERE product_id = $1 ORDER BY received_at DESC LIMIT $2 OFFSET $3",
   "describe": {
     "columns": [
       {
@@ -101,11 +101,24 @@
             "name": "updated_at"
           }
         }
+      },
+      {
+        "ordinal": 9,
+        "name": "received_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "received_at"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "UuidArray"
+        "Uuid",
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -117,8 +130,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "331cef2f1455cb9f472722b22524630849ad4705c11f347b5b23181c104cc6c7"
+  "hash": "34b5bb5e7e23ff365ae32752f48e291c9903b421211e567c1f7ac74dae0bdd73"
 }
