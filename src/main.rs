@@ -27,13 +27,21 @@ use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
-                .map_err(|e| AppError::StartupErr(format!("failed to set up tracing: {e}")))?,
-        )
-        .init();
+    let json_logs =
+        std::env::var("LOG_JSON").is_ok_and(|v| v.eq_ignore_ascii_case("true") || v == "1");
+
+    let env_filter = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("appleland=info,tower_http=warn"))
+        .map_err(|e| AppError::StartupErr(format!("failed to set up tracing: {e}")))?;
+
+    if json_logs {
+        tracing_subscriber::fmt()
+            .with_env_filter(env_filter)
+            .json()
+            .init();
+    } else {
+        tracing_subscriber::fmt().with_env_filter(env_filter).init();
+    }
 
     let cli = config::Cli::parse();
     if let Err(e) = api_doc::generate_docs() {
@@ -49,8 +57,8 @@ async fn main() -> Result<(), AppError> {
             tracing::error!("failed to parse duration: {}", e);
             AppError::GeneralErr
         })?;
-    let token_cleanup_interval =
-        parse_duration::parse(&conf.playground_token_cleanup_interval).map_err(|e| {
+    let token_cleanup_interval = parse_duration::parse(&conf.playground_token_cleanup_interval)
+        .map_err(|e| {
             tracing::error!("failed to parse duration: {}", e);
             AppError::GeneralErr
         })?;
@@ -98,10 +106,7 @@ async fn main() -> Result<(), AppError> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .with_graceful_shutdown(shutdown_signal(
-        abort_handle.clone(),
-        token_cleanup_handle,
-    ))
+    .with_graceful_shutdown(shutdown_signal(abort_handle.clone(), token_cleanup_handle))
     .await
     .map_err(|_| AppError::GeneralErr)?;
 
@@ -144,7 +149,7 @@ async fn shutdown_signal(
         () = ctrl_c => {
             deletion_task_abort_handle.abort();
             token_cleanup_abort_handle.abort();
-        },
+        }
         () = terminate => {
             deletion_task_abort_handle.abort();
             token_cleanup_abort_handle.abort();

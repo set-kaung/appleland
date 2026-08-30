@@ -24,6 +24,7 @@ use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_sessions::Session;
 use tracing::{Span, info};
+use uuid::Uuid;
 
 pub async fn user_auth_middleware(
     State(state): State<AppState>,
@@ -56,26 +57,37 @@ pub async fn user_auth_middleware(
             next.run(request).await
         }
         Err(AuthError::Expired) => {
-            println!("token expired");
+            tracing::warn!("token expired");
             StatusCode::UNAUTHORIZED.into_response()
         }
         Err(AuthError::InvalidToken) => {
-            println!("invalid token");
+            tracing::warn!("invalid token");
             StatusCode::UNAUTHORIZED.into_response()
         }
         Err(AuthError::Provider(e)) => {
-            println!("internal error : {}", e);
+            tracing::error!(error = %e, "auth provider error");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
 }
 
-pub async fn debug_log_middleware(request: Request<axum::body::Body>, next: Next) -> Response {
-    let method = request.method().clone();
-    let path = request.uri().path().to_string();
+#[derive(Debug, Clone, Copy)]
+pub struct RequestId(pub Uuid);
 
-    let response = next.run(request).await;
-    tracing::info!("{} {} {}", response.status(), method, path);
+pub async fn request_id_middleware(mut request: Request<Body>, next: Next) -> Response {
+    let request_id = request
+        .headers()
+        .get("x-request-id")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| Uuid::parse_str(value).ok())
+        .unwrap_or_else(Uuid::new_v4);
+
+    request.extensions_mut().insert(RequestId(request_id));
+
+    let mut response = next.run(request).await;
+    if let Ok(value) = HeaderValue::from_str(&request_id.to_string()) {
+        response.headers_mut().insert("x-request-id", value);
+    }
     response
 }
 
@@ -150,12 +162,38 @@ pub fn with_global_middleware(
                     .allow_headers(vec![CONTENT_TYPE, AUTHORIZATION, ACCEPT])
                     .allow_credentials(true),
             )
-            .layer(axum::middleware::from_fn(debug_log_middleware))
-            .layer(TraceLayer::new_for_http().on_failure(
-                |error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
-                    tracing::error!("Request failed: {:?}", error);
-                },
-            )),
+            .layer(axum::middleware::from_fn(request_id_middleware))
+            .layer(
+                TraceLayer::new_for_http()
+                    .make_span_with(|request: &Request| {
+                        let request_id = request.extensions().get::<RequestId>().map_or_else(
+                            || "unattributed".to_string(),
+                            |id| id.0.to_string(),
+                        );
+                        tracing::info_span!(
+                            "http_request",
+                            request_id = %request_id,
+                            method = %request.method(),
+                            path = %request.uri().path(),
+                        )
+                    })
+                    .on_response(|response: &Response, latency: Duration, _span: &Span| {
+                        tracing::info!(
+                            status = response.status().as_u16(),
+                            latency_ms = latency.as_millis() as u64,
+                            "request completed"
+                        );
+                    })
+                    .on_failure(
+                        |error: ServerErrorsFailureClass, latency: Duration, _span: &Span| {
+                            tracing::error!(
+                                error = ?error,
+                                latency_ms = latency.as_millis() as u64,
+                                "request failed"
+                            );
+                        },
+                    ),
+            ),
     ))
 }
 

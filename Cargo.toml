@@ -27,7 +27,11 @@ rust_decimal = { version = "1", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 tower = { version = "0.5.3", features = ["timeout"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "ansi"] }
+tracing-subscriber = { version = "0.3", features = [
+    "env-filter",
+    "ansi",
+    "json",
+] }
 tower-http = { version = "0.7", features = ["cors", "trace"] }
 tower_governor = "0.8.0"
 tower-sessions-sqlx-store = { git = "https://github.com/maxcountryman/tower-sessions-stores", features = [

@@ -77,7 +77,7 @@ where
 
 fn default_port() -> u16 {
     let port = 8080;
-    println!("using default port: {}", port);
+    tracing::info!("using default port: {}", port);
     port
 }
 
@@ -100,7 +100,7 @@ fn default_playground_cleanup_interval() -> String {
 pub fn load_config() -> Result<Config, AppError> {
     match envy::from_env::<Config>().map_err(AppError::ConfigErr) {
         Ok(conf) => {
-            println!("Configurations\n==============\n{}", conf);
+            tracing::info!("Configurations\n==============\n{}", conf);
             Ok(conf)
         }
         Err(err) => Err(err),
