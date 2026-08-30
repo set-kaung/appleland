@@ -28,3 +28,14 @@ pub async fn connect_db(db_url: String) -> Result<Pool<Postgres>, sqlx::Error> {
 pub trait DBQueryFilter<DB: sqlx::Database> {
     fn apply_filter(&self, query_builder: &mut sqlx::QueryBuilder<DB>);
 }
+
+pub fn escape_like(input: &str) -> String {
+    let mut escaped = String::with_capacity(input.len());
+    for ch in input.chars() {
+        if matches!(ch, '%' | '_' | '\\') {
+            escaped.push('\\');
+        }
+        escaped.push(ch);
+    }
+    escaped
+}
