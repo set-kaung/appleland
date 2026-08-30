@@ -178,6 +178,7 @@ mod tests {
             created_at: OffsetDateTime::now_utc(),
             updated_at: OffsetDateTime::now_utc(),
             received_at: OffsetDateTime::now_utc(),
+            expiry_date: Some(OffsetDateTime::now_utc()),
         }
     }
 

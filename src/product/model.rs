@@ -1,5 +1,5 @@
 use crate::app_error::APIError;
-use crate::db::DBQueryFilter;
+use crate::db::{DBQueryFilter, escape_like};
 use crate::inventory::model::NewInventoryPayload;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -26,6 +26,7 @@ pub struct AdminProduct {
     pub updated_at: OffsetDateTime,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    pub is_perishable: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -52,6 +53,7 @@ pub struct CreateProductPayload {
     pub is_active: bool,
     pub image_url: Option<String>,
     pub inventory: Option<NewInventoryPayload>,
+    pub is_perishable: bool,
 }
 
 impl CreateProductPayload {
@@ -87,6 +89,7 @@ pub struct InsertProduct {
     pub image_url: Option<String>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    pub is_perishable: bool,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -99,6 +102,7 @@ pub struct UpdateProductPayload {
     pub is_active: bool,
     pub selling_price: Decimal,
     pub image_url: Option<String>,
+    pub is_perishable: bool,
 }
 
 impl UpdateProductPayload {
@@ -134,6 +138,7 @@ pub struct UpdateProduct {
     pub selling_price: Decimal,
     pub updated_by: Uuid,
     pub image_url: Option<String>,
+    pub is_perishable: bool,
 }
 
 #[derive(Debug, FromRow)]
@@ -154,6 +159,7 @@ pub struct ProductRow {
     pub updated_by: Uuid,
     pub quantity_in_stock: i32,
     pub image_url: Option<String>,
+    pub is_perishable: bool,
 }
 
 impl From<ProductRow> for UserProduct {
@@ -191,6 +197,7 @@ impl From<ProductRow> for AdminProduct {
             updated_by: row.updated_by,
             quantity_in_stock: row.quantity_in_stock,
             image_url: row.image_url,
+            is_perishable: row.is_perishable,
         }
     }
 }
@@ -218,12 +225,12 @@ impl DBQueryFilter<Postgres> for ProductSearchParams {
     fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
         if let Some(name) = &self.name {
             query_builder.push(" AND p.name ILIKE ");
-            query_builder.push_bind(format!("%{name}%"));
+            query_builder.push_bind(format!("%{}%", escape_like(name)));
         }
 
         if let Some(barcode) = &self.barcode {
             query_builder.push(" AND p.barcode ILIKE ");
-            query_builder.push_bind(format!("%{barcode}%"));
+            query_builder.push_bind(format!("%{}%", escape_like(barcode)));
         }
 
         if let Some(categories_id) = &self.categories_id {

@@ -10,8 +10,8 @@ use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::product::model::{
-    AdminProduct, CreateProductPayload, InsertProduct, ProductFilter,
-    ProductSearchParamsAdmin, UpdateProduct, UpdateProductPayload, UserProduct,
+    AdminProduct, CreateProductPayload, InsertProduct, ProductFilter, ProductSearchParamsAdmin,
+    UpdateProduct, UpdateProductPayload, UserProduct,
 };
 
 use crate::auth::password::session_admin_id;
@@ -222,11 +222,13 @@ pub async fn create_product(
         image_url: payload.image_url,
         created_by: admin_id,
         updated_by: admin_id,
+        is_perishable: payload.is_perishable,
     };
 
     let product_id = store::create(&mut tx, insert_payload).await?;
     if let Some(inventory_payload) = payload.inventory {
-        let inventory_record = NewInventoryRecord::new(product_id, admin_id, &inventory_payload)?;
+        let inventory_record =
+            NewInventoryRecord::new(product_id, admin_id, payload.is_perishable, &inventory_payload)?;
         inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 
@@ -284,6 +286,7 @@ pub async fn update_product(
         selling_price: payload.selling_price,
         image_url: payload.image_url,
         updated_by: admin_id,
+        is_perishable: payload.is_perishable,
     };
 
     let product = store::update(&mut tx, update_payload).await?.into();

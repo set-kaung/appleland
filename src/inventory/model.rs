@@ -19,6 +19,8 @@ pub struct AdminInventory {
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub received_at: OffsetDateTime,
+
+    pub expiry_date: Option<OffsetDateTime>,
 }
 
 #[allow(dead_code)]
@@ -34,6 +36,8 @@ pub struct InventoryRow {
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub received_at: OffsetDateTime,
+
+    pub expiry_date: Option<OffsetDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -41,6 +45,8 @@ pub struct NewInventoryPayload {
     pub quantity_received: i32,
     pub unit_cost: Decimal,
     pub received_at: Option<OffsetDateTime>,
+
+    pub expiry_date: Option<OffsetDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -52,12 +58,14 @@ pub struct NewInventoryRecord {
     pub received_at: Option<OffsetDateTime>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    pub expiry_date: Option<OffsetDateTime>,
 }
 
 impl NewInventoryRecord {
     pub fn new(
         product_id: Uuid,
         admin_id: Uuid,
+        product_is_perishable: bool,
         payload: &NewInventoryPayload,
     ) -> Result<Self, APIError> {
         if payload.quantity_received <= 0 {
@@ -72,6 +80,18 @@ impl NewInventoryRecord {
             ));
         }
 
+        if product_is_perishable && payload.expiry_date.is_none() {
+            return Err(APIError::BadRequest(
+                "expiry_date is required for perishable products".to_string(),
+            ));
+        }
+
+        if !product_is_perishable && payload.expiry_date.is_some() {
+            return Err(APIError::BadRequest(
+                "expiry_date cannot be set for non-perishable products".to_string(),
+            ));
+        }
+
         Ok(NewInventoryRecord {
             product_id,
             quantity_received: payload.quantity_received,
@@ -80,6 +100,7 @@ impl NewInventoryRecord {
             created_by: admin_id,
             updated_by: admin_id,
             received_at: payload.received_at,
+            expiry_date: payload.expiry_date,
         })
     }
 }
@@ -102,6 +123,8 @@ impl From<InventoryRow> for AdminInventory {
             created_at: value.created_at,
             updated_at: value.updated_at,
             received_at: value.received_at,
+
+            expiry_date: value.expiry_date,
         }
     }
 }

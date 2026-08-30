@@ -1,5 +1,5 @@
 use crate::app_error::StoreError;
-use crate::db::DBQueryFilter;
+use crate::db::{DBQueryFilter, escape_like};
 use crate::product::model::{InsertProduct, ProductFilter};
 use crate::product::model::{ProductRow, UpdateProduct};
 use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
@@ -25,7 +25,8 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
                 p.created_by as "created_by!",
                 p.updated_by as "updated_by!",
                 COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as "quantity_in_stock!",
-                p.image_url
+                p.image_url,
+                p.is_perishable as "is_perishable!"
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -63,9 +64,10 @@ pub async fn fetch_paginated(
             p.created_by,
             p.updated_by,
             COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS "quantity_in_stock!",
-            p.image_url as "image_url?"
+            p.image_url as "image_url?",
+            p.is_perishable
         FROM products p
-        JOIN categories c1 on c1.id = p.category_id
+        LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.is_active = $3 AND p.is_deleted IS FALSE
         ORDER BY p.created_at DESC, p.id DESC
@@ -111,9 +113,10 @@ pub async fn fetch_paginated_admin(
             p.created_by,
             p.updated_by,
             COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!",
-            p.image_url as "image_url?"
+            p.image_url as "image_url?",
+            p.is_perishable
         FROM products p
-        JOIN categories c1 on c1.id = p.category_id
+        LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
         WHERE p.is_deleted IS FALSE
         ORDER BY p.created_at DESC, p.id DESC
@@ -124,9 +127,10 @@ pub async fn fetch_paginated_admin(
         .fetch_all(pool)
         .await?;
 
-    let total_items = sqlx::query_scalar!("SELECT COUNT(*) FROM products WHERE is_deleted IS FALSE")
-        .fetch_one(pool)
-        .await?;
+    let total_items =
+        sqlx::query_scalar!("SELECT COUNT(*) FROM products WHERE is_deleted IS FALSE")
+            .fetch_one(pool)
+            .await?;
 
     Ok((products, total_items.unwrap_or(0)))
 }
@@ -154,7 +158,8 @@ where
             p.created_by as "created_by!",
             p.updated_by as "updated_by!",
             COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as "quantity_in_stock!",
-            p.image_url
+            p.image_url,
+            p.is_perishable
         FROM products p
         LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -175,8 +180,8 @@ pub async fn create(
 ) -> Result<Uuid, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9)
+        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by, is_perishable)
+        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)
         RETURNING
             id
         "#,
@@ -188,7 +193,8 @@ pub async fn create(
         payload.selling_price,
         payload.is_active,
         payload.image_url,
-        payload.created_by
+        payload.created_by,
+        payload.is_perishable
     )
         .fetch_one(&mut **tx)
         .await?;
@@ -201,8 +207,8 @@ pub async fn update(
 ) -> Result<ProductRow, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW()
-       WHERE id = $10 AND is_deleted IS FALSE
+       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10
+       WHERE id = $11 AND is_deleted IS FALSE
        RETURNING id
         "#,
         payload.barcode,
@@ -214,7 +220,8 @@ pub async fn update(
         payload.is_active,
         payload.image_url,
         payload.updated_by,
-        payload.id,
+        payload.is_perishable,
+        payload.id
     )
         .fetch_one(&mut **tx)
         .await
@@ -274,7 +281,8 @@ where
                 p.created_by,
                 p.updated_by,
                 COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS quantity_in_stock,
-                p.image_url
+                p.image_url,
+                p.is_perishable
             FROM products p
             LEFT JOIN categories c1 on c1.id = p.category_id
             LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -292,7 +300,9 @@ where
     let query = data_builder.build_query_as::<ProductRow>();
     let product_rows = query.fetch_all(pool).await?;
 
-    let mut count_qb = QueryBuilder::<Postgres>::new("SELECT COUNT(*) FROM products p WHERE p.is_deleted IS FALSE");
+    let mut count_qb = QueryBuilder::<Postgres>::new(
+        "SELECT COUNT(*) FROM products p WHERE p.is_deleted IS FALSE",
+    );
     filters.apply_filter(&mut count_qb);
     let total: i64 = count_qb.build_query_scalar().fetch_one(pool).await?;
 
@@ -305,7 +315,7 @@ pub async fn fetch_products_search(
     limit: i64,
     offset: i64,
 ) -> Result<(Vec<ProductRow>, i64), StoreError> {
-    let search_term = format!("%{}%", filter.query);
+    let search_term = format!("%{}%", escape_like(&filter.query));
 
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
         r"
@@ -325,7 +335,8 @@ pub async fn fetch_products_search(
                     p.created_by,
                     p.updated_by,
                     COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS quantity_in_stock,
-                    p.image_url
+                    p.image_url,
+                    p.is_perishable
                 FROM products p
                 LEFT JOIN categories c1 on c1.id = p.category_id
                 LEFT JOIN categories c2 on c2.id = p.sub_category_id
@@ -372,4 +383,11 @@ pub async fn fetch_products_search(
     let total_count: Option<i64> = count_query.fetch_one(pool).await?;
 
     Ok((result, total_count.unwrap_or(0)))
+}
+
+pub async fn fetch_product_perishability(pool: &PgPool, id: Uuid) -> Result<bool, StoreError> {
+    let result = sqlx::query_scalar!("SELECT is_perishable FROM products WHERE id = $1", id)
+        .fetch_one(pool)
+        .await?;
+    Ok(result)
 }

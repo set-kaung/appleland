@@ -1,5 +1,6 @@
 pub mod handler;
 pub mod model;
+pub mod service;
 mod store;
 
 use axum::routing::post;
