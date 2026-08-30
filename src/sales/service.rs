@@ -177,6 +177,7 @@ mod tests {
             updated_by: Uuid::new_v4(),
             created_at: OffsetDateTime::now_utc(),
             updated_at: OffsetDateTime::now_utc(),
+            received_at: OffsetDateTime::now_utc(),
         }
     }
 

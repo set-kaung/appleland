@@ -18,6 +18,7 @@ pub struct AdminInventory {
     pub updated_by: Uuid,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+    pub received_at: OffsetDateTime,
 }
 
 #[allow(dead_code)]
@@ -32,12 +33,14 @@ pub struct InventoryRow {
     pub updated_by: Uuid,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+    pub received_at: OffsetDateTime,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct NewInventoryPayload {
     pub quantity_received: i32,
     pub unit_cost: Decimal,
+    pub received_at: Option<OffsetDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -46,6 +49,7 @@ pub struct NewInventoryRecord {
     pub quantity_received: i32,
     pub quantity_remaining: i32,
     pub unit_cost: Decimal,
+    pub received_at: Option<OffsetDateTime>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
 }
@@ -75,6 +79,7 @@ impl NewInventoryRecord {
             unit_cost: payload.unit_cost,
             created_by: admin_id,
             updated_by: admin_id,
+            received_at: payload.received_at,
         })
     }
 }
@@ -96,6 +101,7 @@ impl From<InventoryRow> for AdminInventory {
             updated_by: value.updated_by,
             created_at: value.created_at,
             updated_at: value.updated_at,
+            received_at: value.received_at,
         }
     }
 }

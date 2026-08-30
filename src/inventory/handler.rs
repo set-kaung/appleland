@@ -1,9 +1,10 @@
-use crate::ApiResult;
+use super::store;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
+use crate::{ApiResult, PaginatedApiResult, pagination};
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -27,7 +28,7 @@ use uuid::Uuid;
     ),
     tag = "Admin Inventory"
 )]
-pub async fn create_inventory(
+pub async fn insert_inventory_record(
     State(state): State<AppState>,
     session: Session,
     Path(product_id): Path<Uuid>,
@@ -36,8 +37,48 @@ pub async fn create_inventory(
     let admin_id: Uuid = session_admin_id(session).await?;
 
     let inventory_record = NewInventoryRecord::new(product_id, admin_id, &payload)?;
-    let result = super::store::insert_new_inventory_record(&state.db, inventory_record)
+    let result = store::insert_new_inventory_record(&state.db, inventory_record)
         .await?
         .into();
     Ok(Json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/inventory/{product_id}",
+    description = "List paginated inventory records for a product.",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID"),
+        pagination::PaginationQuery
+    ),
+    responses(
+        (status = 200, description = "Paginated inventory records", body = pagination::PaginatedResponse<AdminInventory>),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Product not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Inventory"
+)]
+pub async fn get_product_inventory_records(
+    State(state): State<AppState>,
+    Query(query): Query<pagination::PaginationQuery>,
+    Path(product_id): Path<Uuid>,
+) -> PaginatedApiResult<AdminInventory> {
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (rows, total_items) =
+        store::get_product_inventory_records_paginated(&state.db, product_id, limit, offset)
+            .await?;
+    let data = rows.into_iter().map(Into::into).collect();
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
 }

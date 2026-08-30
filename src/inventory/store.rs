@@ -1,32 +1,29 @@
 use crate::inventory::model::InventoryRow;
-use crate::{
-    app_error,
-    inventory::model::NewInventoryRecord,
-};
+use crate::{app_error, inventory::model::NewInventoryRecord};
 
-use sqlx::{Executor, Postgres, Transaction};
+use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-// use when new products are created, to insert a record row
 pub async fn insert_new_inventory_record<'e, E>(
     executor: E,
     new_inventory_record: NewInventoryRecord,
 ) -> Result<InventoryRow, app_error::StoreError>
 where
-    E: Executor<'e, Database=Postgres>,
+    E: Executor<'e, Database = Postgres>,
 {
     let result = sqlx::query_as!(
         InventoryRow,
         r#"
-        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by)
-        VALUES ($1, $2, $3, $4, $5, $5)
-        RETURNING id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at
+        INSERT INTO inventory (product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, received_at)
+        VALUES ($1, $2, $3, $4, $5, $5, COALESCE($6, NOW()))
+        RETURNING id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at, received_at
         "#,
         new_inventory_record.product_id,
         new_inventory_record.quantity_received,
         new_inventory_record.quantity_remaining,
         new_inventory_record.unit_cost,
         new_inventory_record.created_by,
+        new_inventory_record.received_at,
     )
         .fetch_one(executor)
         .await?;
@@ -41,10 +38,10 @@ pub async fn fetch_inventory_fifo_batch(
     let rows = sqlx::query_as!(
         InventoryRow,
         r#"
-        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at
+        SELECT id, product_id, quantity_received, quantity_remaining, unit_cost, created_by, updated_by, created_at, updated_at, received_at
         FROM inventory
         WHERE product_id = ANY($1) AND quantity_remaining > 0
-        ORDER BY product_id, created_at ASC, id ASC
+        ORDER BY product_id, received_at ASC, id ASC
         "#,
         product_ids
     )
@@ -76,8 +73,34 @@ pub async fn deduct_inventory_batch(
     let result = qb.build().execute(&mut **tx).await?;
 
     if result.rows_affected() != deductions.len() as u64 {
-        return Err(app_error::StoreError::UnexpectedRowsAffected(result.rows_affected()));
+        return Err(app_error::StoreError::UnexpectedRowsAffected(
+            result.rows_affected(),
+        ));
     }
 
     Ok(())
+}
+
+pub async fn get_product_inventory_records_paginated(
+    pool: &PgPool,
+    product_id: Uuid,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<InventoryRow>, i64), app_error::StoreError> {
+    let result = sqlx::query_as!(
+        InventoryRow,
+        "SELECT id, product_id, quantity_received, quantity_remaining,unit_cost,created_by,updated_by,created_at, updated_at,received_at FROM inventory WHERE product_id = $1 ORDER BY received_at DESC LIMIT $2 OFFSET $3",
+        product_id,
+        limit,
+        offset
+    ).fetch_all(pool).await?;
+
+    let total_items = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM inventory WHERE product_id = $1",
+        product_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok((result, total_items.unwrap_or(0)))
 }
