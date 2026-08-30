@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO playground_purchase_tokens (quantity, created_by, expires_at)\n         VALUES ($1, $2, NOW() + INTERVAL '1 hour')\n         RETURNING id",
+  "query": "INSERT INTO playground_purchase_tokens (purchased_quantity, free_quantity, created_by, expires_at)\n         VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour')\n         RETURNING id",
   "describe": {
     "columns": [
       {
@@ -18,6 +18,7 @@
     "parameters": {
       "Left": [
         "Int4",
+        "Int4",
         "Uuid"
       ]
     },
@@ -25,5 +26,5 @@
       false
     ]
   },
-  "hash": "fcc12e0869b7dff2978f579c70213d25b53473e25dc754de2dbde99979ed198b"
+  "hash": "6d6c6ff5b3a8fb3f3ad1b9bacf979144c7d035751ed40d6fe4acd390fb0b6379"
 }

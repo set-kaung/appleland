@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by)\n        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9)\n        RETURNING\n            id\n        ",
+  "query": "UPDATE products\n       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10\n       WHERE id = $11 AND is_deleted IS FALSE\n       RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -25,6 +25,8 @@
         "Numeric",
         "Bool",
         "Text",
+        "Uuid",
+        "Bool",
         "Uuid"
       ]
     },
@@ -32,5 +34,5 @@
       false
     ]
   },
-  "hash": "52a7ba5189207d232d9309f26b49993aafa6961050e64c4d5e0b7abbd8d4f78f"
+  "hash": "3b0d3a020d0e652f70f92ad55886c41a50c8b7ff1fe6f8ef602701eb691ba556"
 }

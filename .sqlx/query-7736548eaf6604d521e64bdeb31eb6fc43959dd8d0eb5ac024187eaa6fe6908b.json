@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url as \"image_url?\"\n        FROM products p\n        JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_deleted IS FALSE\n        ORDER BY p.created_at DESC, p.id DESC\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS \"quantity_in_stock!\",\n            p.image_url as \"image_url?\",\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_active = $3 AND p.is_deleted IS FALSE\n        ORDER BY p.created_at DESC, p.id DESC\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -173,12 +173,24 @@
             "name": "image_url"
           }
         }
+      },
+      {
+        "ordinal": 16,
+        "name": "is_perishable",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "is_perishable"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
         "Int8",
-        "Int8"
+        "Int8",
+        "Bool"
       ]
     },
     "nullable": [
@@ -197,8 +209,9 @@
       false,
       false,
       null,
-      true
+      true,
+      false
     ]
   },
-  "hash": "b0d0be0c5ad03b1df4a081d57fbc21bef602e83ceb5d38d564a417d38e3f3e74"
+  "hash": "7736548eaf6604d521e64bdeb31eb6fc43959dd8d0eb5ac024187eaa6fe6908b"
 }

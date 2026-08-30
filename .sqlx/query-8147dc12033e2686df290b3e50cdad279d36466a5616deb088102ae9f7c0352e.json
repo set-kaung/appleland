@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            WHERE p.is_deleted IS FALSE\n            ",
+  "query": "\n        SELECT\n            p.id as \"id!\",\n            p.barcode as \"barcode!\",\n            p.name as \"name!\",\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active as \"is_active!\",\n            p.selling_price as \"selling_price!\",\n            p.created_at as \"created_at!\",\n            p.updated_at as \"updated_at!\",\n            p.created_by as \"created_by!\",\n            p.updated_by as \"updated_by!\",\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url,\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1 AND p.is_deleted IS FALSE",
   "describe": {
     "columns": [
       {
@@ -60,7 +60,7 @@
       },
       {
         "ordinal": 5,
-        "name": "category",
+        "name": "category?",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -82,7 +82,7 @@
       },
       {
         "ordinal": 7,
-        "name": "sub_category",
+        "name": "sub_category?",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -173,29 +173,43 @@
             "name": "image_url"
           }
         }
+      },
+      {
+        "ordinal": 16,
+        "name": "is_perishable",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "is_perishable"
+          }
+        }
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
+      false,
+      false,
       false,
       true,
       true,
       true,
       true,
       true,
-      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
       null,
-      true
+      true,
+      false
     ]
   },
-  "hash": "b948b3b651cbd641af480bdb8a78cdbb3273a7ca1decef06ea05c2af70d047a5"
+  "hash": "8147dc12033e2686df290b3e50cdad279d36466a5616deb088102ae9f7c0352e"
 }
