@@ -6,7 +6,8 @@ use uuid::Uuid;
 
 #[derive(Deserialize, Debug, Clone, ToSchema)]
 pub struct CreateClaimTokenPayload {
-    pub quantity: i32,
+    pub purchased_quantity: i32,
+    pub free_quantity: i32,
 }
 
 #[derive(Serialize, ToSchema, Debug, Clone)]

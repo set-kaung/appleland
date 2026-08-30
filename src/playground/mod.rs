@@ -11,6 +11,7 @@ use crate::{
 
 pub mod handler;
 pub mod model;
+mod service;
 mod store;
 
 pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::task::AbortHandle {

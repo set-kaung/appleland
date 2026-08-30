@@ -6,13 +6,15 @@ use crate::app_error::StoreError;
 pub async fn create_claim_token(
     pool: &PgPool,
     created_by: Uuid,
-    quantity: i32,
+    purchased_quantity: i32,
+    free_quantity: i32
 ) -> Result<Uuid, StoreError> {
     let result: Uuid = sqlx::query_scalar!(
-        "INSERT INTO playground_purchase_tokens (quantity, created_by, expires_at)
-         VALUES ($1, $2, NOW() + INTERVAL '1 hour')
+        "INSERT INTO playground_purchase_tokens (purchased_quantity, free_quantity, created_by, expires_at)
+         VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour')
          RETURNING id",
-        quantity,
+        purchased_quantity,
+        free_quantity,
         created_by
     )
     .fetch_one(pool)
@@ -49,6 +51,7 @@ pub async fn claim_token(
 ) -> Result<Uuid, StoreError> {
     let mut tx = pool.begin().await?;
 
+
     let claimed = sqlx::query_scalar!(
         r#"UPDATE playground_purchase_tokens
            SET claimed_by = $1, claimed_at = NOW(), status = 'claimed'
@@ -61,6 +64,8 @@ pub async fn claim_token(
     .await?;
 
     if let Some(id) = claimed {
+
+
         tx.commit().await?;
         return Ok(id);
     }
@@ -100,9 +105,9 @@ pub async fn claim_token(
 pub async fn get_user_tickets_info(
     pool: &PgPool,
     user_id: Uuid,
-) -> Result<PlaygroundTicketsRow, StoreError> {
+) -> Result<Option<PlaygroundTicketsRow>, StoreError> {
     let result = sqlx::query_as!(PlaygroundTicketsRow,
         "select user_id, tickets_purchased, free_tickets_redeemed, created_at,updated_at from playground_accounts where user_id = $1", user_id)
-        .fetch_one(pool).await?;
+        .fetch_optional(pool).await?;
     Ok(result)
 }

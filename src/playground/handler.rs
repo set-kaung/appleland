@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[utoipa::path(
-    get,
+    post,
     path = "/admin/playground/tokens",
     description = "Create a claim token for the frontend",
     request_body = CreateClaimTokenPayload,
@@ -37,16 +37,16 @@ pub async fn creat_playground_token(
     session: Session,
     Json(payload): Json<CreateClaimTokenPayload>,
 ) -> ApiResult<Uuid> {
-    if payload.quantity < 0{
+    if payload.purchased_quantity < 0{
         return Err(APIError::BadRequest("ticket quantity must be greater than 0".to_string()))
     }
     let admin_id = session_admin_id(session).await?;
-    let token = store::create_claim_token(&state.db, admin_id, payload.quantity).await?;
+    let token = store::create_claim_token(&state.db, admin_id, payload.purchased_quantity, payload.free_quantity).await?;
     Ok(Json(token))
 }
 
 #[utoipa::path(get,
-     path="/api/playground/tickets/{user_id}",
+     path="/api/playground/tickets",
      description = "Get Tickets History of a User",
      responses(
         (status = 200, description = "Ticket History", body = UserPlaygroundTickets),
@@ -63,9 +63,15 @@ pub async fn get_user_tickets(
     Extension(claims): Extension<Claims>,
 ) -> ApiResult<UserPlaygroundTickets> {
     let user_id = uuid::Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
-    let result = store::get_user_tickets_info(&state.db, user_id)
-        .await?
-        .into();
+    let result = match store::get_user_tickets_info(&state.db, user_id).await? {
+        Some(row) => row.into(),
+        None => UserPlaygroundTickets {
+            user_id,
+            tickets_purchased: 0,
+            free_tickets_redeemed: 0,
+            to_redeem: 0,
+        },
+    };
     Ok(Json(result))
 }
 
