@@ -1,7 +1,9 @@
 use super::store;
+use crate::app_extractor::{RequiresRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
+use crate::product::service as product_service;
 use crate::{ApiResult, PaginatedApiResult, pagination};
 use axum::Json;
 use axum::extract::{Path, Query, State};
@@ -31,12 +33,14 @@ use uuid::Uuid;
 pub async fn insert_inventory_record(
     State(state): State<AppState>,
     session: Session,
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     Path(product_id): Path<Uuid>,
     Json(payload): Json<NewInventoryPayload>,
 ) -> ApiResult<AdminInventory> {
     let admin_id: Uuid = session_admin_id(session).await?;
 
-    let inventory_record = NewInventoryRecord::new(product_id, admin_id, &payload)?;
+    let is_perishable = product_service::is_product_perishable(&state.db, product_id).await?;
+    let inventory_record = NewInventoryRecord::new(product_id, admin_id, is_perishable, &payload)?;
     let result = store::insert_new_inventory_record(&state.db, inventory_record)
         .await?
         .into();
