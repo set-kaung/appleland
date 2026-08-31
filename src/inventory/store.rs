@@ -32,10 +32,13 @@ where
     Ok(result)
 }
 
-pub async fn fetch_inventory_fifo_batch(
-    tx: &mut Transaction<'_, Postgres>,
+pub async fn fetch_inventory_fifo_batch<'e, E>(
+    executor: E,
     product_ids: &[Uuid],
-) -> Result<Vec<InventoryRow>, app_error::StoreError> {
+) -> Result<Vec<InventoryRow>, app_error::StoreError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
     let rows = sqlx::query_as!(
         InventoryRow,
         r#"
@@ -46,7 +49,7 @@ pub async fn fetch_inventory_fifo_batch(
         "#,
         product_ids
     )
-        .fetch_all(&mut **tx)
+        .fetch_all(executor)
         .await?;
 
     Ok(rows)

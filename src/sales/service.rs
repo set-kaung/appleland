@@ -24,12 +24,29 @@ pub async fn perform_sale_admin(
         sale_store::fetch_selling_prices(&mut tx, &product_ids).await?;
 
     let inventory_entries =
-        inventory::store::fetch_inventory_fifo_batch(&mut tx, &product_ids).await?;
+        inventory::store::fetch_inventory_fifo_batch(&mut *tx, &product_ids).await?;
 
     let (sale_product_dtos, deductions) =
         build_sale_items(products, &selling_prices, &inventory_entries)?;
 
-    inventory::store::deduct_inventory_batch(&mut tx, &deductions).await?;
+    if let Err(err @ StoreError::UnexpectedRowsAffected(_)) =
+        inventory::store::deduct_inventory_batch(&mut tx, &deductions).await
+    {
+        // stock was validated against this snapshot, so a short UPDATE means a
+        // concurrent sale deducted first; re-check with a fresh snapshot (on the
+        // pool, so our rolled-back partial deductions are not visible) to report
+        // which product is short
+        if let Ok(fresh_entries) =
+            inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
+        {
+            if let Err(shortage @ StoreError::InsufficientInventory(..)) =
+                build_sale_items(products, &selling_prices, &fresh_entries)
+            {
+                return Err(shortage);
+            }
+        }
+        return Err(err);
+    }
 
     let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
     sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
