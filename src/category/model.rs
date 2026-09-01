@@ -9,8 +9,10 @@ pub struct CategoryRow {
     pub id: Uuid,
     pub name: String,
     pub created_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
     pub updated_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
 }
 
@@ -31,8 +33,10 @@ pub struct AdminCategory {
     pub id: Uuid,
     pub name: String,
     pub created_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
     pub updated_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
 }
 

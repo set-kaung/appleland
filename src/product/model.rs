@@ -22,7 +22,9 @@ pub struct AdminProduct {
     pub image_url: Option<String>,
     pub selling_price: Decimal,
     pub quantity_in_stock: i32,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
     pub created_by: Uuid,
     pub updated_by: Uuid,

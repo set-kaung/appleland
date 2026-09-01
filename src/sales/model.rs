@@ -11,6 +11,7 @@ use crate::db::DBQueryFilter;
 pub struct SaleRow {
     pub id: Uuid,
     pub total_amount: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 
@@ -18,6 +19,7 @@ pub struct SaleRow {
 pub struct AdminSale {
     pub id: Uuid,
     pub total_amount: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 
@@ -25,6 +27,7 @@ pub struct AdminSale {
 pub struct AdminSaleDetails {
     pub id: Uuid,
     pub total_amount: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
     pub sale_items: Vec<SaleItem>,
 }
@@ -58,6 +61,7 @@ pub struct SaleItem {
     pub quantity: i32,
     pub selling_price: Decimal,
     pub cost_price: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 

@@ -16,10 +16,14 @@ pub struct AdminInventory {
     pub unit_cost: Decimal,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
     pub received_at: OffsetDateTime,
 
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub expiry_date: Option<OffsetDateTime>,
 }
 
@@ -33,10 +37,14 @@ pub struct InventoryRow {
     pub unit_cost: Decimal,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
     pub updated_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
     pub received_at: OffsetDateTime,
 
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub expiry_date: Option<OffsetDateTime>,
 }
 
@@ -44,8 +52,10 @@ pub struct InventoryRow {
 pub struct NewInventoryPayload {
     pub quantity_received: i32,
     pub unit_cost: Decimal,
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub received_at: Option<OffsetDateTime>,
 
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub expiry_date: Option<OffsetDateTime>,
 }
 
@@ -55,9 +65,11 @@ pub struct NewInventoryRecord {
     pub quantity_received: i32,
     pub quantity_remaining: i32,
     pub unit_cost: Decimal,
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub received_at: Option<OffsetDateTime>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+    #[serde(with = "time::serde::rfc3339::option", default)]
     pub expiry_date: Option<OffsetDateTime>,
 }
 
