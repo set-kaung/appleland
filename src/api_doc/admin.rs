@@ -3,7 +3,7 @@ use crate::product::model::{
     UpdateProductPayload,
 };
 
-use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
+use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload,DeleteCategoryResponse};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
 use crate::orders::model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload};
 use crate::sales::model::{
@@ -37,6 +37,7 @@ use utoipa::OpenApi;
         category::handler::create_category,
         category::handler::get_all_categories,
         category::handler::update_category,
+        category::handler::delete_category,
         inventory::handler::insert_inventory_record,
         inventory::handler::get_product_inventory_records,
         password::admin_login_handler,
@@ -69,6 +70,7 @@ use utoipa::OpenApi;
             AdminCategory,
             CreateCategoryPayload,
             UpdateCategoryPayload,
+            DeleteCategoryResponse,
             AdminSale,
             AdminSaleDetails,
             CreateSalePayload,

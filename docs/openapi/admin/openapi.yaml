@@ -88,6 +88,34 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+    delete:
+      tags:
+      - Admin Categories
+      description: Soft delete a product category
+      operationId: delete_category
+      parameters:
+      - name: id
+        in: path
+        description: Category UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Category (soft) deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCategoryResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/inventory/{product_id}:
     get:
       tags:
@@ -697,6 +725,7 @@ components:
       - created_at
       - updated_by
       - updated_at
+      - is_deleted
       properties:
         created_at:
           type: string
@@ -704,9 +733,21 @@ components:
         created_by:
           type: string
           format: uuid
+        deleted_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        deleted_by:
+          type:
+          - string
+          - 'null'
+          format: uuid
         id:
           type: string
           format: uuid
+        is_deleted:
+          type: boolean
         name:
           type: string
         updated_at:
@@ -942,6 +983,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleProduct'
+    DeleteCategoryResponse:
+      type: object
+      required:
+      - id
+      - is_deleted
+      properties:
+        deleted_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        deleted_by:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        id:
+          type: string
+          format: uuid
+        is_deleted:
+          type: boolean
     DeliveryStatus:
       type: string
       enum:
