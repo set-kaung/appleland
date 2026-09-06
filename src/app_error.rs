@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
@@ -47,6 +49,9 @@ pub enum AppError {
 
     #[error("starup setup error")]
     StartupErr(String),
+
+    #[error("invalid operation")]
+    InvalidOperation,
 }
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {
@@ -144,4 +149,12 @@ impl From<StoreError> for APIError {
             }
         }
     }
+}
+
+pub fn log_convert_error<'a, E, F>(message: &'a str, from: E, to: F) -> F
+where
+    E: Display,
+{
+    tracing::error!("{message} : {from}");
+    to
 }
