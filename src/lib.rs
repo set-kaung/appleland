@@ -30,7 +30,7 @@ pub mod config;
 pub mod db;
 pub mod inventory;
 pub mod middleware;
-pub mod order;
+pub mod orders;
 pub mod pagination;
 pub mod playground;
 pub mod product;

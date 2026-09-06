@@ -10,10 +10,10 @@ use sqlx::PgPool;
 use tower_sessions::SessionManagerLayer;
 use tower_sessions_sqlx_store::PostgresStore;
 
-use crate::app_error::AppError;
 use crate::app_state::AppState;
-use sqlx::Connection;
+use crate::{app_error::AppError, orders};
 use crate::{auth, category, inventory, middleware, playground, product, sales};
+use sqlx::Connection;
 
 #[derive(Serialize)]
 struct HealthResponse<'a> {
@@ -50,9 +50,7 @@ pub fn create_app(
     burst_size: u32,
     per_sec: u64,
 ) -> Result<Router, AppError> {
-    let root_routes = Router::new()
-        .route("/health", get(health))
-        .with_state(pool);
+    let root_routes = Router::new().route("/health", get(health)).with_state(pool);
 
     let api_routes = Router::new()
         .nest("/products", product::route())
@@ -68,6 +66,7 @@ pub fn create_app(
         .nest("/categories", category::route_admin())
         .nest("/sales", sales::route_admin())
         .nest("/playground", playground::route_admin())
+        .nest("/orders", orders::route_admin())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::admin_auth_middleware,
@@ -89,10 +88,5 @@ pub fn create_app(
         .nest("/admin", admin_routes)
         .with_state(state);
 
-    middleware::with_global_middleware(
-        app_router,
-        allowed_origins,
-        burst_size,
-        per_sec,
-    )
+    middleware::with_global_middleware(app_router, allowed_origins, burst_size, per_sec)
 }
