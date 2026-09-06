@@ -38,13 +38,11 @@ pub async fn perform_sale_admin(
         // which product is short
         if let Ok(fresh_entries) =
             inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
-        {
-            if let Err(shortage @ StoreError::InsufficientInventory(..)) =
+            && let Err(shortage @ StoreError::InsufficientInventory(..)) =
                 build_sale_items(products, &selling_prices, &fresh_entries)
             {
                 return Err(shortage);
             }
-        }
         return Err(err);
     }
 

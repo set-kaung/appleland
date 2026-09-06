@@ -151,7 +151,7 @@ impl From<StoreError> for APIError {
     }
 }
 
-pub fn log_convert_error<'a, E, F>(message: &'a str, from: E, to: F) -> F
+pub fn log_convert_error<E, F>(message: &str, from: E, to: F) -> F
 where
     E: Display,
 {
