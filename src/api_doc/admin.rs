@@ -5,6 +5,7 @@ use crate::product::model::{
 
 use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
+use crate::orders::model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload};
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateSalePayload, SaleItem, SaleProduct, SaleSummary,
     SaleSummaryFilter,
@@ -16,6 +17,7 @@ use crate::auth::password;
 use crate::auth::password::{Admin, LoginRequest};
 use crate::category;
 use crate::inventory;
+use crate::orders;
 use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::playground;
 use crate::product;
@@ -52,6 +54,8 @@ use utoipa::OpenApi;
         sales::handler::get_sale_detail_by_id,
         sales::handler::create_sale,
         sales::handler::sale_summary,
+        orders::handler::update_order_tracking_url_handler,
+        orders::handler::update_order_delivery_status,
     ),
     components(
         schemas(
@@ -78,6 +82,8 @@ use utoipa::OpenApi;
             AdminInventory,
             NewInventoryPayload,
             CreateClaimTokenPayload,
+            UpdateOrderDeliveryStatusResponse, 
+            UpdateOrderTrackingURLPayload
         )
     ),
     tags(

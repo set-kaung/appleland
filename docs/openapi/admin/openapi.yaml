@@ -203,6 +203,70 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/orders/update_status/{order_id}:
+    patch:
+      tags:
+      - Admin Orders
+      description: Update an order delivery status
+      operationId: update_order_delivery_status
+      parameters:
+      - name: order_id
+        in: path
+        description: Order ID/UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Order delivery status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateOrderDeliveryStatusResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
+  /admin/orders/{order_id}:
+    patch:
+      tags:
+      - Admin Orders
+      description: Update an order tracking url.
+      operationId: update_order_tracking_url_handler
+      parameters:
+      - name: order_id
+        in: path
+        description: Order UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderTrackingURLPayload'
+        required: true
+      responses:
+        '200':
+          description: Order tracking url updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateOrderTrackingURLPayload'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/playground/tokens:
     post:
       tags:
@@ -878,6 +942,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleProduct'
+    DeliveryStatus:
+      type: string
+      enum:
+      - Pending
+      - OnDelivery
+      - Received
     LoginRequest:
       type: object
       required:
@@ -1268,6 +1338,24 @@ components:
         updated_by:
           type: string
           format: uuid
+    UpdateOrderDeliveryStatusResponse:
+      type: object
+      required:
+      - id
+      - delivery_status
+      properties:
+        delivery_status:
+          $ref: '#/components/schemas/DeliveryStatus'
+        id:
+          type: string
+          format: uuid
+    UpdateOrderTrackingURLPayload:
+      type: object
+      required:
+      - order_tracking_url
+      properties:
+        order_tracking_url:
+          type: string
     UpdateProductPayload:
       type: object
       required:
