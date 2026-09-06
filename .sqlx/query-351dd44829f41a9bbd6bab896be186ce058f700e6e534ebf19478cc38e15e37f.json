@@ -1,0 +1,66 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE categories SET\n                is_deleted = $1,\n                deleted_at = NOW(),\n                deleted_by = $2\n                WHERE id = $3\n            RETURNING id, is_deleted, deleted_at, deleted_by;\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "is_deleted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "is_deleted"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "deleted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "deleted_by",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "351dd44829f41a9bbd6bab896be186ce058f700e6e534ebf19478cc38e15e37f"
+}

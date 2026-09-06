@@ -6,7 +6,8 @@ use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::category::model::{
-    AdminCategory, CreateCategoryPayload, InsertCategory, UpdateCategory, UpdateCategoryPayload,
+    AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, InsertCategory, UpdateCategory,
+    UpdateCategoryPayload,
 };
 use axum::Json;
 use axum::extract::{Path, State};
@@ -116,5 +117,34 @@ pub async fn update_category(
         updated_by: admin_id,
     };
     let result = store::update_category(&s.db, update_category).await?.into();
+    Ok(Json(result))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/admin/categories/{id}",
+    description = "Soft delete a product category",
+    params(
+        ("id" = Uuid, Path, description = "Category UUID")
+    ),
+    responses(
+        (status = 200, description = "Category (soft) deleted", body = DeleteCategoryResponse),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Categories"
+)]
+
+pub async fn delete_category(
+    State(state): State<AppState>,
+    session: Session,
+    Path(id): Path<Uuid>,
+) -> ApiResult<DeleteCategoryResponse> {
+    let admin_id = session_admin_id(session).await?;
+    let result = store::delete_category(&state.db, admin_id, id).await?;
     Ok(Json(result))
 }

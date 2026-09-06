@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, created_by, created_at, updated_by, updated_at FROM categories",
+  "query": "SELECT id, name, created_by, created_at, updated_by, updated_at,is_deleted, deleted_at as \"deleted_at?\", deleted_by as \"deleted_by?\" FROM categories",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,39 @@
             "name": "updated_at"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "is_deleted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "is_deleted"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_by?",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_by"
+          }
+        }
       }
     ],
     "parameters": {
@@ -79,8 +112,11 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      true,
+      true
     ]
   },
-  "hash": "365595ed6231acfa7bd00dc67fd3c954549e745b2dfbfc3667643d926a74171e"
+  "hash": "35558207f8934d241af280f3370a880f3fdfd688c6a72de002c1893954d4133d"
 }

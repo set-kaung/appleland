@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING id, name, created_by, created_at, updated_by, updated_at",
+  "query": "UPDATE categories SET name = $1, updated_by = $2 WHERE id = $3 RETURNING id, name, created_by, created_at, updated_by, updated_at,is_deleted, deleted_at as \"deleted_at?\", deleted_by as \"deleted_by?\"",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,39 @@
             "name": "updated_at"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "is_deleted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "is_deleted"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_by?",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_by"
+          }
+        }
       }
     ],
     "parameters": {
@@ -83,8 +116,11 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      true,
+      true
     ]
   },
-  "hash": "5a5e29b28bb83c45f5ae8defcd79aadf504497cc20fb361256ebcf74c7776424"
+  "hash": "4a402c9a3572d164731c9541ecd2c63e13b9377574fda012f10a55cc6b108988"
 }

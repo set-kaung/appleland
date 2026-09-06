@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO categories (name,created_by,updated_by,created_at,updated_at)\n            VALUES ($1,$2,$3,NOW(),NOW())\n            RETURNING id,name,created_by,created_at,updated_by,updated_at\n        ",
+  "query": "\n            INSERT INTO categories (name,created_by,updated_by,created_at,updated_at)\n            VALUES ($1,$2,$3,NOW(),NOW())\n            RETURNING id,name,created_by,created_at,updated_by,updated_at,is_deleted, deleted_at as \"deleted_at?\", deleted_by as \"deleted_by?\"\n        ",
   "describe": {
     "columns": [
       {
@@ -68,6 +68,39 @@
             "name": "updated_at"
           }
         }
+      },
+      {
+        "ordinal": 6,
+        "name": "is_deleted",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "is_deleted"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at?",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_by?",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "categories",
+            "name": "deleted_by"
+          }
+        }
       }
     ],
     "parameters": {
@@ -83,8 +116,11 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      true,
+      true
     ]
   },
-  "hash": "cad971a3f890ab6e1e87446e01786ccc8893b613cd58b4be22ab2a555d9ada24"
+  "hash": "e2f40093094b5196af98a0e2a168ebac962b9c5d87984d301bcb536bac3ff4c6"
 }
