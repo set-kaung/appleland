@@ -26,8 +26,8 @@ pub enum StoreError {
     #[error("invalid input: {0}")]
     InvalidInput(String),
 
-    #[error("expire: {0}")]
-    TokenExpired(String),
+    #[error("expired")]
+    TokenExpired,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -143,15 +143,12 @@ impl From<StoreError> for APIError {
                 ))
             }
             StoreError::InvalidInput(e) => APIError::BadRequest(e),
-            StoreError::TokenExpired(id) => {
-                tracing::warn!(token = %id, "claim attempted on expired token");
-                APIError::TokenExpired
-            }
+            StoreError::TokenExpired => APIError::TokenExpired,
         }
     }
 }
 
-pub fn log_convert_error<E, F>(message: &str, from: E, to: F) -> F
+pub fn log_err_convert<E, F>(message: &str, from: E, to: F) -> F
 where
     E: Display,
 {

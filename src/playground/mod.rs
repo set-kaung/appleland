@@ -1,12 +1,13 @@
 use axum::{
-    Router, routing::{get, patch, post},
+    Router,
+    routing::{get, patch, post},
 };
 use sqlx::PgPool;
 use std::time::Duration;
 
 use crate::{
     app_state::AppState,
-    playground::handler::{creat_playground_token, get_user_tickets,claim_token},
+    playground::handler::{creat_playground_token, get_user_tickets},
 };
 
 pub mod handler;
@@ -34,7 +35,8 @@ pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::t
 }
 
 pub fn route() -> Router<AppState> {
-    Router::new().route("/tickets", get(get_user_tickets)).route("/tokens/{token_id}", patch(claim_token))
+    Router::new().route("/tickets", get(get_user_tickets))
+    // .route("/tokens/{token_id}", patch(claim_token))
 }
 
 pub fn route_admin() -> Router<AppState> {

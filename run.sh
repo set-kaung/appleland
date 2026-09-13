@@ -6,8 +6,8 @@ set -a
 source "$1"
 set +a
 
-cargo sqlx prepare --workspace &&
-  cargo clippy --all-targets --release &&
+cargo sqlx prepare --workspace -- --quiet &&
+  cargo clippy --all-targets --release --quiet &&
   cargo build --release || exit 1
 
 read -p "Build successful. Run application? [y/N] " answer

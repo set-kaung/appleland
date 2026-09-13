@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
@@ -6,8 +7,8 @@ use uuid::Uuid;
 
 #[derive(Deserialize, Debug, Clone, ToSchema)]
 pub struct CreateClaimTokenPayload {
-    pub purchased_quantity: i32,
-    pub free_quantity: i32,
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
 }
 
 #[derive(Serialize, ToSchema, Debug, Clone)]
@@ -25,6 +26,44 @@ pub struct PlaygroundTicketsRow {
     pub free_tickets_redeemed: i32,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserPlaygroundPurchase {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub quantity: i32,
+    pub is_free: bool,
+}
+
+#[derive(FromRow)]
+pub struct ExpiredStatus {
+    pub expired: bool,
+    pub status: String,
+}
+
+#[derive(FromRow)]
+pub struct ClaimedTokenInfo {
+    pub id: Uuid,
+    pub claimed_by: Uuid,
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
+    pub created_by: Uuid,
+}
+
+#[derive(FromRow)]
+pub struct PlaygroundPurchaseRow {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub quantity: i32,
+    pub is_free_redemption: bool,
+}
+
+#[derive(FromRow)]
+pub struct CouponStatus {
+    pub id: Uuid,
+    pub is_not_used: bool,
+    pub is_expired: bool,
 }
 
 impl From<PlaygroundTicketsRow> for UserPlaygroundTickets {
