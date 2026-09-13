@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into playground_coupons (user_id,expires_at) VALUES($1,NOW() + INTERVAL '30 day')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1d44b92f20043f734e04d68f34613b170407b4b69adb5d3550e86001d6c58554"
+}

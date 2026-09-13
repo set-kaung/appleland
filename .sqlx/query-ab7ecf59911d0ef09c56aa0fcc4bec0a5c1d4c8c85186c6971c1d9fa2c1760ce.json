@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    SELECT\n        id,\n        is_used as \"is_used!\",\n        expires_at < NOW() as \"is_expired!\"\n    FROM playground_coupons\n    WHERE id = ANY($1)\n      AND user_id = $2\n    FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "playground_coupons",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "is_used!",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "playground_coupons",
+            "name": "is_used"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "is_expired!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "ab7ecf59911d0ef09c56aa0fcc4bec0a5c1d4c8c85186c6971c1d9fa2c1760ce"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE playground_coupons\n        SET is_used = true, updated_at = NOW()\n        WHERE id = ANY ($1)\n        AND user_id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5c10ead69142e6c6af4a95e679455e4a14bdaf1cc87715741188126f24dc316c"
+}
