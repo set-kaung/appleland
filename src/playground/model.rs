@@ -16,7 +16,7 @@ pub struct UserPlaygroundTickets {
     pub user_id: Uuid,
     pub tickets_purchased: i32,
     pub free_tickets_redeemed: i32,
-    pub to_redeem: i32,
+    pub free_ticket_eligible: i32,
 }
 
 #[derive(Debug, FromRow)]
@@ -24,22 +24,52 @@ pub struct PlaygroundTicketsRow {
     pub user_id: Uuid,
     pub tickets_purchased: i32,
     pub free_tickets_redeemed: i32,
+    pub free_ticket_eligible: i32,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, FromRow)]
+pub struct PlaygroundAccountRow {
+    pub user_id: Uuid,
+    pub tickets_purchased: i32,
+    pub free_tickets_redeemed: i32,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
+    pub free_ticket_eligible: i32,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserPlaygroundAccount {
+    pub user_id: Uuid,
+    pub tickets_purchased: i32,
+    pub free_tickets_redeemed: i32,
+    pub free_ticket_eligible: i32,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct UserPlaygroundPurchase {
     pub id: Uuid,
     pub user_id: Uuid,
     pub quantity: i32,
-    pub is_free: bool,
+    pub is_free_redemption: bool,
+}
+
+#[derive(Clone, Debug, Serialize, ToSchema)]
+pub struct UserPlaygroundPurchaseResponse {
+    pub purchased_record: Option<UserPlaygroundPurchase>,
+    pub free_record: Option<UserPlaygroundPurchase>,
 }
 
 #[derive(FromRow)]
 pub struct ExpiredStatus {
     pub expired: bool,
     pub status: String,
+}
+
+#[derive(Clone, Debug, ToSchema, Deserialize)]
+pub struct ClaimTokenPayload {
+    pub playground_coupons: Option<Vec<Uuid>>,
 }
 
 #[derive(FromRow)]
@@ -57,23 +87,47 @@ pub struct PlaygroundPurchaseRow {
     pub user_id: Uuid,
     pub quantity: i32,
     pub is_free_redemption: bool,
+    pub created_at: OffsetDateTime,
+    pub created_by: Uuid,
+    pub unit_price: Decimal,
 }
 
 #[derive(FromRow)]
 pub struct CouponStatus {
     pub id: Uuid,
-    pub is_not_used: bool,
+    pub is_used: bool,
     pub is_expired: bool,
 }
 
 impl From<PlaygroundTicketsRow> for UserPlaygroundTickets {
     fn from(value: PlaygroundTicketsRow) -> Self {
-        let to_redeem = (value.tickets_purchased / 10).saturating_sub(value.free_tickets_redeemed);
         Self {
             user_id: value.user_id,
             tickets_purchased: value.tickets_purchased,
             free_tickets_redeemed: value.free_tickets_redeemed,
-            to_redeem,
+            free_ticket_eligible: value.free_ticket_eligible,
+        }
+    }
+}
+
+impl From<PlaygroundPurchaseRow> for UserPlaygroundPurchase {
+    fn from(value: PlaygroundPurchaseRow) -> Self {
+        Self {
+            id: value.id,
+            user_id: value.user_id,
+            quantity: value.quantity,
+            is_free_redemption: value.is_free_redemption,
+        }
+    }
+}
+
+impl From<PlaygroundAccountRow> for UserPlaygroundAccount {
+    fn from(value: PlaygroundAccountRow) -> Self {
+        Self {
+            user_id: value.user_id,
+            tickets_purchased: value.tickets_purchased,
+            free_tickets_redeemed: value.free_tickets_redeemed,
+            free_ticket_eligible: value.free_ticket_eligible,
         }
     }
 }

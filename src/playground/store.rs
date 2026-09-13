@@ -2,11 +2,15 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-use super::model::{ExpiredStatus, PlaygroundTicketsRow};
+use super::model::{
+    ExpiredStatus, PlaygroundAccountRow, PlaygroundPurchaseRow, PlaygroundTicketsRow,
+};
 use crate::{
     app_error::StoreError,
     playground::model::{ClaimedTokenInfo, CouponStatus},
 };
+
+// created_by must be the admin who created the claim token
 pub async fn create_claim_token(
     pool: &PgPool,
     created_by: Uuid,
@@ -95,57 +99,63 @@ pub async fn update_expire_status(
     Ok(())
 }
 
-pub async fn update_user_tokens(
-    tx: &mut Transaction<'_, Postgres>,
-    token_info: ClaimedTokenInfo,
-) -> Result<(), StoreError> {
-    sqlx::query!(
-        "UPDATE playground_accounts
-            SET tickets_purchased = tickets_purchased + $1, updated_at = NOW()
-            WHERE user_id = $2",
-        token_info.total_quantity,
-        token_info.claimed_by
-    )
-    .execute(&mut **tx)
-    .await?;
-    Ok(())
-}
-
-// pub async fn claim_token(
-//     pool: &PgPool,
-//     claimed_user_id: Uuid,
-//     token: Uuid,
-// ) -> Result<Uuid, StoreError> {
-//     let mut tx = pool.begin().await?;
-//     let claimed = update_claimed_status(&mut tx, claimed_user_id, token).await?;
-//     if let Some(token_info) = claimed {
-//         update_user_tokens(&mut tx, token_info).await?;
-//         tx.commit().await?;
-//         Ok(token)
-//     } else {
-//         let row = get_expired_status(&mut tx, token).await?;
-//         match row {
-//             None => Err(StoreError::RecordNotFound),
-//             Some(r) if r.expired || r.status == "expired" => {
-//                 update_expire_status(&mut tx, token).await?;
-//                 tx.commit().await?;
-//                 tracing::warn!("claiming on expired token: {token}");
-//                 Err(StoreError::TokenExpired)
-//             }
-//             Some(_) => Err(StoreError::InvalidInput(
-//                 "token already claimed".to_string(),
-//             )),
-//         }
-//     }
-// }
-
 pub async fn get_user_tickets_info(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<Option<PlaygroundTicketsRow>, StoreError> {
     let result = sqlx::query_as!(PlaygroundTicketsRow,
-        "select user_id, tickets_purchased, free_tickets_redeemed, created_at,updated_at from playground_accounts where user_id = $1", user_id)
+        "select user_id, tickets_purchased, free_tickets_redeemed,free_ticket_eligible, created_at,updated_at from playground_accounts where user_id = $1", user_id)
         .fetch_optional(pool).await?;
+    Ok(result)
+}
+
+#[allow(dead_code)]
+pub async fn get_user_playground_account(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<PlaygroundAccountRow, StoreError> {
+    let result = sqlx::query_as!(
+        PlaygroundAccountRow,
+        r#"
+    SELECT
+        user_id,
+        tickets_purchased,
+        free_tickets_redeemed,
+        created_at,
+        updated_at,
+        free_ticket_eligible
+    FROM playground_accounts
+    WHERE user_id = $1
+"#,
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(result)
+}
+
+pub async fn get_user_playground_account_for_update(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<PlaygroundAccountRow, StoreError> {
+    let result = sqlx::query_as!(
+        PlaygroundAccountRow,
+        r#"
+    SELECT
+        user_id,
+        tickets_purchased,
+        free_tickets_redeemed,
+        created_at,
+        updated_at,
+        free_ticket_eligible
+    FROM playground_accounts
+    WHERE user_id = $1
+    FOR UPDATE
+"#,
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
     Ok(result)
 }
 
@@ -153,8 +163,8 @@ pub async fn insert_ticket_coupon(
     tx: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
 ) -> Result<(), StoreError> {
-    let result = sqlx::query!(
-        "insert into playground_coupons (user_id,expires_at) VALUES($1,NOW() + INTERVAL '24 hour')",
+    sqlx::query!(
+        "insert into playground_coupons (user_id,expires_at) VALUES($1,NOW() + INTERVAL '30 day')",
         user_id
     )
     .execute(&mut **tx)
@@ -162,22 +172,103 @@ pub async fn insert_ticket_coupon(
     Ok(())
 }
 
+pub async fn deduct_eligible_tickets(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    amount: i32,
+) -> Result<PlaygroundAccountRow, StoreError> {
+    let result = sqlx::query_as!(
+        PlaygroundAccountRow,
+        r#"
+        UPDATE playground_accounts
+        SET free_ticket_eligible = free_ticket_eligible - $1, updated_at = NOW()
+        WHERE user_id = $2
+        RETURNING user_id,tickets_purchased,free_tickets_redeemed,created_at,updated_at,free_ticket_eligible
+    "#,
+        amount,
+        user_id
+    )
+    .fetch_one(&mut **tx)
+    .await?;
+
+    Ok(result)
+}
+
 pub async fn get_coupon_status(
     tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
     coupons: &[Uuid],
 ) -> Result<Vec<CouponStatus>, StoreError> {
     let result = sqlx::query_as!(
         CouponStatus,
         r#"
-    SELECT 
-        id, 
-        NOT is_used as "is_not_used!", 
-        expires_at + INTERVAL '1 minute' > NOW() as "is_expired!"
+    SELECT
+        id,
+        is_used as "is_used!",
+        expires_at < NOW() as "is_expired!"
     FROM playground_coupons
-    WHERE id = ANY($1)"#,
-        coupons
+    WHERE id = ANY($1)
+      AND user_id = $2
+    FOR UPDATE"#,
+        coupons,
+        user_id
     )
     .fetch_all(&mut **tx)
     .await?;
+    Ok(result)
+}
+
+pub async fn update_coupon_status(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    coupons: &[Uuid],
+) -> Result<(), StoreError> {
+    sqlx::query!(
+        r#"
+        UPDATE playground_coupons
+        SET is_used = true, updated_at = NOW()
+        WHERE id = ANY ($1)
+        AND user_id = $2
+        "#,
+        coupons,
+        user_id
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
+pub async fn update_playground_account(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    tickets_purchased: i32,
+    free_tickets_redeemed: i32,
+) -> Result<PlaygroundTicketsRow, StoreError> {
+    let result = sqlx::query_as!(PlaygroundTicketsRow, r#"
+        UPDATE playground_accounts
+        SET 
+            tickets_purchased = tickets_purchased + $1, 
+            free_ticket_eligible = free_ticket_eligible + $1,
+            free_tickets_redeemed = $2,
+            updated_at = NOW()
+        WHERE user_id = $3
+        RETURNING user_id, tickets_purchased,free_tickets_redeemed, free_ticket_eligible,created_at,updated_at
+    "#,tickets_purchased,free_tickets_redeemed,user_id).fetch_one(&mut **tx).await?;
+    Ok(result)
+}
+
+pub async fn insert_playground_purchase(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    quantity: i32,
+    is_free_redemption: bool,
+    created_by: Uuid,
+    unit_price: Decimal,
+) -> Result<PlaygroundPurchaseRow, StoreError> {
+    let result = sqlx::query_as!(PlaygroundPurchaseRow, r#"
+    INSERT INTO playground_purchases (user_id,quantity,is_free_redemption,created_at,created_by,unit_price)
+    VALUES($1,$2,$3,NOW(),$4,$5)
+    RETURNING id, user_id,quantity,is_free_redemption,created_by,created_at,unit_price
+    "#,user_id,quantity,is_free_redemption,created_by,unit_price).fetch_one(&mut **tx).await?;
     Ok(result)
 }

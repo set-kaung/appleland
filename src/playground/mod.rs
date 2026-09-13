@@ -7,8 +7,9 @@ use std::time::Duration;
 
 use crate::{
     app_state::AppState,
-    playground::handler::{creat_playground_token, get_user_tickets},
+    playground::handler::{claim_token, creat_playground_token, get_user_tickets},
 };
+use crate::playground::handler::claim_free_ticket;
 
 pub mod handler;
 pub mod model;
@@ -35,8 +36,10 @@ pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::t
 }
 
 pub fn route() -> Router<AppState> {
-    Router::new().route("/tickets", get(get_user_tickets))
-    // .route("/tokens/{token_id}", patch(claim_token))
+    Router::new()
+        .route("/tickets", get(get_user_tickets))
+        .route("/tokens/{token_id}", patch(claim_token))
+        .route("/tickets/claim_free", patch(claim_free_ticket))
 }
 
 pub fn route_admin() -> Router<AppState> {
