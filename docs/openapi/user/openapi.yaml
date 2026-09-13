@@ -25,28 +25,6 @@ paths:
           description: Internal server error
       security:
       - bearer: []
-  /api/playground/tokens/{token_id}:
-    patch:
-      tags:
-      - User Playground
-      description: Claim a ticket sale token by a user
-      operationId: claim_token
-      responses:
-        '200':
-          description: Ticket Token Claimed
-          content:
-            text/plain:
-              schema:
-                type: string
-                format: uuid
-        '401':
-          description: Unauthorized - Missing or invalid JWT
-        '410':
-          description: Token Expired
-        '500':
-          description: Internal server error
-      security:
-      - bearer: []
   /api/products:
     get:
       tags:

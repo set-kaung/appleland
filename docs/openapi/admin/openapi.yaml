@@ -924,15 +924,14 @@ components:
     CreateClaimTokenPayload:
       type: object
       required:
-      - purchased_quantity
-      - free_quantity
+      - total_quantity
+      - unit_price
       properties:
-        free_quantity:
+        total_quantity:
           type: integer
           format: int32
-        purchased_quantity:
-          type: integer
-          format: int32
+        unit_price:
+          type: string
     CreateProductPayload:
       type: object
       required:

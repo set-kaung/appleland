@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE playground_purchase_tokens SET status = 'expired'\n                    WHERE id = $1 AND status = 'pending'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "eac65bb4bc8e45846ef7d3bde3c17cfb2435d11a391006e0a7a3a1541a187779"
+}
