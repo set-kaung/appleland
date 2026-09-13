@@ -25,6 +25,57 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /api/playground/tickets/claim_free:
+    patch:
+      tags:
+      - User Playground
+      description: Claim a free ticket by a user
+      operationId: claim_free_ticket
+      responses:
+        '200':
+          description: Claimed Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPlaygroundAccount'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
+  /api/playground/tokens/{token_id}:
+    patch:
+      tags:
+      - User Playground
+      description: Claim a ticket sale token by a user
+      operationId: claim_token
+      requestBody:
+        description: Optional list of playground coupon IDs to redeem as free tickets. If omitted, no free tickets are redeemed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimTokenPayload'
+        required: true
+      responses:
+        '200':
+          description: Claimed Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPlaygroundPurchaseResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '410':
+          description: Token Expired
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/products:
     get:
       tags:
@@ -139,6 +190,16 @@ paths:
       - bearer: []
 components:
   schemas:
+    ClaimTokenPayload:
+      type: object
+      properties:
+        playground_coupons:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            format: uuid
     PaginatedResponse_UserProduct:
       type: object
       required:
@@ -220,21 +281,71 @@ components:
           format: uuid
         query:
           type: string
-    UserPlaygroundTickets:
+    UserPlaygroundAccount:
       type: object
       required:
       - user_id
       - tickets_purchased
       - free_tickets_redeemed
-      - to_redeem
+      - free_ticket_eligible
       properties:
+        free_ticket_eligible:
+          type: integer
+          format: int32
         free_tickets_redeemed:
           type: integer
           format: int32
         tickets_purchased:
           type: integer
           format: int32
-        to_redeem:
+        user_id:
+          type: string
+          format: uuid
+    UserPlaygroundPurchase:
+      type: object
+      required:
+      - id
+      - user_id
+      - quantity
+      - is_free_redemption
+      properties:
+        id:
+          type: string
+          format: uuid
+        is_free_redemption:
+          type: boolean
+        quantity:
+          type: integer
+          format: int32
+        user_id:
+          type: string
+          format: uuid
+    UserPlaygroundPurchaseResponse:
+      type: object
+      properties:
+        free_record:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/UserPlaygroundPurchase'
+        purchased_record:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/UserPlaygroundPurchase'
+    UserPlaygroundTickets:
+      type: object
+      required:
+      - user_id
+      - tickets_purchased
+      - free_tickets_redeemed
+      - free_ticket_eligible
+      properties:
+        free_ticket_eligible:
+          type: integer
+          format: int32
+        free_tickets_redeemed:
+          type: integer
+          format: int32
+        tickets_purchased:
           type: integer
           format: int32
         user_id:

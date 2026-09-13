@@ -6,11 +6,11 @@ set -a
 source "$1"
 set +a
 
-cargo sqlx prepare --workspace -- --quiet &&
-  cargo clippy --all-targets --release --quiet &&
+cargo sqlx prepare --workspace &&
+  cargo clippy --all-targets --release &&
   cargo build --release || exit 1
 
-read -p "Build successful. Run application? [y/N] " answer
+read -r -p "Build successful. Run application? [y/N] " answer
 
 if [[ "$answer" =~ ^[Yy]$ ]]; then
   ./target/release/appleland
