@@ -1,6 +1,6 @@
 use super::store;
 use crate::app_error::APIError;
-use crate::app_extractor::{RequiresRole, SaleAdminRole, ValidatedJson};
+use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole, ValidatedJson};
 use crate::inventory::store as inventory_store;
 use crate::{ApiResult, PaginatedApiResult, pagination};
 use axum::extract::Path;
@@ -78,6 +78,7 @@ pub async fn get_products_paginated(
     tag = "Admin Products"
 )]
 pub async fn get_products_paginated_admin(
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
 ) -> PaginatedApiResult<AdminProduct> {
@@ -227,8 +228,12 @@ pub async fn create_product(
 
     let product_id = store::create(&mut tx, insert_payload).await?;
     if let Some(inventory_payload) = payload.inventory {
-        let inventory_record =
-            NewInventoryRecord::new(product_id, admin_id, payload.is_perishable, &inventory_payload)?;
+        let inventory_record = NewInventoryRecord::new(
+            product_id,
+            admin_id,
+            payload.is_perishable,
+            &inventory_payload,
+        )?;
         inventory_store::insert_new_inventory_record(&mut *tx, inventory_record).await?;
     }
 
@@ -262,6 +267,7 @@ pub async fn create_product(
     tag = "Admin Products"
 )]
 pub async fn update_product(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     session: Session,
     Path(product_id): Path<Uuid>,
@@ -316,6 +322,7 @@ pub async fn update_product(
 )]
 
 pub async fn delete_product(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     session: Session,
     Path(product_id): Path<Uuid>,
@@ -356,6 +363,7 @@ pub async fn delete_product(
     tag = "Admin Products"
 )]
 pub async fn search_products_admin_advanced(
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     ValidatedJson(search_params): ValidatedJson<ProductSearchParamsAdmin>,
@@ -398,6 +406,7 @@ pub async fn search_products_admin_advanced(
     tag = "Admin Products"
 )]
 pub async fn search_products_admin(
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     Query(product_query): Query<ProductFilter>,

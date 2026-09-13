@@ -1,4 +1,4 @@
-use axum::{Extension, Json, extract::{Path, State}};
+use axum::{Extension, Json, extract::State};
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -37,11 +37,19 @@ pub async fn creat_playground_token(
     session: Session,
     Json(payload): Json<CreateClaimTokenPayload>,
 ) -> ApiResult<Uuid> {
-    if payload.purchased_quantity < 0{
-        return Err(APIError::BadRequest("ticket quantity must be greater than 0".to_string()))
+    if payload.total_quantity <= 0 {
+        return Err(APIError::BadRequest(
+            "ticket quantity must be greater than 0".to_string(),
+        ));
     }
     let admin_id = session_admin_id(session).await?;
-    let token = store::create_claim_token(&state.db, admin_id, payload.purchased_quantity, payload.free_quantity).await?;
+    let token = store::create_claim_token(
+        &state.db,
+        admin_id,
+        payload.total_quantity,
+        payload.unit_price,
+    )
+    .await?;
     Ok(Json(token))
 }
 
@@ -75,19 +83,23 @@ pub async fn get_user_tickets(
     Ok(Json(result))
 }
 
-#[utoipa::path(patch,
-    path="/api/playground/tokens/{token_id}",
-    description = "Claim a ticket sale token by a user",
-    responses(
-        (status = 200, description = "Ticket Token Claimed", body = Uuid),
-        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
-        (status = 410, description = "Token Expired"),
-        (status = 500, description= "Internal server error")
-    ),
-    security(("bearer" = [])),
-    tag = "User Playground")]
-pub async fn claim_token(State(state): State<AppState>, Path(token_id): Path<Uuid>,Extension(claims): Extension<Claims>,) -> ApiResult<Uuid>{
-    let user_id = uuid::Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
-    let result = store::claim_token(&state.db, user_id, token_id).await?;
-    Ok(Json(result))
-}
+// #[utoipa::path(patch,
+//     path="/api/playground/tokens/{token_id}",
+//     description = "Claim a ticket sale token by a user",
+//     responses(
+//         (status = 200, description = "Ticket Token Claimed", body = Uuid),
+//         (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+//         (status = 410, description = "Token Expired"),
+//         (status = 500, description= "Internal server error")
+//     ),
+//     security(("bearer" = [])),
+//     tag = "User Playground")]
+// pub async fn claim_token(
+//     State(state): State<AppState>,
+//     Path(token_id): Path<Uuid>,
+//     Extension(claims): Extension<Claims>,
+// ) -> ApiResult<Uuid> {
+//     let user_id = uuid::Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
+//     let result = store::claim_token(&state.db, user_id, token_id).await?;
+//     Ok(Json(result))
+// }

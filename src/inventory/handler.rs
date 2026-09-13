@@ -31,9 +31,9 @@ use uuid::Uuid;
     tag = "Admin Inventory"
 )]
 pub async fn insert_inventory_record(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     session: Session,
-    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     Path(product_id): Path<Uuid>,
     Json(payload): Json<NewInventoryPayload>,
 ) -> ApiResult<AdminInventory> {
@@ -67,6 +67,7 @@ pub async fn insert_inventory_record(
     tag = "Admin Inventory"
 )]
 pub async fn get_product_inventory_records(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
     Path(product_id): Path<Uuid>,

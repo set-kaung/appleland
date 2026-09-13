@@ -1,7 +1,7 @@
 use super::store;
 use crate::ApiResult;
 use crate::app_error::APIError;
-use crate::app_extractor::ValidatedJson;
+use crate::app_extractor::{RequiresRole, SuperAdminRole, ValidatedJson};
 use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
@@ -33,6 +33,7 @@ use uuid::Uuid;
     tag = "Admin Categories"
 )]
 pub async fn create_category(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<app_state::AppState>,
     session: Session,
     ValidatedJson(payload): ValidatedJson<CreateCategoryPayload>,
@@ -105,6 +106,7 @@ pub async fn get_all_categories(
     tag = "Admin Categories"
 )]
 pub async fn update_category(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(s): State<AppState>,
     session: Session,
     Path(id): Path<Uuid>,
@@ -140,6 +142,7 @@ pub async fn update_category(
 )]
 
 pub async fn delete_category(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     session: Session,
     Path(id): Path<Uuid>,
