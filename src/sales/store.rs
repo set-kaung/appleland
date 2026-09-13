@@ -188,7 +188,7 @@ pub async fn get_sale_summary(
         item_counts AS (
             SELECT
                 sale_id,
-                COUNT(*)::INT4 AS items_sold,
+                SUM(quantity)::INT4 AS items_sold,
                 SUM(quantity * cost_price) AS total_cost
             FROM sale_items
             GROUP BY sale_id
