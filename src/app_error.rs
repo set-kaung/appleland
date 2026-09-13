@@ -75,6 +75,12 @@ pub enum APIError {
 
     #[error("token expired")]
     TokenExpired,
+
+    #[error("coupons expired or used")]
+    InvalidCoupons,
+
+    #[error("invalid coupon amount")]
+    InvalidCouponAmount,
 }
 
 impl IntoResponse for APIError {
@@ -91,6 +97,12 @@ impl IntoResponse for APIError {
             APIError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized").into_response(),
             APIError::NotFound => (StatusCode::NOT_FOUND, "not found").into_response(),
             APIError::TokenExpired => (StatusCode::GONE, "purchase token expired").into_response(),
+            APIError::InvalidCoupons => {
+                (StatusCode::BAD_REQUEST, "invalid coupons exist").into_response()
+            }
+            APIError::InvalidCouponAmount => {
+                (StatusCode::BAD_REQUEST, "invalid coupon amount").into_response()
+            }
         }
     }
 }
