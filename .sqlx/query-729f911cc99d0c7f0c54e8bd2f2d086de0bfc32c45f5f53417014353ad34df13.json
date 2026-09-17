@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO playground_accounts (user_id, tickets_purchased,free_tickets_redeemed,free_ticket_eligible)\n        VALUES ($1,$2,$3,$4)\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "729f911cc99d0c7f0c54e8bd2f2d086de0bfc32c45f5f53417014353ad34df13"
+}
