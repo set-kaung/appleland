@@ -5,15 +5,15 @@ use axum::{
 use sqlx::PgPool;
 use std::time::Duration;
 
+use crate::playground::handler::claim_free_ticket;
 use crate::{
     app_state::AppState,
     playground::handler::{claim_token, creat_playground_token, get_user_tickets},
 };
-use crate::playground::handler::claim_free_ticket;
 
 pub mod handler;
 pub mod model;
-mod service;
+pub mod service;
 mod store;
 
 pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::task::AbortHandle {

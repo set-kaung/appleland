@@ -13,7 +13,7 @@ use crate::{
     app_error::APIError,
     app_extractor::{PlaygroundAdminRole, RequiresRole},
     app_state::AppState,
-    auth::{Claims, password::session_admin_id},
+    auth::{CurrentUser, password::session_admin_id},
     playground::{
         model::{CreateClaimTokenPayload, UserPlaygroundTickets},
         store,
@@ -74,9 +74,9 @@ pub async fn creat_playground_token(
     )]
 pub async fn get_user_tickets(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(user): Extension<CurrentUser>,
 ) -> ApiResult<UserPlaygroundTickets> {
-    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
+    let user_id = user.id;
     let result = match store::get_user_tickets_info(&state.db, user_id).await? {
         Some(row) => row.into(),
         None => UserPlaygroundTickets {
@@ -108,10 +108,10 @@ pub async fn get_user_tickets(
 pub async fn claim_token(
     State(state): State<AppState>,
     Path(token_id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(user): Extension<CurrentUser>,
     ValidatedJson(payload): ValidatedJson<ClaimTokenPayload>,
 ) -> ApiResult<UserPlaygroundPurchaseResponse> {
-    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
+    let user_id = user.id;
     let result =
         service::claim_token(&state.db, user_id, token_id, payload.playground_coupons).await?;
     Ok(Json(result))
@@ -130,9 +130,9 @@ pub async fn claim_token(
     tag = "User Playground")]
 pub async fn claim_free_ticket(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(user): Extension<CurrentUser>,
 ) -> ApiResult<UserPlaygroundAccount> {
-    let user_id = Uuid::parse_str(&claims.sub).map_err(|_| APIError::Unauthorized)?;
+    let user_id = user.id;
     let result = service::claim_free_ticket(&state.db, user_id).await?;
     Ok(Json(result))
 }

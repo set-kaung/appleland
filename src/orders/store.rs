@@ -69,3 +69,5 @@ pub async fn update_order_delivery_status(
     .await?;
     Ok(())
 }
+
+// pub async fn get_all_orders_paged(pool: &PgPool, limit: i64,offset: i64)

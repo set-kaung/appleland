@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use serde::Deserialize;
+use uuid::Uuid;
 mod supabase;
 pub use supabase::SupabaseAuth;
 pub mod password;
@@ -18,6 +19,12 @@ pub struct Claims {
     pub exp: usize,
     pub iat: usize,
     pub aud: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CurrentUser {
+    pub id: Uuid,
+    pub supabase_id: Uuid,
 }
 
 #[derive(Debug, Clone, thiserror::Error)]

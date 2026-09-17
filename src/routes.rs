@@ -12,7 +12,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 
 use crate::app_state::AppState;
 use crate::{app_error::AppError, orders};
-use crate::{auth, category, inventory, middleware, playground, product, sales};
+use crate::{auth, category, inventory, middleware, playground, product, sales, user};
 use sqlx::Connection;
 
 #[derive(Serialize)]
@@ -52,9 +52,18 @@ pub fn create_app(
 ) -> Result<Router, AppError> {
     let root_routes = Router::new().route("/health", get(health)).with_state(pool);
 
-    let api_routes = Router::new()
+    let account_setup_routes = Router::new().nest("/users", user::route());
+
+    let user_protected_routes = Router::new()
         .nest("/products", product::route())
         .nest("/playground", playground::route())
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            middleware::user_row_middleware,
+        ));
+
+    let api_routes = account_setup_routes
+        .merge(user_protected_routes)
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::user_auth_middleware,

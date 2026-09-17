@@ -71,6 +71,41 @@ pub async fn user_auth_middleware(
     }
 }
 
+pub async fn user_row_middleware(
+    State(state): State<AppState>,
+    mut request: Request<Body>,
+    next: Next,
+) -> Response {
+    let Some(claims) = request.extensions().get::<Claims>().cloned() else {
+        tracing::error!("user_row_middleware ran without verified claims");
+        return APIError::InternalErr.into_response();
+    };
+
+    let supabase_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
+    };
+
+    let user_id =
+        match crate::user::service::find_user_id_by_supabase_id(&state.db, supabase_id).await {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to resolve supabase user");
+                return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+            }
+        };
+
+    let Some(user_id) = user_id else {
+        tracing::info!(supabase_id = %supabase_id, "account setup required");
+        return APIError::AccountSetupRequired.into_response();
+    };
+
+    request
+        .extensions_mut()
+        .insert(crate::auth::CurrentUser { id: user_id, supabase_id });
+    next.run(request).await
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct RequestId(pub Uuid);
 

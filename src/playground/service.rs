@@ -1,4 +1,4 @@
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashSet;
 use uuid::Uuid;
 
@@ -156,4 +156,12 @@ pub async fn claim_free_ticket(
     } else {
         Err(APIError::BadRequest("not enough tickets".to_string()))
     }
+}
+
+pub async fn creat_playground_account(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+) -> Result<(), APIError> {
+    store::insert_playground_account(tx, user_id, 0, 0, 0).await?;
+    Ok(())
 }

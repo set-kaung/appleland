@@ -272,3 +272,17 @@ pub async fn insert_playground_purchase(
     "#,user_id,quantity,is_free_redemption,created_by,unit_price).fetch_one(&mut **tx).await?;
     Ok(result)
 }
+
+pub async fn insert_playground_account(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    tickets_purchased: i32,
+    free_tickets_redeemed: i32,
+    free_ticket_eligible: i32,
+) -> Result<(), StoreError> {
+    sqlx::query!(r#"
+        INSERT INTO playground_accounts (user_id, tickets_purchased,free_tickets_redeemed,free_ticket_eligible)
+        VALUES ($1,$2,$3,$4)
+    "#,user_id,tickets_purchased,free_tickets_redeemed,free_ticket_eligible).execute(&mut **tx).await?;
+    Ok(())
+}

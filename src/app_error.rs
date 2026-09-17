@@ -47,7 +47,7 @@ pub enum AppError {
     #[error("general error")]
     GeneralErr,
 
-    #[error("starup setup error")]
+    #[error("startup setup error")]
     StartupErr(String),
 
     #[error("invalid operation")]
@@ -63,6 +63,9 @@ pub enum APIError {
 
     #[error("forbidden")]
     Forbidden,
+
+    #[error("account setup required")]
+    AccountSetupRequired,
 
     #[error("bad request")]
     BadRequest(String),
@@ -93,6 +96,9 @@ impl IntoResponse for APIError {
                 (StatusCode::UNAUTHORIZED, "invalid credentials").into_response()
             }
             APIError::Forbidden => (StatusCode::FORBIDDEN, "forbidden").into_response(),
+            APIError::AccountSetupRequired => {
+                (StatusCode::FORBIDDEN, "account setup required").into_response()
+            }
             APIError::BadRequest(e) => (StatusCode::BAD_REQUEST, e).into_response(),
             APIError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized").into_response(),
             APIError::NotFound => (StatusCode::NOT_FOUND, "not found").into_response(),

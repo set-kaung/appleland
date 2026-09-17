@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -11,6 +12,13 @@ pub struct InsertOrder {
     pub order_method: String,
     pub created_by: Uuid,
     pub updated_by: Uuid,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct OrderRow {
+    pub id: Uuid,
+    pub sale_id: Uuid,
+    // shippinh_
 }
 
 #[derive(Debug, Clone, ToSchema, Deserialize)]
