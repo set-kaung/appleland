@@ -52,7 +52,7 @@ pub fn create_app(
 ) -> Result<Router, AppError> {
     let root_routes = Router::new().route("/health", get(health)).with_state(pool);
 
-    let account_setup_routes = Router::new().nest("/users", user::route());
+    let account_setup_routes = Router::new().nest("/users", user::route_account_setup());
 
     let user_protected_routes = Router::new()
         .nest("/products", product::route())
@@ -62,12 +62,9 @@ pub fn create_app(
             middleware::user_row_middleware,
         ));
 
-    let api_routes = account_setup_routes
-        .merge(user_protected_routes)
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            middleware::user_auth_middleware,
-        ));
+    let api_routes = account_setup_routes.merge(user_protected_routes).layer(
+        axum_middleware::from_fn_with_state(state.clone(), middleware::user_auth_middleware),
+    );
 
     let admin_protected_routes = Router::new()
         .nest("/products", product::route_admin())

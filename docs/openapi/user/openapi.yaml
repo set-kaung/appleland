@@ -188,6 +188,34 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /api/users/setup:
+    post:
+      tags:
+      - User
+      description: Complete account setup for a newly signed-up user with address and phone number.
+      operationId: create_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserPayload'
+        required: true
+      responses:
+        '200':
+          description: Account setup completed successfully, returns user id
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        '400':
+          description: Bad request - Invalid input
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
 components:
   schemas:
     ClaimTokenPayload:
@@ -200,6 +228,16 @@ components:
           items:
             type: string
             format: uuid
+    CreateUserPayload:
+      type: object
+      required:
+      - address_line_1
+      - phone_number
+      properties:
+        address_line_1:
+          type: string
+        phone_number:
+          type: string
     PaginatedResponse_UserProduct:
       type: object
       required:
@@ -395,3 +433,7 @@ components:
 tags:
 - name: Products
   description: Browse and search the product catalog
+- name: Playground
+  description: Check playground tickets,eligibility, claim
+- name: User
+  description: User account management

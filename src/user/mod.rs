@@ -7,6 +7,6 @@ use axum::{Router, routing::post};
 
 use crate::app_state::AppState;
 
-pub fn route() -> Router<AppState> {
+pub fn route_account_setup() -> Router<AppState> {
     Router::new().route("/setup", post(handler::create_user))
 }
