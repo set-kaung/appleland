@@ -1,5 +1,6 @@
 stages:
   - test
+  - deploy
 
 include:
   - template: Security/SAST.gitlab-ci.yml
@@ -41,3 +42,17 @@ rust-build:
   script:
     - cargo build --verbose
     - cargo test --verbose
+
+pages:
+  stage: deploy
+  script:
+    - mkdir -p public
+    - cp docs/index.html docs/user.html docs/admin.html public/
+    - mkdir -p public/openapi/user public/openapi/admin
+    - cp docs/openapi/user/openapi.yaml public/openapi/user/
+    - cp docs/openapi/admin/openapi.yaml public/openapi/admin/
+  artifacts:
+    paths:
+      - public
+  only:
+    - dev
