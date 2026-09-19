@@ -10,17 +10,10 @@
   <div id="swagger-ui"></div>
   <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
   <script>
-    window.onload = function () {
-      SwaggerUIBundle({
-        url: "openapi/user/openapi.yaml",
-        dom_id: "#swagger-ui",
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIBundle.SwaggerUIStandalonePreset
-        ],
-        layout: "StandaloneLayout"
-      });
-    };
+    SwaggerUIBundle({
+      url: "openapi/user/openapi.yaml",
+      dom_id: "#swagger-ui"
+    });
   </script>
 </body>
 </html>

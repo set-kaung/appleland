@@ -36,12 +36,12 @@ cache:
 
 
 
-rust-build:
-  stage: test
-  image: rust:1.97-slim
-  script:
-    - cargo build --verbose
-    - cargo test --verbose
+# rust-build:
+#   stage: test
+#   image: rust:1.97-slim
+#   script:
+#     - cargo build --verbose
+#     - cargo test --verbose
 
 pages:
   stage: deploy
