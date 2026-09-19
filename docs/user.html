@@ -4,9 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User API - Appleland</title>
-  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css">
 </head>
 <body>
-  <redoc spec-url="openapi/user/openapi.yaml"></redoc>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = function () {
+      SwaggerUIBundle({
+        url: "openapi/user/openapi.yaml",
+        dom_id: "#swagger-ui",
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout"
+      });
+    };
+  </script>
 </body>
 </html>
