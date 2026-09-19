@@ -1,6 +1,6 @@
 use super::store;
 use crate::app_error::APIError;
-use crate::app_extractor::{RequiresRole, SuperAdminRole};
+use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::password::session_admin_id;
 use crate::sales::model::{
@@ -30,7 +30,7 @@ use uuid::Uuid;
     tag = "Admin Sales"
 )]
 pub async fn get_sales_paginated(
-    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Query(query): Query<pagination::PaginationQuery>,
 ) -> Result<Json<pagination::PaginatedResponse<AdminSale>>, APIError> {
@@ -67,7 +67,7 @@ pub async fn get_sales_paginated(
     tag = "Admin Sales"
 )]
 pub async fn get_sale_detail_by_id(
-    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Path(sale_id): Path<Uuid>,
 ) -> Result<Json<AdminSaleDetails>, APIError> {
@@ -93,7 +93,7 @@ pub async fn get_sale_detail_by_id(
     tag = "Admin Sales"
 )]
 pub async fn create_sale(
-    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     session: Session,
     Json(payload): Json<CreateSalePayload>,
