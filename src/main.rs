@@ -68,6 +68,7 @@ async fn main() -> Result<(), AppError> {
     let state = AppState::new(
         Arc::new(auth::SupabaseAuth::new(&conf.supabase_ref)),
         pool.clone(),
+        conf.uploadthing_token,
     );
 
     let session_store = PostgresStore::new(pool.clone());

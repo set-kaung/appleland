@@ -22,6 +22,7 @@ use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::playground;
 use crate::product;
 use crate::sales;
+use crate::uploadthing;
 
 use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
@@ -57,6 +58,7 @@ use utoipa::OpenApi;
         sales::handler::sale_summary,
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
+        uploadthing::get_upload_presigned_url,
     ),
     components(
         schemas(
@@ -85,7 +87,9 @@ use utoipa::OpenApi;
             NewInventoryPayload,
             CreateClaimTokenPayload,
             UpdateOrderDeliveryStatusResponse, 
-            UpdateOrderTrackingURLPayload
+            UpdateOrderTrackingURLPayload,
+            uploadthing::PresignRequest,
+            uploadthing::PresignResponse
         )
     ),
     tags(
@@ -94,6 +98,7 @@ use utoipa::OpenApi;
         (name = "Admin Sales", description = "Sales records, checkout, and reporting"),
         (name = "Admin Inventory", description = "Stock replenishment"),
         (name = "Authentication", description = "Admin login and logout"),
+        (name = "Uploads", description = "File upload utilities"),
     )
 )]
 pub struct AdminApiDoc;

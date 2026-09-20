@@ -12,7 +12,7 @@ use tower_sessions_sqlx_store::PostgresStore;
 
 use crate::app_state::AppState;
 use crate::{app_error::AppError, orders};
-use crate::{auth, category, inventory, middleware, playground, product, sales, user};
+use crate::{auth, category, inventory, middleware, playground, product, sales, uploadthing, user};
 use sqlx::Connection;
 
 #[derive(Serialize)]
@@ -73,6 +73,7 @@ pub fn create_app(
         .nest("/sales", sales::route_admin())
         .nest("/playground", playground::route_admin())
         .nest("/orders", orders::route_admin())
+        .nest("/uploads", uploadthing::route())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::admin_auth_middleware,

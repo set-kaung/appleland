@@ -700,6 +700,33 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/uploads/presign:
+    post:
+      tags:
+      - Uploads
+      description: Get a presigned UploadThing URL for file uploads.
+      operationId: get_upload_presigned_url
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignRequest'
+        required: true
+      responses:
+        '200':
+          description: Presigned upload URL and public file URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
 components:
   schemas:
     Admin:
@@ -1249,6 +1276,26 @@ components:
           - integer
           - 'null'
           format: int64
+    PresignRequest:
+      type: object
+      required:
+      - filename
+      - content_type
+      properties:
+        content_type:
+          type: string
+        filename:
+          type: string
+    PresignResponse:
+      type: object
+      required:
+      - upload_url
+      - file_url
+      properties:
+        file_url:
+          type: string
+        upload_url:
+          type: string
     ProductFilter:
       type: object
       required:
@@ -1487,3 +1534,5 @@ tags:
   description: Stock replenishment
 - name: Authentication
   description: Admin login and logout
+- name: Uploads
+  description: File upload utilities

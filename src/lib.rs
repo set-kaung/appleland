@@ -36,6 +36,7 @@ pub mod playground;
 pub mod product;
 pub mod routes;
 pub mod sales;
+pub mod uploadthing;
 pub mod user;
 
 pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;

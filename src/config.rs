@@ -10,6 +10,7 @@ pub struct Config {
     pub port: u16,
     pub supabase_ref: String,
     pub database_url: String,
+    pub uploadthing_token: String,
     #[serde(deserialize_with = "deserialize_comma_separated")]
     pub allowed_origins: Vec<HeaderValue>,
     #[serde(default = "default_burst_size")]
