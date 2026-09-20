@@ -1,4 +1,4 @@
-use super::store as sale_store;
+use super::{store as sale_store, store};
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashMap;
@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::app_error::{APIError, StoreError};
 use crate::inventory;
-use crate::sales::model::{SaleProduct, SaleProductDTO};
+use crate::sales::model::{AdminSaleDetails, SaleProduct, SaleProductDTO};
 
 type InventoryDeduction = (Uuid, i32);
 type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
@@ -40,14 +40,57 @@ pub async fn perform_sale_admin(
             inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
             && let Err(shortage @ StoreError::InsufficientInventory(..)) =
                 build_sale_items(products, &selling_prices, &fresh_entries)
-            {
-                return Err(shortage);
-            }
+        {
+            return Err(shortage);
+        }
         return Err(err);
     }
 
     let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
     sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
+
+    tx.commit().await?;
+
+    Ok(sale_id)
+}
+
+pub async fn perform_sale_user(
+    pool: &PgPool,
+    user_id: Uuid,
+    products: &[SaleProduct],
+) -> Result<Uuid, StoreError> {
+    let mut tx = pool.begin().await?;
+
+    let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
+
+    let selling_prices: HashMap<Uuid, Decimal> =
+        sale_store::fetch_selling_prices(&mut tx, &product_ids).await?;
+
+    let inventory_entries =
+        inventory::store::fetch_inventory_fifo_batch(&mut *tx, &product_ids).await?;
+
+    let (sale_product_dtos, deductions) =
+        build_sale_items(products, &selling_prices, &inventory_entries)?;
+
+    if let Err(err @ StoreError::UnexpectedRowsAffected(_)) =
+        inventory::store::deduct_inventory_batch(&mut tx, &deductions).await
+    {
+        // stock was validated against this snapshot, so a short UPDATE means a
+        // concurrent sale deducted first; re-check with a fresh snapshot (on the
+        // pool, so our rolled-back partial deductions are not visible) to report
+        // which product is short
+        if let Ok(fresh_entries) =
+            inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
+            && let Err(shortage @ StoreError::InsufficientInventory(..)) =
+                build_sale_items(products, &selling_prices, &fresh_entries)
+        {
+            return Err(shortage);
+        }
+        return Err(err);
+    }
+
+    let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
+    sale_store::insert_user_sale(&mut tx, sale_id, user_id).await?;
 
     tx.commit().await?;
 
@@ -172,6 +215,23 @@ pub async fn insert_sale_data(
     sale_store::insert_sale_items(tx, sale_id, sale_products).await?;
 
     Ok(sale_id)
+}
+
+pub async fn get_admin_sale_detail_by_id(
+    pool: &PgPool,
+    sale_id: Uuid,
+) -> Result<AdminSaleDetails, APIError> {
+    let sale_row = store::fetch_sale_row_by_id(pool, sale_id).await?;
+    let sale_items = store::fetch_sale_items(pool, sale_id).await?;
+    let sale_admin = store::fetch_sale_admin_by_sale_id(pool, sale_id).await?;
+    Ok(AdminSaleDetails {
+        id: sale_row.id,
+        total_amount: sale_row.total_amount,
+        created_at: sale_row.created_at,
+        is_instore_sale: sale_row.is_instore_sale,
+        sale_items,
+        by_admin: sale_admin,
+    })
 }
 
 #[cfg(test)]

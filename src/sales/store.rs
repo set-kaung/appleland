@@ -1,7 +1,7 @@
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
 use crate::sales::model::{
-    AdminSaleDetails, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter, SaleSummaryRow,
+    SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter, SaleSummaryRow,
 };
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
@@ -16,7 +16,7 @@ pub async fn fetch_all_paginated(
     let rows = sqlx::query_as!(
         SaleRow,
         r#"
-    SELECT id,total_amount,created_at from sales
+    SELECT id,total_amount,created_at,is_instore as "is_instore_sale" from sales
     ORDER BY created_at DESC, id DESC
     LIMIT $1 OFFSET $2
     "#,
@@ -33,21 +33,7 @@ pub async fn fetch_all_paginated(
     Ok((rows, total_items.unwrap_or(0)))
 }
 
-pub async fn fetch_sale_detail_by_id(
-    pool: &PgPool,
-    sale_id: Uuid,
-) -> Result<AdminSaleDetails, StoreError> {
-    let mut tx = pool.begin().await?;
-
-    let sale_row = sqlx::query_as!(
-        SaleRow,
-        r#"
-        SELECT id, total_amount, created_at FROM sales WHERE id = $1
-    "#,
-        sale_id
-    )
-    .fetch_one(&mut *tx)
-    .await?;
+pub async fn fetch_sale_items(pool: &PgPool, sale_id: Uuid) -> Result<Vec<SaleItem>, StoreError> {
     let sale_items = sqlx::query_as!(
         SaleItem,
         r#"SELECT si.id, si.product_id, p.name as product_name, si.sale_id, si.quantity, si.selling_price,si.cost_price, si.created_at
@@ -56,17 +42,42 @@ pub async fn fetch_sale_detail_by_id(
            WHERE sale_id = $1"#,
         sale_id
     )
-        .fetch_all(&mut *tx)
+        .fetch_all(pool)
         .await?;
+    Ok(sale_items)
+}
 
-    tx.commit().await?;
+pub async fn fetch_sale_row_by_id(pool: &PgPool, sale_id: Uuid) -> Result<SaleRow, StoreError> {
+    let sale_row = sqlx::query_as!(
+        SaleRow,
+        r#"
+        SELECT id, total_amount, created_at, is_instore as is_instore_sale FROM sales WHERE id = $1
+    "#,
+        sale_id
+    )
+    .fetch_one(pool)
+    .await?;
 
-    Ok(AdminSaleDetails {
-        id: sale_row.id,
-        total_amount: sale_row.total_amount,
-        created_at: sale_row.created_at,
-        sale_items,
-    })
+    Ok(sale_row)
+}
+
+pub async fn fetch_sale_admin_by_sale_id(
+    pool: &PgPool,
+    sale_id: Uuid,
+) -> Result<Option<SaleAdminDetail>, StoreError> {
+    let sale_admin = sqlx::query_as!(
+        SaleAdminDetail,
+        r#"
+        SELECT a.id as "id!",a.username as "username!" from admin_sales sa
+        JOIN admins a on a.id = sa.admin_id
+        WHERE sa.sale_id = $1;
+     "#,
+        sale_id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(sale_admin)
 }
 
 pub async fn insert_sale(
@@ -98,6 +109,21 @@ pub async fn insert_admin_sale(
     Ok(())
 }
 
+pub async fn insert_user_sale(
+    tx: &mut Transaction<'_, Postgres>,
+    sale_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), StoreError> {
+    sqlx::query!(
+        "INSERT INTO user_sales (sale_id,user_id) VALUES ($1,$2)",
+        sale_id,
+        user_id
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
 pub async fn fetch_selling_prices(
     tx: &mut Transaction<'_, Postgres>,
     product_ids: &[Uuid],
@@ -112,7 +138,7 @@ pub async fn fetch_selling_prices(
 
     let found: HashMap<Uuid, Decimal> = rows.into_iter().map(|r| (r.id, r.selling_price)).collect();
 
-    // for all client requestd product ids
+    // for all client requested product ids
     // check if any is missing in products returned from db
     let missing: Vec<Uuid> = product_ids
         .iter()
@@ -176,9 +202,8 @@ pub async fn get_sale_summary(
                 s.id,
                 s.created_at::date AS sale_date,
                 s.total_amount,
-                (a.id IS NULL) AS is_online_sale
+                s.is_instore AS is_instore_sale
             FROM sales s
-            LEFT JOIN admin_sales a ON a.sale_id = s.id
             WHERE 1=1",
     );
     filter.apply_filter(&mut qb);
@@ -196,14 +221,14 @@ pub async fn get_sale_summary(
         SELECT
             fs.sale_date,
             SUM(fs.total_amount) AS total_sale,
-            fs.is_online_sale,
+            fs.is_instore_sale,
             COUNT(*)::INT4 AS transactions,
             COALESCE(SUM(ic.items_sold), 0)::INT4 AS items_sold,
             COALESCE(SUM(ic.total_cost), 0) AS total_cost,
             SUM(fs.total_amount) - COALESCE(SUM(ic.total_cost), 0) AS margin
         FROM filtered_sales fs
         LEFT JOIN item_counts ic ON ic.sale_id = fs.id
-        GROUP BY fs.sale_date, fs.is_online_sale
+        GROUP BY fs.sale_date, fs.is_instore_sale
         ",
     );
     let query = qb.build_query_as::<SaleSummaryRow>();

@@ -34,7 +34,7 @@ For more specifics, refer to openapi.yaml files under docs folder.
 **User** (`/api/`) — Supabase JWT required:
 
 | Method | Path                   | Description                     |
-| ------ | ---------------------- | ------------------------------- |
+|--------|------------------------|---------------------------------|
 | GET    | `/api/products`        | Paginated active products       |
 | GET    | `/api/products/{id}`   | Product by ID                   |
 | GET    | `/api/products/search` | Search by name/barcode/category |
@@ -42,7 +42,7 @@ For more specifics, refer to openapi.yaml files under docs folder.
 **Admin** (`/admin/`) — Session auth required:
 
 | Method   | Path                       | Description                       |
-| -------- | -------------------------- | --------------------------------- |
+|----------|----------------------------|-----------------------------------|
 | POST     | `/admin/login`             | Login (creates session)           |
 | POST     | `/admin/logout`            | Destroy session                   |
 | GET      | `/admin/products`          | Paginated products (all statuses) |
@@ -70,7 +70,7 @@ PostgreSQL with 14 migrations in `db/migrations/`. Full schema at `db/schema.sql
 Required env vars
 
 | Variable                  | Description                    |
-| ------------------------- | ------------------------------ |
+|---------------------------|--------------------------------|
 | `DATABASE_URL`            | PostgreSQL connection string   |
 | `SUPABASE_REF`            | Supabase project reference     |
 | `PORT`                    | Server port                    |
@@ -84,13 +84,13 @@ Required env vars
 ## Run
 
 ```bash
-./run.sh .local.env
+./run.sh .env.local
 ```
 
 Or manually:
 
 ```bash
-export $(cat .local.env | xargs) && cargo run --release
+export $(cat .env.local | xargs) && cargo run --release
 ```
 
 ## Build

@@ -1,3 +1,4 @@
+use crate::db::DBQueryFilter;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres};
@@ -5,14 +6,13 @@ use time::{Date, OffsetDateTime};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::db::DBQueryFilter;
-
 #[derive(FromRow, Serialize, Deserialize)]
 pub struct SaleRow {
     pub id: Uuid,
     pub total_amount: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    pub is_instore_sale: bool,
 }
 
 #[derive(FromRow, Serialize, Deserialize, ToSchema)]
@@ -23,13 +23,21 @@ pub struct AdminSale {
     pub created_at: OffsetDateTime,
 }
 
-#[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, FromRow, Serialize, ToSchema)]
 pub struct AdminSaleDetails {
     pub id: Uuid,
     pub total_amount: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
     pub sale_items: Vec<SaleItem>,
+    pub is_instore_sale: bool,
+    pub by_admin: Option<SaleAdminDetail>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SaleAdminDetail {
+    pub id: Uuid,
+    pub username: String,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
@@ -99,7 +107,7 @@ impl DBQueryFilter<Postgres> for SaleSummaryFilter {
 pub struct SaleSummaryRow {
     pub sale_date: Date,
     pub total_sale: Decimal,
-    pub is_online_sale: bool,
+    pub is_instore_sale: bool,
     pub transactions: i32,
     pub items_sold: i32,
     pub total_cost: Decimal,
@@ -110,7 +118,7 @@ pub struct SaleSummaryRow {
 pub struct SaleSummary {
     pub sale_date: Date,
     pub total_sale: Decimal,
-    pub is_online_sale: bool,
+    pub is_instore_sale: bool,
     pub transactions: i32,
     pub items_sold: i32,
     pub total_cost: Decimal,
@@ -134,7 +142,7 @@ impl From<SaleSummaryRow> for SaleSummary {
         Self {
             sale_date: value.sale_date,
             total_sale: value.total_sale,
-            is_online_sale: value.is_online_sale,
+            is_instore_sale: value.is_instore_sale,
             transactions: value.transactions,
             items_sold: value.items_sold,
             total_cost: value.total_cost,

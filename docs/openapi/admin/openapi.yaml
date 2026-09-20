@@ -4,7 +4,7 @@ info:
   description: API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`).
   license:
     name: ''
-  version: 0.1.0
+  version: 0.8.0
 paths:
   /admin/categories:
     get:
@@ -612,7 +612,7 @@ paths:
       tags:
       - Admin Sales
       description: Create a new sale (POS checkout) with FIFO inventory deduction.
-      operationId: create_sale
+      operationId: create_admin_sale
       requestBody:
         content:
           application/json:
@@ -901,13 +901,20 @@ components:
       - total_amount
       - created_at
       - sale_items
+      - is_instore_sale
       properties:
+        by_admin:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/SaleAdminDetail'
         created_at:
           type: string
           format: date-time
         id:
           type: string
           format: uuid
+        is_instore_sale:
+          type: boolean
         sale_items:
           type: array
           items:
@@ -1296,6 +1303,17 @@ components:
             type:
             - boolean
             - 'null'
+    SaleAdminDetail:
+      type: object
+      required:
+      - id
+      - username
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
     SaleItem:
       type: object
       required:
@@ -1346,7 +1364,7 @@ components:
       required:
       - sale_date
       - total_sale
-      - is_online_sale
+      - is_instore_sale
       - transactions
       - items_sold
       - total_cost
@@ -1356,7 +1374,7 @@ components:
       properties:
         avg_basket:
           type: string
-        is_online_sale:
+        is_instore_sale:
           type: boolean
         items_sold:
           type: integer

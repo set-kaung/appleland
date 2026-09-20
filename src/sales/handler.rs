@@ -71,7 +71,7 @@ pub async fn get_sale_detail_by_id(
     State(state): State<AppState>,
     Path(sale_id): Path<Uuid>,
 ) -> Result<Json<AdminSaleDetails>, APIError> {
-    let data = store::fetch_sale_detail_by_id(&state.db, sale_id).await?;
+    let data = service::get_admin_sale_detail_by_id(&state.db, sale_id).await?;
     Ok(Json(data))
 }
 
@@ -92,7 +92,7 @@ pub async fn get_sale_detail_by_id(
     ),
     tag = "Admin Sales"
 )]
-pub async fn create_sale(
+pub async fn create_admin_sale(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     session: Session,

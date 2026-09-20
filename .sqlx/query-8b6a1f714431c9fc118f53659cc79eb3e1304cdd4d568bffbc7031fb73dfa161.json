@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    SELECT id,total_amount,created_at from sales\n    ORDER BY created_at DESC, id DESC\n    LIMIT $1 OFFSET $2\n    ",
+  "query": "\n        SELECT id, total_amount, created_at, is_instore as is_instore_sale FROM sales WHERE id = $1\n    ",
   "describe": {
     "columns": [
       {
@@ -35,19 +35,30 @@
             "name": "created_at"
           }
         }
+      },
+      {
+        "ordinal": 3,
+        "name": "is_instore_sale",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "is_instore"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "4445afefa9b3af62e2d0716b6e53b0dc4cfd4813769b070f8345eee12f69b570"
+  "hash": "8b6a1f714431c9fc118f53659cc79eb3e1304cdd4d568bffbc7031fb73dfa161"
 }

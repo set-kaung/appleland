@@ -53,7 +53,7 @@ use utoipa::OpenApi;
         product::handler::search_products_admin,
         sales::handler::get_sales_paginated,
         sales::handler::get_sale_detail_by_id,
-        sales::handler::create_sale,
+        sales::handler::create_admin_sale,
         sales::handler::sale_summary,
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
