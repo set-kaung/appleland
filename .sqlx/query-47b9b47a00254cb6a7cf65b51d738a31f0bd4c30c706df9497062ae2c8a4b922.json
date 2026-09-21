@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE playground_accounts\n        SET \n            tickets_purchased = tickets_purchased + $1, \n            free_ticket_eligible = free_ticket_eligible + $1,\n            free_tickets_redeemed = $2,\n            updated_at = NOW()\n        WHERE user_id = $3\n        RETURNING user_id, tickets_purchased,free_tickets_redeemed, free_ticket_eligible,created_at,updated_at\n    ",
+  "query": "\n        UPDATE playground_accounts\n        SET \n            tickets_purchased = tickets_purchased + $1, \n            free_ticket_eligible = free_ticket_eligible + $1,\n            free_tickets_redeemed = free_tickets_redeemed + $2,\n            updated_at = NOW()\n        WHERE user_id = $3\n        RETURNING user_id, tickets_purchased,free_tickets_redeemed, free_ticket_eligible,created_at,updated_at\n    ",
   "describe": {
     "columns": [
       {
@@ -86,5 +86,5 @@
       false
     ]
   },
-  "hash": "c14670939ebe6028a0a348fc748006e80f9e83bf059b48ebc26e47055a024215"
+  "hash": "47b9b47a00254cb6a7cf65b51d738a31f0bd4c30c706df9497062ae2c8a4b922"
 }
