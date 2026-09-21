@@ -130,35 +130,44 @@ impl MyanMyanPay {
         }
     }
 
-    fn sign_request(&self, body: &[u8], nonce: &str) -> String {
-        let Ok(mut mac) = HmacSha256::new_from_slice(self.webhook_secret.as_bytes()) else {
-            return String::new();
-        };
+    fn sign_request(&self, body: &[u8], nonce: &str) -> Result<String, PaymentError> {
+        let mut mac =
+            HmacSha256::new_from_slice(self.webhook_secret.as_bytes()).map_err(|e| {
+                PaymentError::Serialize(format!("failed to create HMAC: {e}"))
+            })?;
         mac.update(body);
         mac.update(nonce.as_bytes());
-        hex::encode(mac.finalize().into_bytes())
+        Ok(hex::encode(mac.finalize().into_bytes()))
     }
 
-    fn auth_headers(&self, body_bytes: &[u8], nonce: &str) -> Vec<(&str, String)> {
-        let signature = self.sign_request(body_bytes, nonce);
-        vec![
+    fn auth_headers(
+        &self,
+        body_bytes: &[u8],
+        nonce: &str,
+    ) -> Result<Vec<(&str, String)>, PaymentError> {
+        let signature = self.sign_request(body_bytes, nonce)?;
+        Ok(vec![
             ("Content-Type", "application/json".to_string()),
             ("Authorization", format!("Bearer {}", self.publishable_key)),
             ("X-Mmpay-Nonce", nonce.to_string()),
             ("X-Mmpay-Signature", signature),
-        ]
+        ])
+    }
+
+    fn status_is_paid(status: &str) -> bool {
+        matches!(status, "SUCCESS")
     }
 }
 
 #[async_trait::async_trait]
 impl PaymentProvider for MyanMyanPay {
-    async fn handshake(&self, order_id: &str) -> Result<String, PaymentError> {
-        let payload = serde_json::json!({ "orderId": order_id });
-        let body_bytes = serde_json::to_vec(&payload)
-            .expect("failed to serialize handshake payload");
+    async fn handshake(&self, payment_order_id: &str) -> Result<String, PaymentError> {
+        let payload = serde_json::json!({ "orderId": payment_order_id });
+        let body_bytes =
+            serde_json::to_vec(&payload).map_err(|e| PaymentError::Serialize(e.to_string()))?;
 
         let nonce = uuid::Uuid::new_v4().to_string();
-        let headers = self.auth_headers(&body_bytes, &nonce);
+        let headers = self.auth_headers(&body_bytes, &nonce)?;
 
         let handshake_path = if self.sandbox {
             "sandbox-handshake"
@@ -197,15 +206,15 @@ impl PaymentProvider for MyanMyanPay {
 
     async fn get_payment_info(
         &self,
-        order_id: &str,
+        payment_order_id: &str,
         btoken: &str,
     ) -> Result<PaymentInfo, PaymentError> {
-        let payload = serde_json::json!({ "orderId": order_id });
-        let body_bytes = serde_json::to_vec(&payload)
-            .expect("failed to serialize payment info payload");
+        let payload = serde_json::json!({ "orderId": payment_order_id });
+        let body_bytes =
+            serde_json::to_vec(&payload).map_err(|e| PaymentError::Serialize(e.to_string()))?;
 
         let nonce = uuid::Uuid::new_v4().to_string();
-        let headers = self.auth_headers(&body_bytes, &nonce);
+        let headers = self.auth_headers(&body_bytes, &nonce)?;
 
         let get_path = if self.sandbox { "sandbox-get" } else { "get" };
         let url = format!("{}/payments/{}", self.base_url(), get_path);
@@ -237,7 +246,7 @@ impl PaymentProvider for MyanMyanPay {
             .map_err(|e| PaymentError::InvalidResponse(e.to_string()))?;
 
         Ok(PaymentInfo {
-            order_id: raw.order_id,
+            payment_order_id: raw.order_id,
             amount: raw.amount,
             currency: "MMK".to_string(),
             vendor: raw.vendor,
@@ -250,11 +259,21 @@ impl PaymentProvider for MyanMyanPay {
         })
     }
 
-    fn is_paid(&self, info: &super::PaymentInfo) -> bool {
-        matches!(info.status.as_str(), "SUCCESS")
+    async fn is_paid(&self, payment_order_id: &str) -> Result<Option<PaymentInfo>, PaymentError> {
+        let btoken = self.handshake(payment_order_id).await?;
+        let info = self.get_payment_info(payment_order_id, &btoken).await?;
+        if Self::status_is_paid(&info.status) {
+            Ok(Some(info))
+        } else {
+            Ok(None)
+        }
     }
 
-    fn generate_signature(&self, body: &[u8], nonce: &str) -> String {
+    fn provider_name(&self) -> &'static str {
+        "mmpay"
+    }
+
+    fn generate_signature(&self, body: &[u8], nonce: &str) -> Result<String, PaymentError> {
         self.sign_request(body, nonce)
     }
 
@@ -301,6 +320,16 @@ async fn handle_mmpay_webhook(
         return Err(APIError::Unauthorized);
     }
 
+    if !super::store::consume_nonce(&state.db, nonce).await? {
+        tracing::info!(nonce, "duplicate webhook nonce, acking to stop provider retries");
+        return Ok((
+            StatusCode::OK,
+            Json(MmpayWebhookResponse {
+                status: "received".to_string(),
+            }),
+        ));
+    }
+
     let body: MmpayWebhookBody = serde_json::from_slice(&raw_body)
         .map_err(|e| APIError::BadRequest(format!("invalid webhook body: {e}")))?;
 
@@ -319,7 +348,6 @@ async fn handle_mmpay_webhook(
                 transaction_ref_id = %body.transaction_ref_id,
                 "payment successful"
             );
-            // TODO: update order/payment status in DB
         }
         MmpayStatus::Failed | MmpayStatus::Cancelled => {
             tracing::warn!(

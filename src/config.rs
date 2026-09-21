@@ -24,6 +24,9 @@ pub struct Config {
     #[serde(default = "default_playground_cleanup_interval")]
     pub playground_token_cleanup_interval: String,
 
+    #[serde(default = "default_nonce_cleanup_interval")]
+    pub webhook_nonce_cleanup_interval: String,
+
     #[serde(default)]
     pub rust_log: Option<String>,
 
@@ -46,6 +49,7 @@ impl std::fmt::Display for Config {
                 per_sec: {}
                 session_delete_interval: {}
                 playground_token_cleanup_interval: {}
+                webhook_nonce_cleanup_interval: {}
                 rust_log: {}",
             self.port,
             self.supabase_ref,
@@ -59,6 +63,7 @@ impl std::fmt::Display for Config {
             self.per_sec,
             self.session_delete_interval,
             self.playground_token_cleanup_interval,
+            self.webhook_nonce_cleanup_interval,
             self.rust_log.clone().unwrap_or("NONE".to_string()),
         )
     }
@@ -101,6 +106,10 @@ fn default_expiry_interval() -> String {
 
 fn default_playground_cleanup_interval() -> String {
     "30m".to_string()
+}
+
+fn default_nonce_cleanup_interval() -> String {
+    "3h".to_string()
 }
 
 fn default_true() -> bool {

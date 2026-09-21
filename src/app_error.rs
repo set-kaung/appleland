@@ -3,6 +3,8 @@ use std::fmt::Display;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
+use crate::payment::PaymentError;
+
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
     #[error("Database error occurred: {0}")]
@@ -84,6 +86,9 @@ pub enum APIError {
 
     #[error("invalid coupon amount")]
     InvalidCouponAmount,
+
+    #[error("payment not confirmed for order")]
+    PaymentNotConfirmed,
 }
 
 impl IntoResponse for APIError {
@@ -108,6 +113,9 @@ impl IntoResponse for APIError {
             }
             APIError::InvalidCouponAmount => {
                 (StatusCode::BAD_REQUEST, "invalid coupon amount").into_response()
+            }
+            APIError::PaymentNotConfirmed => {
+                (StatusCode::PAYMENT_REQUIRED, "payment not confirmed").into_response()
             }
         }
     }
@@ -163,6 +171,13 @@ impl From<StoreError> for APIError {
             StoreError::InvalidInput(e) => APIError::BadRequest(e),
             StoreError::TokenExpired => APIError::TokenExpired,
         }
+    }
+}
+
+impl From<PaymentError> for APIError {
+    fn from(value: PaymentError) -> Self {
+        tracing::error!(?value, "payment error");
+        APIError::InternalErr
     }
 }
 
