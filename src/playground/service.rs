@@ -137,14 +137,14 @@ pub async fn claim_free_ticket(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<UserPlaygroundAccount, APIError> {
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| log_err_convert("cannot begin transaction", e, APIError::InternalErr))?;
     let user_playground_account =
-        store::get_user_playground_account_for_update(pool, user_id).await?;
+        store::get_user_playground_account_for_update(&mut tx, user_id).await?;
     let required_amount = 10;
-    if user_playground_account.free_ticket_eligible > required_amount {
-        let mut tx = pool
-            .begin()
-            .await
-            .map_err(|e| log_err_convert("cannot begin transaction", e, APIError::InternalErr))?;
+    if user_playground_account.free_ticket_eligible >= required_amount {
         store::insert_ticket_coupon(&mut tx, user_id).await?;
         let result = store::deduct_eligible_tickets(&mut tx, user_id, required_amount)
             .await?
@@ -154,11 +154,14 @@ pub async fn claim_free_ticket(
             .map_err(|e| log_err_convert("failed to commit", e, APIError::InternalErr))?;
         Ok(result)
     } else {
+        tx.rollback()
+            .await
+            .map_err(|e| log_err_convert("failed to rollback", e, APIError::InternalErr))?;
         Err(APIError::BadRequest("not enough tickets".to_string()))
     }
 }
 
-pub async fn creat_playground_account(
+pub async fn create_playground_account(
     tx: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
 ) -> Result<(), APIError> {

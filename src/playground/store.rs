@@ -135,7 +135,7 @@ pub async fn get_user_playground_account(
 }
 
 pub async fn get_user_playground_account_for_update(
-    pool: &PgPool,
+    tx: &mut Transaction<'_, Postgres>,
     user_id: Uuid,
 ) -> Result<PlaygroundAccountRow, StoreError> {
     let result = sqlx::query_as!(
@@ -154,7 +154,7 @@ pub async fn get_user_playground_account_for_update(
 "#,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(&mut **tx)
     .await?;
     Ok(result)
 }
@@ -249,7 +249,7 @@ pub async fn update_playground_account(
         SET 
             tickets_purchased = tickets_purchased + $1, 
             free_ticket_eligible = free_ticket_eligible + $1,
-            free_tickets_redeemed = $2,
+            free_tickets_redeemed = free_tickets_redeemed + $2,
             updated_at = NOW()
         WHERE user_id = $3
         RETURNING user_id, tickets_purchased,free_tickets_redeemed, free_ticket_eligible,created_at,updated_at

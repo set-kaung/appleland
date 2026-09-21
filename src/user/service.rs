@@ -36,7 +36,7 @@ pub async fn new_user_account_creation(
     .await?;
 
     // create playground user
-    playground_service::creat_playground_account(&mut tx, user_id).await?;
+    playground_service::create_playground_account(&mut tx, user_id).await?;
 
     tx.commit()
         .await
