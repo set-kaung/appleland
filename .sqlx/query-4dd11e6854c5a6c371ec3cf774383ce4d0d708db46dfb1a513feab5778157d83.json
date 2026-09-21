@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO payment_webhook_nonces (nonce) VALUES($1)\n           ON CONFLICT (nonce) DO NOTHING\n           RETURNING nonce",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "nonce",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "payment_webhook_nonces",
+            "name": "nonce"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4dd11e6854c5a6c371ec3cf774383ce4d0d708db46dfb1a513feab5778157d83"
+}

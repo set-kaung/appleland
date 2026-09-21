@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM payment_webhook_nonces\n           WHERE consumed_at < now() - ($1::text)::interval",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c95524b9911f30d6d459985e5fd4cccb8408d3b01e1c6bdbad6d2838a1c24c88"
+}

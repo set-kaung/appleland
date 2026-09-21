@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO sales (total_amount) VALUES($1) RETURNING id",
+  "query": "SELECT s.id FROM sales s\n           JOIN user_sales us ON us.sale_id = s.id\n           WHERE s.payment_order_id = $1 AND us.user_id = $2",
   "describe": {
     "columns": [
       {
@@ -17,12 +17,13 @@
     ],
     "parameters": {
       "Left": [
-        "Numeric"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "3470886c6a8c72f06ff48a741dcf7c26eb7116e0a33c06f660d268aa07b6a54d"
+  "hash": "c4d85a85bd5286c44b0dc30962376ab7f33e8448f3f91f4297ea209e427a1af8"
 }
