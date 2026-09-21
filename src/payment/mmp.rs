@@ -131,10 +131,8 @@ impl MyanMyanPay {
     }
 
     fn sign_request(&self, body: &[u8], nonce: &str) -> Result<String, PaymentError> {
-        let mut mac =
-            HmacSha256::new_from_slice(self.webhook_secret.as_bytes()).map_err(|e| {
-                PaymentError::Serialize(format!("failed to create HMAC: {e}"))
-            })?;
+        let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())
+            .map_err(|e| PaymentError::Serialize(format!("failed to create HMAC: {e}")))?;
         mac.update(body);
         mac.update(nonce.as_bytes());
         Ok(hex::encode(mac.finalize().into_bytes()))
@@ -292,7 +290,7 @@ impl PaymentProvider for MyanMyanPay {
     }
 
     fn webhook_route(&self) -> Router<AppState> {
-        Router::new().route("/mmpay", post(handle_mmpay_webhook))
+        Router::new().route("/payment", post(handle_mmpay_webhook))
     }
 }
 
@@ -321,7 +319,10 @@ async fn handle_mmpay_webhook(
     }
 
     if !super::store::consume_nonce(&state.db, nonce).await? {
-        tracing::info!(nonce, "duplicate webhook nonce, acking to stop provider retries");
+        tracing::info!(
+            nonce,
+            "duplicate webhook nonce, acking to stop provider retries"
+        );
         return Ok((
             StatusCode::OK,
             Json(MmpayWebhookResponse {
