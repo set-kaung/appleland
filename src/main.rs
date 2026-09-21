@@ -12,6 +12,7 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
+use appleland::payment;
 use appleland::payment::mmp::MyanMyanPay;
 use appleland::playground;
 use appleland::routes;
@@ -63,6 +64,11 @@ async fn main() -> Result<(), AppError> {
             tracing::error!("failed to parse duration: {}", e);
             AppError::GeneralErr
         })?;
+    let nonce_cleanup_interval = parse_duration::parse(&conf.webhook_nonce_cleanup_interval)
+        .map_err(|e| {
+            tracing::error!("failed to parse duration: {}", e);
+            AppError::GeneralErr
+        })?;
 
     let pool = db::connect_db(conf.database_url).await?;
 
@@ -90,6 +96,9 @@ async fn main() -> Result<(), AppError> {
     let token_cleanup_handle =
         playground::spawn_expired_token_cleanup(pool.clone(), token_cleanup_interval);
 
+    let nonce_cleanup_handle =
+        payment::spawn_nonce_cleanup(pool.clone(), nonce_cleanup_interval);
+
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)
         .with_same_site(tower_sessions::cookie::SameSite::None)
@@ -113,7 +122,11 @@ async fn main() -> Result<(), AppError> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .with_graceful_shutdown(shutdown_signal(abort_handle.clone(), token_cleanup_handle))
+    .with_graceful_shutdown(shutdown_signal(
+        abort_handle.clone(),
+        token_cleanup_handle,
+        nonce_cleanup_handle,
+    ))
     .await
     .map_err(|_| AppError::GeneralErr)?;
 
@@ -130,6 +143,7 @@ async fn main() -> Result<(), AppError> {
 async fn shutdown_signal(
     deletion_task_abort_handle: AbortHandle,
     token_cleanup_abort_handle: AbortHandle,
+    nonce_cleanup_abort_handle: AbortHandle,
 ) {
     let ctrl_c = async {
         if let Err(e) = signal::ctrl_c().await {
@@ -156,10 +170,12 @@ async fn shutdown_signal(
         () = ctrl_c => {
             deletion_task_abort_handle.abort();
             token_cleanup_abort_handle.abort();
+            nonce_cleanup_abort_handle.abort();
         }
         () = terminate => {
             deletion_task_abort_handle.abort();
             token_cleanup_abort_handle.abort();
+            nonce_cleanup_abort_handle.abort();
         },
     }
 }

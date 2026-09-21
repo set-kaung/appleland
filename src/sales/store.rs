@@ -4,7 +4,7 @@ use crate::sales::model::{
     SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter, SaleSummaryRow,
 };
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
+use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -83,12 +83,39 @@ pub async fn fetch_sale_admin_by_sale_id(
 pub async fn insert_sale(
     tx: &mut Transaction<'_, Postgres>,
     total_amount: Decimal,
+    is_instore: bool,
+    payment_order_id: Option<&str>,
+    payment_provider: Option<&str>,
+    payment_method: Option<&str>,
 ) -> Result<Uuid, StoreError> {
     let id = sqlx::query_scalar!(
-        "INSERT INTO sales (total_amount) VALUES($1) RETURNING id",
-        total_amount
+        r#"INSERT INTO sales (total_amount, is_instore, payment_order_id, payment_provider, payment_method)
+           VALUES($1, $2, $3, $4, $5) RETURNING id"#,
+        total_amount,
+        is_instore,
+        payment_order_id,
+        payment_provider,
+        payment_method
     )
     .fetch_one(&mut **tx)
+    .await?;
+
+    Ok(id)
+}
+
+pub async fn fetch_sale_id_by_payment_order_id(
+    pool: &PgPool,
+    payment_order_id: &str,
+    user_id: Uuid,
+) -> Result<Uuid, StoreError> {
+    let id = sqlx::query_scalar!(
+        r#"SELECT s.id FROM sales s
+           JOIN user_sales us ON us.sale_id = s.id
+           WHERE s.payment_order_id = $1 AND us.user_id = $2"#,
+        payment_order_id,
+        user_id
+    )
+    .fetch_one(pool)
     .await?;
 
     Ok(id)
@@ -124,16 +151,19 @@ pub async fn insert_user_sale(
     Ok(())
 }
 
-pub async fn fetch_selling_prices(
-    tx: &mut Transaction<'_, Postgres>,
+pub async fn fetch_selling_prices<'e, E>(
+    executor: E,
     product_ids: &[Uuid],
-) -> Result<HashMap<Uuid, Decimal>, StoreError> {
+) -> Result<HashMap<Uuid, Decimal>, StoreError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
     let rows = sqlx::query_as!(
         PriceRow,
         "SELECT id, selling_price FROM products WHERE id = ANY($1) AND is_deleted IS FALSE",
         product_ids
     )
-    .fetch_all(&mut **tx)
+    .fetch_all(executor)
     .await?;
 
     let found: HashMap<Uuid, Decimal> = rows.into_iter().map(|r| (r.id, r.selling_price)).collect();

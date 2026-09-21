@@ -11,33 +11,73 @@ use crate::sales::model::{AdminSaleDetails, SaleActor, SaleProduct, SaleProductD
 type InventoryDeduction = (Uuid, i32);
 type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
 
+pub async fn compute_sale_total(
+    pool: &PgPool,
+    products: &[SaleProduct],
+) -> Result<Decimal, StoreError> {
+    let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
+    let prices = sale_store::fetch_selling_prices(pool, &product_ids).await?;
+
+    let mut total = Decimal::ZERO;
+    for p in products {
+        let price = prices
+            .get(&p.product_id)
+            .ok_or_else(|| StoreError::InvalidInput(format!("product not found: {}", p.product_id)))?;
+        total += *price * Decimal::from(p.quantity);
+    }
+
+    Ok(total)
+}
+
 pub async fn perform_sale_admin(
     pool: &PgPool,
     admin_id: Uuid,
     products: &[SaleProduct],
 ) -> Result<Uuid, StoreError> {
-    perform_sale(pool, products, SaleActor::Admin(admin_id)).await
+    perform_sale(
+        pool,
+        products,
+        SaleActor::Admin(admin_id),
+        None,
+        None,
+        None,
+    )
+    .await
 }
 
 pub async fn perform_sale_user(
     pool: &PgPool,
     user_id: Uuid,
     products: &[SaleProduct],
+    payment_order_id: &str,
+    payment_provider: &str,
+    payment_method: &str,
 ) -> Result<Uuid, StoreError> {
-    perform_sale(pool, products, SaleActor::User(user_id)).await
+    perform_sale(
+        pool,
+        products,
+        SaleActor::User(user_id),
+        Some(payment_order_id),
+        Some(payment_provider),
+        Some(payment_method),
+    )
+    .await
 }
 
 async fn perform_sale(
     pool: &PgPool,
     products: &[SaleProduct],
     actor: SaleActor,
+    payment_order_id: Option<&str>,
+    payment_provider: Option<&str>,
+    payment_method: Option<&str>,
 ) -> Result<Uuid, StoreError> {
     let mut tx = pool.begin().await?;
 
     let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
 
     let selling_prices: HashMap<Uuid, Decimal> =
-        sale_store::fetch_selling_prices(&mut tx, &product_ids).await?;
+        sale_store::fetch_selling_prices(&mut *tx, &product_ids).await?;
 
     let inventory_entries =
         inventory::store::fetch_inventory_fifo_batch(&mut *tx, &product_ids).await?;
@@ -58,7 +98,16 @@ async fn perform_sale(
         return Err(err);
     }
 
-    let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
+    let is_instore = matches!(actor, SaleActor::Admin(_));
+    let sale_id = insert_sale_data(
+        &mut tx,
+        sale_product_dtos,
+        is_instore,
+        payment_order_id,
+        payment_provider,
+        payment_method,
+    )
+    .await?;
 
     match actor {
         SaleActor::Admin(admin_id) => {
@@ -181,13 +230,25 @@ fn build_sale_items(
 pub async fn insert_sale_data(
     tx: &mut Transaction<'_, Postgres>,
     sale_products: Vec<SaleProductDTO>,
+    is_instore: bool,
+    payment_order_id: Option<&str>,
+    payment_provider: Option<&str>,
+    payment_method: Option<&str>,
 ) -> Result<Uuid, StoreError> {
     let total_selling_price: Decimal = sale_products
         .iter()
         .map(|x| x.selling_price * Decimal::from(x.quantity))
         .sum();
 
-    let sale_id = sale_store::insert_sale(tx, total_selling_price).await?;
+    let sale_id = sale_store::insert_sale(
+        tx,
+        total_selling_price,
+        is_instore,
+        payment_order_id,
+        payment_provider,
+        payment_method,
+    )
+    .await?;
 
     sale_store::insert_sale_items(tx, sale_id, sale_products).await?;
 

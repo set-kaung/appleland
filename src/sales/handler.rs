@@ -1,5 +1,5 @@
 use super::store;
-use crate::app_error::APIError;
+use crate::app_error::{APIError, StoreError};
 use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::CurrentUser;
@@ -12,6 +12,8 @@ use crate::{ApiResult, ApiResultWithStatusCode, pagination};
 use axum::Json;
 use axum::extract::{Extension, Path, Query, State};
 use axum::http::StatusCode;
+use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -138,6 +140,7 @@ pub async fn sale_summary(
         (status = 201, description = "Sale created", body = Uuid),
         (status = 400, description = "Invalid request or insufficient inventory"),
         (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 402, description = "Payment not confirmed for order"),
         (status = 500, description = "Internal server error")
     ),
     security(
@@ -151,7 +154,39 @@ pub async fn create_user_sale(
     Json(payload): Json<CreateSalePayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
+    let Some(payment_info) = state.payment_provider.is_paid(&payload.payment_order_id).await? else {
+        return Err(APIError::PaymentNotConfirmed);
+    };
 
-    let sale_id = service::perform_sale_user(&state.db, user.id, &aggregated_products).await?;
-    Ok((StatusCode::CREATED, Json(sale_id)))
+    let expected_total = service::compute_sale_total(&state.db, &aggregated_products).await?;
+    let paid_amount = Decimal::from_f64(payment_info.amount)
+        .ok_or_else(|| APIError::BadRequest("invalid payment amount".into()))?;
+    if paid_amount != expected_total {
+        return Err(APIError::BadRequest(
+            "payment amount does not match sale total".into(),
+        ));
+    }
+
+    match service::perform_sale_user(
+        &state.db,
+        user.id,
+        &aggregated_products,
+        &payload.payment_order_id,
+        state.payment_provider.provider_name(),
+        &payment_info.method,
+    )
+    .await
+    {
+        Ok(sale_id) => Ok((StatusCode::CREATED, Json(sale_id))),
+        Err(StoreError::UniqueKeyViolated(_)) => {
+            let sale_id = store::fetch_sale_id_by_payment_order_id(
+                &state.db,
+                &payload.payment_order_id,
+                user.id,
+            )
+            .await?;
+            Ok((StatusCode::CREATED, Json(sale_id)))
+        }
+        Err(e) => Err(e.into()),
+    }
 }
