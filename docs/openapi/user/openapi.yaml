@@ -188,6 +188,36 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /api/sales:
+    post:
+      tags:
+      - User Sales
+      description: Create a new sale (checkout) with FIFO inventory deduction.
+      operationId: create_user_sale
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSalePayload'
+        required: true
+      responses:
+        '201':
+          description: Sale created
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        '400':
+          description: Invalid request or insufficient inventory
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '402':
+          description: Payment not confirmed for order
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/users/setup:
     post:
       tags:
@@ -228,6 +258,18 @@ components:
           items:
             type: string
             format: uuid
+    CreateSalePayload:
+      type: object
+      required:
+      - payment_order_id
+      - sale_products
+      properties:
+        payment_order_id:
+          type: string
+        sale_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleProduct'
     CreateUserPayload:
       type: object
       required:
@@ -319,6 +361,18 @@ components:
           format: uuid
         query:
           type: string
+    SaleProduct:
+      type: object
+      required:
+      - product_id
+      - quantity
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
     UserPlaygroundAccount:
       type: object
       required:
@@ -437,3 +491,5 @@ tags:
   description: Check playground tickets,eligibility, claim
 - name: User
   description: User account management
+- name: User Sales
+  description: Checkout and sales for users

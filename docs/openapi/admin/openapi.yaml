@@ -1010,8 +1010,11 @@ components:
     CreateSalePayload:
       type: object
       required:
+      - payment_order_id
       - sale_products
       properties:
+        payment_order_id:
+          type: string
         sale_products:
           type: array
           items:
