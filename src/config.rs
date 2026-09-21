@@ -26,6 +26,11 @@ pub struct Config {
 
     #[serde(default)]
     pub rust_log: Option<String>,
+
+    pub mmpay_webhook_secret: String,
+    pub mmpay_publishable_key: String,
+    #[serde(default = "default_true")]
+    pub mmpay_sandbox: bool,
 }
 
 impl std::fmt::Display for Config {
@@ -96,6 +101,10 @@ fn default_expiry_interval() -> String {
 
 fn default_playground_cleanup_interval() -> String {
     "30m".to_string()
+}
+
+fn default_true() -> bool {
+    true
 }
 
 pub fn load_config() -> Result<Config, AppError> {

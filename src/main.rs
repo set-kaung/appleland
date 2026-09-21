@@ -12,6 +12,7 @@ use appleland::app_state::AppState;
 use appleland::auth;
 use appleland::config;
 use appleland::db;
+use appleland::payment::mmp::MyanMyanPay;
 use appleland::playground;
 use appleland::routes;
 use clap::Parser;
@@ -69,6 +70,11 @@ async fn main() -> Result<(), AppError> {
         Arc::new(auth::SupabaseAuth::new(&conf.supabase_ref)),
         pool.clone(),
         conf.uploadthing_token,
+        Arc::new(MyanMyanPay::new(
+            conf.mmpay_webhook_secret,
+            conf.mmpay_publishable_key,
+            conf.mmpay_sandbox,
+        )),
     );
 
     let session_store = PostgresStore::new(pool.clone());

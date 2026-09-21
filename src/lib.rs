@@ -32,6 +32,7 @@ pub mod inventory;
 pub mod middleware;
 pub mod orders;
 pub mod pagination;
+pub mod payment;
 pub mod playground;
 pub mod product;
 pub mod routes;
