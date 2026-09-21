@@ -10,7 +10,9 @@ pub struct Config {
     pub port: u16,
     pub supabase_ref: String,
     pub database_url: String,
-    pub uploadthing_token: String,
+    pub supabase_secret_key: String,
+    #[serde(default = "default_image_bucket_name")]
+    pub image_bucket_name: String,
     #[serde(deserialize_with = "deserialize_comma_separated")]
     pub allowed_origins: Vec<HeaderValue>,
     #[serde(default = "default_burst_size")]
@@ -110,6 +112,10 @@ fn default_playground_cleanup_interval() -> String {
 
 fn default_nonce_cleanup_interval() -> String {
     "3h".to_string()
+}
+
+fn default_image_bucket_name() -> String {
+    "appleland-product-images".to_string()
 }
 
 fn default_true() -> bool {

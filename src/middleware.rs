@@ -100,9 +100,10 @@ pub async fn user_row_middleware(
         return APIError::AccountSetupRequired.into_response();
     };
 
-    request
-        .extensions_mut()
-        .insert(crate::auth::CurrentUser { id: user_id, supabase_id });
+    request.extensions_mut().insert(crate::auth::CurrentUser {
+        id: user_id,
+        supabase_id,
+    });
     next.run(request).await
 }
 
@@ -201,11 +202,11 @@ pub fn with_global_middleware(
             .layer(
                 TraceLayer::new_for_http()
                     .make_span_with(|request: &Request| {
-                        let request_id = request.extensions().get::<RequestId>().map_or_else(
-                            || "unattributed".to_string(),
-                            |id| id.0.to_string(),
-                        );
-                        tracing::info_span!(
+                        let request_id = request
+                            .extensions()
+                            .get::<RequestId>()
+                            .map_or_else(|| "unattributed".to_string(), |id| id.0.to_string());
+                        tracing::debug_span!(
                             "http_request",
                             request_id = %request_id,
                             method = %request.method(),
@@ -213,7 +214,7 @@ pub fn with_global_middleware(
                         )
                     })
                     .on_response(|response: &Response, latency: Duration, _span: &Span| {
-                        tracing::info!(
+                        tracing::debug!(
                             status = response.status().as_u16(),
                             latency_ms = latency.as_millis() as u64,
                             "request completed"

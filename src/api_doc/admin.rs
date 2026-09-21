@@ -22,7 +22,7 @@ use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::playground;
 use crate::product;
 use crate::sales;
-use crate::uploadthing;
+use crate::image_storage;
 
 use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
@@ -58,7 +58,7 @@ use utoipa::OpenApi;
         sales::handler::sale_summary,
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
-        uploadthing::get_upload_presigned_url,
+        image_storage::upload_image,
     ),
     components(
         schemas(
@@ -88,8 +88,7 @@ use utoipa::OpenApi;
             CreateClaimTokenPayload,
             UpdateOrderDeliveryStatusResponse, 
             UpdateOrderTrackingURLPayload,
-            uploadthing::PresignRequest,
-            uploadthing::PresignResponse
+            image_storage::UploadResponse
         )
     ),
     tags(

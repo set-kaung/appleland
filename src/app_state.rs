@@ -7,7 +7,9 @@ use std::sync::Arc;
 pub struct AppState {
     pub db: PgPool,
     pub auth: Arc<dyn AuthProvider>,
-    pub uploadthing_token: String,
+    pub supabase_ref: String,
+    pub supabase_secret_key: String,
+    pub image_bucket_name: String,
     pub payment_provider: Arc<dyn PaymentProvider>,
 }
 
@@ -15,13 +17,17 @@ impl AppState {
     pub fn new(
         auth: Arc<dyn AuthProvider>,
         db: PgPool,
-        uploadthing_token: String,
+        supabase_ref: String,
+        supabase_secret_key: String,
+        image_bucket_name: String,
         payment_provider: Arc<dyn PaymentProvider>,
     ) -> Self {
         Self {
             db,
             auth,
-            uploadthing_token,
+            supabase_ref,
+            supabase_secret_key,
+            image_bucket_name,
             payment_provider,
         }
     }

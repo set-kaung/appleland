@@ -700,29 +700,30 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
-  /admin/uploads/presign:
+  /admin/uploads:
     post:
       tags:
       - Uploads
-      description: Get a presigned UploadThing URL for file uploads.
-      operationId: get_upload_presigned_url
+      description: Upload an image to Supabase Storage. Send as multipart/form-data with a 'file' field.
+      operationId: upload_image
       requestBody:
+        description: Multipart form data with 'file' field
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PresignRequest'
+              type: string
         required: true
       responses:
         '200':
-          description: Presigned upload URL and public file URL
+          description: Public file URL
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PresignResponse'
+                $ref: '#/components/schemas/UploadResponse'
         '400':
           description: Bad request
         '401':
-          description: Unauthorized - Missing or invalid JWT
+          description: Unauthorized
         '500':
           description: Internal server error
       security:
@@ -1279,26 +1280,6 @@ components:
           - integer
           - 'null'
           format: int64
-    PresignRequest:
-      type: object
-      required:
-      - filename
-      - content_type
-      properties:
-        content_type:
-          type: string
-        filename:
-          type: string
-    PresignResponse:
-      type: object
-      required:
-      - upload_url
-      - file_url
-      properties:
-        file_url:
-          type: string
-        upload_url:
-          type: string
     ProductFilter:
       type: object
       required:
@@ -1521,6 +1502,13 @@ components:
           - string
           - 'null'
           format: uuid
+    UploadResponse:
+      type: object
+      required:
+      - file_url
+      properties:
+        file_url:
+          type: string
   securitySchemes:
     session_cookie:
       type: apiKey

@@ -75,7 +75,9 @@ async fn main() -> Result<(), AppError> {
     let state = AppState::new(
         Arc::new(auth::SupabaseAuth::new(&conf.supabase_ref)),
         pool.clone(),
-        conf.uploadthing_token,
+        conf.supabase_ref,
+        conf.supabase_secret_key,
+        conf.image_bucket_name,
         Arc::new(MyanMyanPay::new(
             conf.mmpay_webhook_secret,
             conf.mmpay_publishable_key,
