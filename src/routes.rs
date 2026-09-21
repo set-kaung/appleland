@@ -57,6 +57,7 @@ pub fn create_app(
     let user_protected_routes = Router::new()
         .nest("/products", product::route())
         .nest("/playground", playground::route())
+        .nest("/sales", sales::route())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::user_row_middleware,
@@ -89,8 +90,11 @@ pub fn create_app(
         ))
         .with_state(state.clone());
 
+    let webhook_routes = state.payment_provider.webhook_route();
+
     let app_router = Router::new()
         .merge(root_routes)
+        .merge(webhook_routes)
         .nest("/api", api_routes)
         .nest("/admin", admin_routes)
         .with_state(state);

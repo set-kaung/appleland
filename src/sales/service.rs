@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::app_error::{APIError, StoreError};
 use crate::inventory;
-use crate::sales::model::{AdminSaleDetails, SaleProduct, SaleProductDTO};
+use crate::sales::model::{AdminSaleDetails, SaleActor, SaleProduct, SaleProductDTO};
 
 type InventoryDeduction = (Uuid, i32);
 type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
@@ -16,48 +16,21 @@ pub async fn perform_sale_admin(
     admin_id: Uuid,
     products: &[SaleProduct],
 ) -> Result<Uuid, StoreError> {
-    let mut tx = pool.begin().await?;
-
-    let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
-
-    let selling_prices: HashMap<Uuid, Decimal> =
-        sale_store::fetch_selling_prices(&mut tx, &product_ids).await?;
-
-    let inventory_entries =
-        inventory::store::fetch_inventory_fifo_batch(&mut *tx, &product_ids).await?;
-
-    let (sale_product_dtos, deductions) =
-        build_sale_items(products, &selling_prices, &inventory_entries)?;
-
-    if let Err(err @ StoreError::UnexpectedRowsAffected(_)) =
-        inventory::store::deduct_inventory_batch(&mut tx, &deductions).await
-    {
-        // stock was validated against this snapshot, so a short UPDATE means a
-        // concurrent sale deducted first; re-check with a fresh snapshot (on the
-        // pool, so our rolled-back partial deductions are not visible) to report
-        // which product is short
-        if let Ok(fresh_entries) =
-            inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
-            && let Err(shortage @ StoreError::InsufficientInventory(..)) =
-                build_sale_items(products, &selling_prices, &fresh_entries)
-        {
-            return Err(shortage);
-        }
-        return Err(err);
-    }
-
-    let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
-    sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
-
-    tx.commit().await?;
-
-    Ok(sale_id)
+    perform_sale(pool, products, SaleActor::Admin(admin_id)).await
 }
 
 pub async fn perform_sale_user(
     pool: &PgPool,
     user_id: Uuid,
     products: &[SaleProduct],
+) -> Result<Uuid, StoreError> {
+    perform_sale(pool, products, SaleActor::User(user_id)).await
+}
+
+async fn perform_sale(
+    pool: &PgPool,
+    products: &[SaleProduct],
+    actor: SaleActor,
 ) -> Result<Uuid, StoreError> {
     let mut tx = pool.begin().await?;
 
@@ -75,10 +48,6 @@ pub async fn perform_sale_user(
     if let Err(err @ StoreError::UnexpectedRowsAffected(_)) =
         inventory::store::deduct_inventory_batch(&mut tx, &deductions).await
     {
-        // stock was validated against this snapshot, so a short UPDATE means a
-        // concurrent sale deducted first; re-check with a fresh snapshot (on the
-        // pool, so our rolled-back partial deductions are not visible) to report
-        // which product is short
         if let Ok(fresh_entries) =
             inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
             && let Err(shortage @ StoreError::InsufficientInventory(..)) =
@@ -90,7 +59,15 @@ pub async fn perform_sale_user(
     }
 
     let sale_id = insert_sale_data(&mut tx, sale_product_dtos).await?;
-    sale_store::insert_user_sale(&mut tx, sale_id, user_id).await?;
+
+    match actor {
+        SaleActor::Admin(admin_id) => {
+            sale_store::insert_admin_sale(&mut tx, sale_id, admin_id).await?;
+        }
+        SaleActor::User(user_id) => {
+            sale_store::insert_user_sale(&mut tx, sale_id, user_id).await?;
+        }
+    }
 
     tx.commit().await?;
 

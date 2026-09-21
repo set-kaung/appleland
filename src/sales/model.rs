@@ -46,6 +46,12 @@ pub struct SaleProduct {
     pub quantity: i32,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum SaleActor {
+    Admin(Uuid),
+    User(Uuid),
+}
+
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct CreateSalePayload {
     pub sale_products: Vec<SaleProduct>,

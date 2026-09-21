@@ -2,6 +2,7 @@ use super::store;
 use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole};
 use crate::app_state::AppState;
+use crate::auth::CurrentUser;
 use crate::auth::password::session_admin_id;
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateSalePayload, SaleSummary, SaleSummaryFilter,
@@ -9,7 +10,7 @@ use crate::sales::model::{
 use crate::sales::service;
 use crate::{ApiResult, ApiResultWithStatusCode, pagination};
 use axum::Json;
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::http::StatusCode;
 use tower_sessions::Session;
 use uuid::Uuid;
@@ -126,4 +127,31 @@ pub async fn sale_summary(
 ) -> ApiResult<Vec<SaleSummary>> {
     let rows = store::get_sale_summary(&state.db, filter).await?;
     Ok(Json(rows.into_iter().map(|row| row.into()).collect()))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/sales",
+    description = "Create a new sale (checkout) with FIFO inventory deduction.",
+    request_body = CreateSalePayload,
+    responses(
+        (status = 201, description = "Sale created", body = Uuid),
+        (status = 400, description = "Invalid request or insufficient inventory"),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
+    ),
+    tag = "User Sales"
+)]
+pub async fn create_user_sale(
+    State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
+    Json(payload): Json<CreateSalePayload>,
+) -> ApiResultWithStatusCode<Uuid> {
+    let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
+
+    let sale_id = service::perform_sale_user(&state.db, user.id, &aggregated_products).await?;
+    Ok((StatusCode::CREATED, Json(sale_id)))
 }
