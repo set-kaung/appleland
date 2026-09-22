@@ -1,5 +1,5 @@
 use crate::product::model::UserProduct;
-use crate::sales::model::CreateSalePayload;
+use crate::sales::model::CreateUserSalePayload;
 use crate::user::model::CreateUserPayload;
 
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
@@ -36,7 +36,7 @@ use utoipa::OpenApi;
             playground::model::UserPlaygroundPurchaseResponse,
             playground::model::UserPlaygroundAccount,
             CreateUserPayload,
-            CreateSalePayload,
+            CreateUserSalePayload,
             sales::model::SaleProduct,
         )
     ),

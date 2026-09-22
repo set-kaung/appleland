@@ -5,7 +5,8 @@ use crate::app_state::AppState;
 use crate::auth::CurrentUser;
 use crate::auth::password::session_admin_id;
 use crate::sales::model::{
-    AdminSale, AdminSaleDetails, CreateSalePayload, SaleSummary, SaleSummaryFilter,
+    AdminSale, AdminSaleDetails, CreateAdminSalePayload, CreateUserSalePayload, SaleSummary,
+    SaleSummaryFilter,
 };
 use crate::sales::service;
 use crate::{ApiResult, ApiResultWithStatusCode, pagination};
@@ -82,7 +83,7 @@ pub async fn get_sale_detail_by_id(
     post,
     path = "/admin/sales",
     description = "Create a new sale (POS checkout) with FIFO inventory deduction.",
-    request_body = CreateSalePayload,
+    request_body = CreateUserSalePayload,
     responses(
         (status = 201, description = "Sale created", body = Uuid),
         (status = 400, description = "Invalid request or insufficient inventory"),
@@ -99,7 +100,7 @@ pub async fn create_admin_sale(
     RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     session: Session,
-    Json(payload): Json<CreateSalePayload>,
+    Json(payload): Json<CreateAdminSalePayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
     let admin_id = session_admin_id(session).await?;
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
@@ -135,7 +136,7 @@ pub async fn sale_summary(
     post,
     path = "/api/sales",
     description = "Create a new sale (checkout) with FIFO inventory deduction.",
-    request_body = CreateSalePayload,
+    request_body = CreateUserSalePayload,
     responses(
         (status = 201, description = "Sale created", body = Uuid),
         (status = 400, description = "Invalid request or insufficient inventory"),
@@ -151,10 +152,14 @@ pub async fn sale_summary(
 pub async fn create_user_sale(
     State(state): State<AppState>,
     Extension(user): Extension<CurrentUser>,
-    Json(payload): Json<CreateSalePayload>,
+    Json(payload): Json<CreateUserSalePayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
-    let Some(payment_info) = state.payment_provider.is_paid(&payload.payment_order_id).await? else {
+    let Some(payment_info) = state
+        .payment_provider
+        .is_paid(&payload.payment_order_id)
+        .await?
+    else {
         return Err(APIError::PaymentNotConfirmed);
     };
 

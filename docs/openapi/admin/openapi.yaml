@@ -617,7 +617,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSalePayload'
+              $ref: '#/components/schemas/CreateUserSalePayload'
         required: true
       responses:
         '201':
@@ -949,6 +949,15 @@ components:
             $ref: '#/components/schemas/SaleItem'
         total_amount:
           type: string
+    CreateAdminSalePayload:
+      type: object
+      required:
+      - sale_products
+      properties:
+        sale_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleProduct'
     CreateCategoryPayload:
       type: object
       required:
@@ -1008,7 +1017,7 @@ components:
           - string
           - 'null'
           format: uuid
-    CreateSalePayload:
+    CreateUserSalePayload:
       type: object
       required:
       - payment_order_id

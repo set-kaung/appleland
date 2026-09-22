@@ -53,8 +53,13 @@ pub enum SaleActor {
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
-pub struct CreateSalePayload {
+pub struct CreateUserSalePayload {
     pub payment_order_id: String,
+    pub sale_products: Vec<SaleProduct>,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct CreateAdminSalePayload {
     pub sale_products: Vec<SaleProduct>,
 }
 

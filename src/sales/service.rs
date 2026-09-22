@@ -20,9 +20,9 @@ pub async fn compute_sale_total(
 
     let mut total = Decimal::ZERO;
     for p in products {
-        let price = prices
-            .get(&p.product_id)
-            .ok_or_else(|| StoreError::InvalidInput(format!("product not found: {}", p.product_id)))?;
+        let price = prices.get(&p.product_id).ok_or_else(|| {
+            StoreError::InvalidInput(format!("product not found: {}", p.product_id))
+        })?;
         total += *price * Decimal::from(p.quantity);
     }
 
@@ -41,6 +41,7 @@ pub async fn perform_sale_admin(
         None,
         None,
         None,
+        true,
     )
     .await
 }
@@ -60,6 +61,7 @@ pub async fn perform_sale_user(
         Some(payment_order_id),
         Some(payment_provider),
         Some(payment_method),
+        false,
     )
     .await
 }
@@ -71,6 +73,7 @@ async fn perform_sale(
     payment_order_id: Option<&str>,
     payment_provider: Option<&str>,
     payment_method: Option<&str>,
+    is_instore: bool,
 ) -> Result<Uuid, StoreError> {
     let mut tx = pool.begin().await?;
 
@@ -98,7 +101,6 @@ async fn perform_sale(
         return Err(err);
     }
 
-    let is_instore = matches!(actor, SaleActor::Admin(_));
     let sale_id = insert_sale_data(
         &mut tx,
         sale_product_dtos,
@@ -158,7 +160,7 @@ pub fn validate_aggregate_sale_products(
 
 // check if there is enough inventory,
 // create the SaleProductDTO Vector (with inventory ids) for insert_sale_data
-fn build_sale_items(
+pub(super) fn build_sale_items(
     sale_products: &[SaleProduct],
     selling_prices: &HashMap<Uuid, Decimal>,
     inventory_entries: &[inventory::model::InventoryRow],
@@ -259,9 +261,11 @@ pub async fn get_admin_sale_detail_by_id(
     pool: &PgPool,
     sale_id: Uuid,
 ) -> Result<AdminSaleDetails, APIError> {
-    let sale_row = store::fetch_sale_row_by_id(pool, sale_id).await?;
-    let sale_items = store::fetch_sale_items(pool, sale_id).await?;
-    let sale_admin = store::fetch_sale_admin_by_sale_id(pool, sale_id).await?;
+    let (sale_row, sale_items, sale_admin) = tokio::try_join!(
+        store::fetch_sale_row_by_id(pool, sale_id),
+        store::fetch_sale_items(pool, sale_id),
+        store::fetch_sale_admin_by_sale_id(pool, sale_id),
+    )?;
     Ok(AdminSaleDetails {
         id: sale_row.id,
         total_amount: sale_row.total_amount,
@@ -270,136 +274,4 @@ pub async fn get_admin_sale_detail_by_id(
         sale_items,
         by_admin: sale_admin,
     })
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
-mod tests {
-    use super::*;
-    use crate::inventory::model::InventoryRow;
-    use time::OffsetDateTime;
-
-    fn make_inventory(product_id: Uuid, quantity_remaining: i32, unit_cost: i64) -> InventoryRow {
-        InventoryRow {
-            id: Uuid::new_v4(),
-            product_id,
-            quantity_received: quantity_remaining,
-            quantity_remaining,
-            unit_cost: Decimal::new(unit_cost, 2),
-            created_by: Uuid::new_v4(),
-            updated_by: Uuid::new_v4(),
-            created_at: OffsetDateTime::now_utc(),
-            updated_at: OffsetDateTime::now_utc(),
-            received_at: OffsetDateTime::now_utc(),
-            expiry_date: Some(OffsetDateTime::now_utc()),
-        }
-    }
-
-    fn make_sale_product(product_id: Uuid, quantity: i32) -> SaleProduct {
-        SaleProduct {
-            product_id,
-            quantity,
-        }
-    }
-
-    #[test]
-    fn test_enough_inventory_single_entry() {
-        let product_id = Uuid::new_v4();
-        let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
-        let inventory = vec![make_inventory(product_id, 10, 100)];
-        let sale_products = vec![make_sale_product(product_id, 5)];
-
-        let (items, deductions) =
-            build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
-
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0].quantity, 5);
-        assert_eq!(items[0].cost_price, Decimal::new(100, 2));
-        assert_eq!(items[0].selling_price, Decimal::new(500, 2));
-        assert_eq!(items[0].inventory_id, inventory[0].id);
-        assert_eq!(deductions, vec![(inventory[0].id, 5)]);
-    }
-
-    #[test]
-    fn test_enough_inventory_fifo_split_across_entries() {
-        let product_id = Uuid::new_v4();
-        let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
-        let inv1 = make_inventory(product_id, 3, 100);
-        let inv2 = make_inventory(product_id, 7, 150);
-        let inventory = vec![inv1.clone(), inv2.clone()];
-        let sale_products = vec![make_sale_product(product_id, 8)];
-
-        let (items, deductions) =
-            build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
-
-        assert_eq!(items.len(), 2);
-
-        assert_eq!(items[0].quantity, 3);
-        assert_eq!(items[0].cost_price, Decimal::new(100, 2));
-        assert_eq!(items[0].inventory_id, inv1.id);
-
-        assert_eq!(items[1].quantity, 5);
-        assert_eq!(items[1].cost_price, Decimal::new(150, 2));
-        assert_eq!(items[1].inventory_id, inv2.id);
-
-        assert_eq!(deductions, vec![(inv1.id, 3), (inv2.id, 5)]);
-    }
-
-    #[test]
-    fn test_not_enough_inventory() {
-        let product_id = Uuid::new_v4();
-        let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
-        let inventory = vec![make_inventory(product_id, 3, 100)];
-        let sale_products = vec![make_sale_product(product_id, 5)];
-
-        let result = build_sale_items(&sale_products, &selling_prices, &inventory);
-
-        assert!(matches!(
-            result,
-            Err(StoreError::InsufficientInventory(id, 5, 3)) if id == product_id
-        ));
-    }
-
-    #[test]
-    fn test_zero_inventory_entries() {
-        let product_id = Uuid::new_v4();
-        let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
-        let inventory: Vec<InventoryRow> = vec![];
-        let sale_products = vec![make_sale_product(product_id, 1)];
-
-        let result = build_sale_items(&sale_products, &selling_prices, &inventory);
-
-        assert!(matches!(
-            result,
-            Err(StoreError::InsufficientInventory(id, 1, 0)) if id == product_id
-        ));
-    }
-
-    #[test]
-    fn test_multiple_products() {
-        let product_a = Uuid::new_v4();
-        let product_b = Uuid::new_v4();
-        let selling_prices = HashMap::from([
-            (product_a, Decimal::new(500, 2)),
-            (product_b, Decimal::new(800, 2)),
-        ]);
-        let inv_a = make_inventory(product_a, 10, 100);
-        let inv_b = make_inventory(product_b, 5, 200);
-        let inventory = vec![inv_a.clone(), inv_b.clone()];
-        let sale_products = vec![
-            make_sale_product(product_a, 4),
-            make_sale_product(product_b, 3),
-        ];
-
-        let (items, deductions) =
-            build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
-
-        assert_eq!(items.len(), 2);
-        assert_eq!(items[0].product_id, product_a);
-        assert_eq!(items[0].quantity, 4);
-        assert_eq!(items[1].product_id, product_b);
-        assert_eq!(items[1].quantity, 3);
-
-        assert_eq!(deductions, vec![(inv_a.id, 4), (inv_b.id, 3)]);
-    }
 }

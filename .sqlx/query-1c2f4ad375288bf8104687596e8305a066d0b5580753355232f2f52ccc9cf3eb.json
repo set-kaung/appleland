@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT s.id, s.total_amount, s.created_at, s.is_instore as \"is_instore_sale\"\n        FROM user_sales us\n        JOIN sales s ON s.id = us.sale_id\n        WHERE us.user_id = $1\n        ORDER BY s.created_at DESC, s.id DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "total_amount",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "total_amount"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "is_instore_sale",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "is_instore"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1c2f4ad375288bf8104687596e8305a066d0b5580753355232f2f52ccc9cf3eb"
+}

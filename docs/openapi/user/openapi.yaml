@@ -198,7 +198,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSalePayload'
+              $ref: '#/components/schemas/CreateUserSalePayload'
         required: true
       responses:
         '201':
@@ -258,7 +258,17 @@ components:
           items:
             type: string
             format: uuid
-    CreateSalePayload:
+    CreateUserPayload:
+      type: object
+      required:
+      - address_line_1
+      - phone_number
+      properties:
+        address_line_1:
+          type: string
+        phone_number:
+          type: string
+    CreateUserSalePayload:
       type: object
       required:
       - payment_order_id
@@ -270,16 +280,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleProduct'
-    CreateUserPayload:
-      type: object
-      required:
-      - address_line_1
-      - phone_number
-      properties:
-        address_line_1:
-          type: string
-        phone_number:
-          type: string
     PaginatedResponse_UserProduct:
       type: object
       required:
