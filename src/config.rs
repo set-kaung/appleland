@@ -8,9 +8,11 @@ use sqlx::postgres::PgConnectOptions;
 pub struct Config {
     #[serde(default = "default_port")]
     pub port: u16,
-    pub supabase_ref: String,
+    pub supabase_auth_ref: String,
     pub database_url: String,
-    pub supabase_secret_key: String,
+    pub supabase_storage_ref: String,
+    pub supabase_storage_url: String,
+    pub supabase_storage_secret_key: String,
     #[serde(default = "default_image_bucket_name")]
     pub image_bucket_name: String,
     #[serde(deserialize_with = "deserialize_comma_separated")]
@@ -44,7 +46,9 @@ impl std::fmt::Display for Config {
             f,
             "
                 port: {}
-                supabase_ref: {}
+                supabase_auth_ref: {}
+                supabase_storage_ref: {}
+                supabase_storage_url: {}
                 database_host: {}
                 allowed_origins: {}
                 burst_size: {}
@@ -54,7 +58,9 @@ impl std::fmt::Display for Config {
                 webhook_nonce_cleanup_interval: {}
                 rust_log: {}",
             self.port,
-            self.supabase_ref,
+            self.supabase_auth_ref,
+            self.supabase_storage_ref,
+            self.supabase_storage_url,
             database_host(&self.database_url),
             self.allowed_origins
                 .iter()

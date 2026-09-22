@@ -73,10 +73,11 @@ async fn main() -> Result<(), AppError> {
     let pool = db::connect_db(conf.database_url).await?;
 
     let state = AppState::new(
-        Arc::new(auth::SupabaseAuth::new(&conf.supabase_ref)),
+        Arc::new(auth::SupabaseAuth::new(&conf.supabase_auth_ref)),
         pool.clone(),
-        conf.supabase_ref,
-        conf.supabase_secret_key,
+        conf.supabase_storage_ref,
+        conf.supabase_storage_url,
+        conf.supabase_storage_secret_key,
         conf.image_bucket_name,
         Arc::new(MyanMyanPay::new(
             conf.mmpay_webhook_secret,
