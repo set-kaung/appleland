@@ -80,6 +80,27 @@ pub async fn fetch_sale_admin_by_sale_id(
     Ok(sale_admin)
 }
 
+pub async fn fetch_user_purchase_history(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Vec<SaleRow>, StoreError> {
+    let rows = sqlx::query_as!(
+        SaleRow,
+        r#"
+        SELECT s.id, s.total_amount, s.created_at, s.is_instore as "is_instore_sale"
+        FROM user_sales us
+        JOIN sales s ON s.id = us.sale_id
+        WHERE us.user_id = $1
+        ORDER BY s.created_at DESC, s.id DESC
+        "#,
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
+}
+
 pub async fn insert_sale(
     tx: &mut Transaction<'_, Postgres>,
     total_amount: Decimal,
