@@ -7,7 +7,7 @@ use axum::Json;
 use axum::extract::State;
 
 #[utoipa::path(
-    patch,
+    get,
     path = "/admin/staff",
     description = "Get all staff",
     responses(
