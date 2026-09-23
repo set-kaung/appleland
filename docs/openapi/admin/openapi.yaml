@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Appleland Admin API
-  description: API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`).
+  description: API for the staff dashboard. Endpoints require an authenticated staff session established via the login endpoint (session cookie named `id`).
   license:
     name: ''
   version: 0.9.0
@@ -700,6 +700,27 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/staff:
+    patch:
+      tags:
+      - Admin Orders
+      description: Get all staff
+      operationId: get_all_admin_staff
+      responses:
+        '200':
+          description: All staff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStaff'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/uploads:
     post:
       tags:
@@ -953,6 +974,20 @@ components:
           items:
             $ref: '#/components/schemas/SaleItem'
         total_amount:
+          type: string
+    AdminStaff:
+      type: object
+      required:
+      - id
+      - username
+      - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/AdminRole'
+        username:
           type: string
     CreateAdminSalePayload:
       type: object

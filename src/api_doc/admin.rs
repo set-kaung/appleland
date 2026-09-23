@@ -14,6 +14,7 @@ use crate::sales::model::{
 };
 
 use crate::playground::model::CreateClaimTokenPayload;
+use crate::staff::model::AdminStaff;
 
 use crate::auth::admin as admin_auth;
 use crate::category;
@@ -24,6 +25,7 @@ use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::playground;
 use crate::product;
 use crate::sales;
+use crate::staff;
 
 use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
@@ -32,7 +34,7 @@ use utoipa::OpenApi;
 #[openapi(
     info(
         title = "Appleland Admin API",
-        description = "API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`)."
+        description = "API for the admin dashboard. Endpoints require an authenticated staff session established via the login endpoint (session cookie named `id`)."
     ),
     modifiers(&SessionCookieSecurityAddon),
     paths(
@@ -59,6 +61,7 @@ use utoipa::OpenApi;
         sales::handler::sale_summary,
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
+        staff::handler::get_all_admin_staff,
         image_storage::upload_image,
     ),
     components(
@@ -89,6 +92,7 @@ use utoipa::OpenApi;
             CreateClaimTokenPayload,
             UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
+            AdminStaff,
             image_storage::UploadResponse
         )
     ),

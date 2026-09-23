@@ -11,7 +11,7 @@ use tower_sessions::SessionManagerLayer;
 use tower_sessions_sqlx_store::PostgresStore;
 
 use crate::app_state::AppState;
-use crate::{app_error::AppError, orders};
+use crate::{app_error::AppError, orders, staff};
 use crate::{
     auth, category, image_storage, inventory, middleware, playground, product, sales, user,
 };
@@ -70,6 +70,7 @@ pub fn create_app(
     );
 
     let admin_protected_routes = Router::new()
+        .nest("/staff", staff::route_admin())
         .nest("/products", product::route_admin())
         .nest("/inventory", inventory::route_admin())
         .nest("/categories", category::route_admin())
