@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Appleland Admin API
-  description: API for the staff dashboard. Endpoints require an authenticated staff session established via the login endpoint (session cookie named `id`).
+  description: API for the admin dashboard. Endpoints require an authenticated staff session established via the login endpoint (session cookie named `id`).
   license:
     name: ''
   version: 0.9.0
@@ -701,7 +701,7 @@ paths:
       security:
       - session_cookie: []
   /admin/staff:
-    patch:
+    get:
       tags:
       - Admin Orders
       description: Get all staff
@@ -749,6 +749,12 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /admin/users:
+    get:
+      tags:
+      - users::handler
+      operationId: get_all_users_paginated
+      responses: {}
 components:
   schemas:
     Admin:
@@ -1316,6 +1322,42 @@ components:
         total_pages:
           type: integer
           format: int64
+    PaginatedResponse_UserResponse:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - username
+            - address_line_1
+            - phone_number
+            properties:
+              address_line_1:
+                type: string
+              id:
+                type: string
+                format: uuid
+              phone_number:
+                type: string
+              username:
+                type: string
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginationQuery:
       type: object
       properties:
@@ -1558,6 +1600,23 @@ components:
       properties:
         file_url:
           type: string
+    UserResponse:
+      type: object
+      required:
+      - id
+      - username
+      - address_line_1
+      - phone_number
+      properties:
+        address_line_1:
+          type: string
+        id:
+          type: string
+          format: uuid
+        phone_number:
+          type: string
+        username:
+          type: string
   securitySchemes:
     session_cookie:
       type: apiKey
@@ -1576,3 +1635,5 @@ tags:
   description: Admin login and logout
 - name: Uploads
   description: File upload utilities
+- name: Admin Users
+  description: User account management for staff

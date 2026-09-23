@@ -261,12 +261,15 @@ components:
     CreateUserPayload:
       type: object
       required:
+      - username
       - address_line_1
       - phone_number
       properties:
         address_line_1:
           type: string
         phone_number:
+          type: string
+        username:
           type: string
     CreateUserSalePayload:
       type: object

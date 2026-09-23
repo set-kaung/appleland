@@ -88,7 +88,7 @@ pub async fn user_row_middleware(
     };
 
     let user_id =
-        match crate::user::service::find_user_id_by_supabase_id(&state.db, supabase_id).await {
+        match crate::users::service::find_user_id_by_supabase_id(&state.db, supabase_id).await {
             Ok(id) => id,
             Err(e) => {
                 tracing::error!(error = %e, "failed to resolve supabase user");

@@ -10,3 +10,7 @@ use crate::app_state::AppState;
 pub fn route_account_setup() -> Router<AppState> {
     Router::new().route("/setup", post(handler::create_user))
 }
+
+pub fn route_admin() -> Router<AppState> {
+    Router::new().route("/", post(handler::get_all_users_paginated))
+}

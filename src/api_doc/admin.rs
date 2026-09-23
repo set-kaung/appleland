@@ -15,6 +15,7 @@ use crate::sales::model::{
 
 use crate::playground::model::CreateClaimTokenPayload;
 use crate::staff::model::AdminStaff;
+use crate::users::model::UserResponse;
 
 use crate::auth::admin as admin_auth;
 use crate::category;
@@ -26,6 +27,7 @@ use crate::playground;
 use crate::product;
 use crate::sales;
 use crate::staff;
+use crate::users;
 
 use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
@@ -62,6 +64,7 @@ use utoipa::OpenApi;
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
         staff::handler::get_all_admin_staff,
+        users::handler::get_all_users_paginated,
         image_storage::upload_image,
     ),
     components(
@@ -93,6 +96,8 @@ use utoipa::OpenApi;
             UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
             AdminStaff,
+            UserResponse,
+            PaginatedResponse<UserResponse>,
             image_storage::UploadResponse
         )
     ),
@@ -103,6 +108,7 @@ use utoipa::OpenApi;
         (name = "Admin Inventory", description = "Stock replenishment"),
         (name = "Authentication", description = "Admin login and logout"),
         (name = "Uploads", description = "File upload utilities"),
+        (name = "Admin Users", description = "User account management for staff"),
     )
 )]
 pub struct AdminApiDoc;

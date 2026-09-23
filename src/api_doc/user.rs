@@ -1,10 +1,10 @@
 use crate::product::model::UserProduct;
 use crate::sales::model::CreateUserSalePayload;
-use crate::user::model::CreateUserPayload;
+use crate::users::model::CreateUserPayload;
 
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
 use super::BearerSecurityAddon;
-use crate::{playground, product, sales, user};
+use crate::{playground, product, sales, users};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -21,7 +21,7 @@ use utoipa::OpenApi;
         playground::handler::claim_token,
         playground::handler::get_user_tickets,
         playground::handler::claim_free_ticket,
-        user::handler::create_user,
+        users::handler::create_user,
         sales::handler::create_user_sale,
     ),
     components(

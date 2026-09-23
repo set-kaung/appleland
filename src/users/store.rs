@@ -1,4 +1,4 @@
-use crate::app_error::StoreError;
+use crate::{app_error::StoreError, users::model::UserRow};
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
@@ -43,4 +43,25 @@ pub async fn insert_into_user_contact(
     .execute(&mut **tx)
     .await?;
     Ok(())
+}
+
+pub async fn get_all_users_paginated(
+    pool: &PgPool,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<UserRow>, i64), StoreError> {
+    let result = sqlx::query_as!(
+        UserRow,
+        "SELECT users.id, username, uc.address_line_1, uc.phone_number FROM users JOIN user_contact uc ON users.id = uc.user_id LIMIT $1 OFFSET $2",
+        limit,
+        offset
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let total = sqlx::query_scalar!("SELECT count(*) FROM users")
+        .fetch_one(pool)
+        .await?;
+
+    Ok((result, total.unwrap_or(0)))
 }

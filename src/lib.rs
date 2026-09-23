@@ -39,7 +39,7 @@ pub mod product;
 pub mod routes;
 pub mod sales;
 mod staff;
-pub mod user;
+pub mod users;
 
 pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;
 pub type ApiResultWithStatusCode<T> = Result<(StatusCode, Json<T>), app_error::APIError>;
