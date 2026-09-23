@@ -40,6 +40,24 @@ pub enum DeliveryStatus {
 }
 
 impl DeliveryStatus {
+    const fn new() -> Self {
+        DeliveryStatus::Pending
+    }
+    pub fn all() -> Vec<String> {
+        let mut values = Vec::new();
+        let mut current = Self::new();
+        values.push(String::from(&current));
+        loop {
+            match current.next() {
+                Ok(v) => {
+                    values.push(String::from(&v));
+                    current = v;
+                }
+                Err(_) => break,
+            }
+        }
+        values
+    }
     pub fn next(&self) -> Result<Self, AppError> {
         match self {
             DeliveryStatus::Pending => Ok(DeliveryStatus::OnDelivery),

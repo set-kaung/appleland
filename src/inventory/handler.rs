@@ -1,7 +1,7 @@
 use super::store;
 use crate::app_extractor::{RequiresRole, SuperAdminRole};
 use crate::app_state::AppState;
-use crate::auth::password::session_admin_id;
+use crate::auth::session_admin_id;
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
 use crate::product::service as product_service;
 use crate::{ApiResult, PaginatedApiResult, pagination};

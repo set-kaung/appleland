@@ -3,27 +3,27 @@ use crate::product::model::{
     UpdateProductPayload,
 };
 
-use crate::category::model::{AdminCategory, CreateCategoryPayload, UpdateCategoryPayload,DeleteCategoryResponse};
+use crate::category::model::{
+    AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, UpdateCategoryPayload,
+};
 use crate::inventory::model::{AdminInventory, NewInventoryPayload};
 use crate::orders::model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload};
 use crate::sales::model::{
-    AdminSale, AdminSaleDetails,SaleItem, SaleProduct, SaleSummary,
-    CreateAdminSalePayload,
+    AdminSale, AdminSaleDetails, CreateAdminSalePayload, SaleItem, SaleProduct, SaleSummary,
     SaleSummaryFilter,
 };
 
 use crate::playground::model::CreateClaimTokenPayload;
 
-use crate::auth::password;
-use crate::auth::password::{Admin, LoginRequest};
+use crate::auth::admin as admin_auth;
 use crate::category;
+use crate::image_storage;
 use crate::inventory;
 use crate::orders;
 use crate::pagination::{PaginatedResponse, PaginationQuery};
 use crate::playground;
 use crate::product;
 use crate::sales;
-use crate::image_storage;
 
 use super::SessionCookieSecurityAddon;
 use utoipa::OpenApi;
@@ -42,8 +42,8 @@ use utoipa::OpenApi;
         category::handler::delete_category,
         inventory::handler::insert_inventory_record,
         inventory::handler::get_product_inventory_records,
-        password::admin_login_handler,
-        password::admin_logout_handler,
+        admin_auth::handler::admin_login_handler,
+        admin_auth::handler::admin_logout_handler,
         playground::handler::creat_playground_token,
         product::handler::get_all_products,
         product::handler::get_products_paginated_admin,
@@ -63,8 +63,8 @@ use utoipa::OpenApi;
     ),
     components(
         schemas(
-            LoginRequest,
-            Admin,
+            admin_auth::model::LoginRequest,
+            admin_auth::model::Admin,
             AdminProduct,
             PaginationQuery,
             CreateProductPayload,
@@ -87,7 +87,7 @@ use utoipa::OpenApi;
             AdminInventory,
             NewInventoryPayload,
             CreateClaimTokenPayload,
-            UpdateOrderDeliveryStatusResponse, 
+            UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
             image_storage::UploadResponse
         )

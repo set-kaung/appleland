@@ -3,7 +3,7 @@ use crate::app_error::{APIError, StoreError};
 use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::CurrentUser;
-use crate::auth::password::session_admin_id;
+use crate::auth::session_admin_id;
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateAdminSalePayload, CreateUserSalePayload, SaleSummary,
     SaleSummaryFilter,

@@ -5,8 +5,8 @@ pub use admin::AdminApiDoc;
 pub use user::ApiDoc;
 
 use std::path::Path;
-use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
 use utoipa::openapi::Components;
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, Http, HttpAuthScheme, SecurityScheme};
 use utoipa::{Modify, OpenApi};
 
 use crate::app_error::AppError;

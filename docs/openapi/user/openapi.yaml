@@ -4,7 +4,7 @@ info:
   description: 'Public API for storefront/user applications. All endpoints require a valid Supabase JWT supplied via the `Authorization: Bearer <token>` header.'
   license:
     name: ''
-  version: 0.8.0
+  version: 0.9.0
 paths:
   /api/playground/tickets:
     get:

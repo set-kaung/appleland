@@ -14,7 +14,7 @@ use crate::product::model::{
     UpdateProduct, UpdateProductPayload, UserProduct,
 };
 
-use crate::auth::password::session_admin_id;
+use crate::auth::session_admin_id;
 use crate::inventory::model::NewInventoryRecord;
 use axum::{
     Json,

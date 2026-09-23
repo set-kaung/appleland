@@ -3,9 +3,9 @@ use serde::Deserialize;
 use uuid::Uuid;
 mod supabase;
 pub use supabase::SupabaseAuth;
-pub mod password;
-pub use password::{AdminRole, admin_login_handler, admin_logout_handler};
+pub mod admin;
 
+pub use admin::handler::{admin_login_handler, admin_logout_handler, session_admin_id};
 #[async_trait]
 pub trait AuthProvider: Send + Sync + 'static {
     async fn verify(&self, token: &str) -> Result<Claims, AuthError>;

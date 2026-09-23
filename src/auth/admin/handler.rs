@@ -1,136 +1,20 @@
+use super::model::{Admin, LoginRequest};
+use super::store;
+use crate::app_error::StoreError::RecordNotFound;
 use crate::{app_error::APIError, app_state::AppState};
-use axum::http::StatusCode;
-use axum::{Json, extract::State};
-use serde::{Deserialize, Serialize};
-use sqlx::query_as;
-use std::str::FromStr;
-use time::OffsetDateTime;
-use tower_sessions::Session;
-use utoipa::ToSchema;
-
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt},
 };
-
-/// Fixed 16-byte zero salt encoded as base64, used only to burn time on unknown usernames
-/// so that login attempts take roughly the same duration regardless of whether the user exists.
-const DUMMY_SALT_B64: &str = "AAAAAAAAAAAAAAAAAAAAAA==";
+use axum::http::StatusCode;
+use axum::{Json, extract::State};
+use tower_sessions::Session;
 use tracing::error;
 use uuid::Uuid;
 
-use crate::app_error::{self, StoreError::RecordNotFound};
-
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    sqlx::Type,
-    serde::Serialize,
-    serde::Deserialize,
-    ToSchema,
-)]
-#[sqlx(type_name = "admin_role", rename_all = "snake_case")]
-#[serde(rename_all = "snake_case")]
-pub enum AdminRole {
-    SaleAdmin,
-    PlaygroundAdmin,
-    SuperAdmin,
-}
-
-impl FromStr for AdminRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "sale_admin" => Ok(AdminRole::SaleAdmin),
-            "playground_admin" => Ok(AdminRole::PlaygroundAdmin),
-            "super_admin" => Ok(AdminRole::SuperAdmin),
-            _ => Err("not defined role".to_string()),
-        }
-    }
-}
-
-// impl ToString for AdminRole {
-//     fn to_string(&self) -> String {
-//         match self {
-//             AdminRole::SaleAdmin => "sale_admin".to_string(),
-//             AdminRole::PlaygroundAdmin => "playground_admin".to_string(),
-//             AdminRole::SuperAdmin => "super_admin".to_string(),
-//         }
-//     }
-// }
-
-impl std::fmt::Display for AdminRole {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str_rep = match self {
-            AdminRole::SaleAdmin => "sale_admin",
-            AdminRole::PlaygroundAdmin => "playground_admin",
-            AdminRole::SuperAdmin => "super_admin",
-        };
-        write!(f, "{}", str_rep)
-    }
-}
-
-#[derive(Deserialize, ToSchema)]
-pub struct LoginRequest {
-    username: String,
-    password: String,
-}
-
-#[derive(sqlx::FromRow, Clone)]
-#[allow(dead_code)]
-struct AdminRow {
-    id: Uuid,
-    username: String,
-    password_hash: String,
-    role: AdminRole,
-    created_at: OffsetDateTime,
-    updated_at: OffsetDateTime,
-}
-
-#[derive(Serialize, Deserialize, Clone, ToSchema)]
-pub struct Admin {
-    pub id: Uuid,
-    pub username: String,
-    pub role: AdminRole,
-}
-
-impl From<AdminRow> for Admin {
-    fn from(value: AdminRow) -> Self {
-        Self {
-            id: value.id,
-            username: value.username,
-            role: value.role,
-        }
-    }
-}
-
-async fn get_admin_by_username(
-    pool: &sqlx::PgPool,
-    username: String,
-) -> Result<AdminRow, app_error::StoreError> {
-    query_as!(
-        AdminRow,
-        "
-    SELECT id,username,password_hash,role as \"role: AdminRole\",created_at,updated_at
-    FROM admins
-    WHERE username = $1",
-        username
-    )
-    .fetch_one(pool)
-    .await
-    .map_err(|e| match e {
-        sqlx::Error::RowNotFound => app_error::StoreError::RecordNotFound,
-        _ => {
-            tracing::debug!("{}", e);
-            app_error::StoreError::Database(e)
-        }
-    })
-}
+/// Fixed 16-byte zero salt encoded as base64, used only to burn time on unknown usernames
+/// so that login attempts take roughly the same duration regardless of whether the user exists.
+const DUMMY_SALT_B64: &str = "AAAAAAAAAAAAAAAAAAAAAA";
 
 #[utoipa::path(
     post,
@@ -150,7 +34,7 @@ pub async fn admin_login_handler(
     session: Session,
     Json(payload): Json<LoginRequest>,
 ) -> Result<(StatusCode, Json<Admin>), APIError> {
-    match get_admin_by_username(&state.db, payload.username).await {
+    match store::get_admin_by_username(&state.db, payload.username).await {
         Ok(admin) => {
             let admin_resp: Admin = admin.clone().into();
             let parsed_hash = PasswordHash::new(&admin.password_hash).map_err(|e| {
@@ -193,10 +77,12 @@ pub async fn admin_login_handler(
                         tracing::error!("failed to build dummy salt: {}", e);
                         APIError::InternalErr
                     })?;
-                    let _ = Argon2::default().hash_password(b"dummy", dummy_salt).map_err(|e| {
-                        tracing::error!("failed to hash dummy password: {}", e);
-                        APIError::InternalErr
-                    })?;
+                    let _ = Argon2::default()
+                        .hash_password(b"dummy", dummy_salt)
+                        .map_err(|e| {
+                            tracing::error!("failed to hash dummy password: {}", e);
+                            APIError::InternalErr
+                        })?;
                     Err(APIError::AdminInvalidCreds)
                 }
                 _ => Err(APIError::InternalErr),

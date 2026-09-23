@@ -1,4 +1,5 @@
-use super::auth::{AdminRole, AuthError, Claims};
+use super::auth::admin::model::AdminRole;
+use super::auth::{AuthError, Claims};
 use crate::app_error::APIError;
 use crate::app_error::AppError;
 use crate::app_state::AppState;

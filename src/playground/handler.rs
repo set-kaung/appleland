@@ -13,7 +13,7 @@ use crate::{
     app_error::APIError,
     app_extractor::{PlaygroundAdminRole, RequiresRole},
     app_state::AppState,
-    auth::{CurrentUser, password::session_admin_id},
+    auth::{CurrentUser, session_admin_id},
     playground::{
         model::{CreateClaimTokenPayload, UserPlaygroundTickets},
         store,

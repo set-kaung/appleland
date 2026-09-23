@@ -4,7 +4,7 @@ use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SuperAdminRole, ValidatedJson};
 use crate::app_state;
 use crate::app_state::AppState;
-use crate::auth::password::session_admin_id;
+use crate::auth::admin::handler::session_admin_id;
 use crate::category::model::{
     AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, InsertCategory, UpdateCategory,
     UpdateCategoryPayload,

@@ -4,7 +4,7 @@ info:
   description: API for the admin dashboard. Endpoints require an authenticated admin session established via the login endpoint (session cookie named `id`).
   license:
     name: ''
-  version: 0.8.0
+  version: 0.9.0
 paths:
   /admin/categories:
     get:
@@ -736,7 +736,12 @@ components:
       - id
       - username
       - role
+      - delivery_status_values
       properties:
+        delivery_status_values:
+          type: array
+          items:
+            type: string
         id:
           type: string
           format: uuid
