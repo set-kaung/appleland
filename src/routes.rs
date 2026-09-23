@@ -12,7 +12,9 @@ use tower_sessions_sqlx_store::PostgresStore;
 
 use crate::app_state::AppState;
 use crate::{app_error::AppError, orders};
-use crate::{auth, category, image_storage, inventory, middleware, playground, product, sales, user};
+use crate::{
+    auth, category, image_storage, inventory, middleware, playground, product, sales, user,
+};
 use sqlx::Connection;
 
 #[derive(Serialize)]

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT total_quantity,unit_price FROM playground_purchase_tokens where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total_quantity",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "playground_purchase_tokens",
+            "name": "total_quantity"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "unit_price",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "playground_purchase_tokens",
+            "name": "unit_price"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "01a4023a2dd760efbc4f2b200b6e0412020e525b3ef49ccb759cc22e34641891"
+}

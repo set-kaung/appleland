@@ -5,7 +5,7 @@ use uuid::Uuid;
 use super::model::{UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseResponse};
 use crate::{
     app_error::{APIError, log_err_convert},
-    playground::store,
+    playground::{model::PlaygroundCheckoutData, store},
 };
 
 pub async fn claim_token(
@@ -167,4 +167,18 @@ pub async fn create_playground_account(
 ) -> Result<(), APIError> {
     store::insert_playground_account(tx, user_id, 0, 0, 0).await?;
     Ok(())
+}
+
+pub async fn get_playground_checkout_data_service(
+    pool: &PgPool,
+    user_id: Uuid,
+    token_id: Uuid,
+) -> Result<PlaygroundCheckoutData, APIError> {
+    let (token_info, available_coupons) = tokio::try_join!(
+        store::get_claim_token_info(pool, token_id),
+        store::get_available_user_coupons(pool, user_id)
+    )?;
+    let result = PlaygroundCheckoutData::new(user_id, token_info, available_coupons)
+        .ok_or(APIError::InternalErr)?;
+    Ok(result)
 }

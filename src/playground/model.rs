@@ -1,12 +1,20 @@
 use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::ops::Mul;
 use time::OffsetDateTime;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Deserialize, Debug, Clone, ToSchema)]
 pub struct CreateClaimTokenPayload {
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct TokenInfo {
     pub total_quantity: i32,
     pub unit_price: Decimal,
 }
@@ -129,5 +137,27 @@ impl From<PlaygroundAccountRow> for UserPlaygroundAccount {
             free_tickets_redeemed: value.free_tickets_redeemed,
             free_ticket_eligible: value.free_ticket_eligible,
         }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct PlaygroundCheckoutData {
+    pub user_id: Uuid,
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
+    pub total_price: Decimal,
+    pub available_coupons: Vec<Uuid>,
+}
+
+impl PlaygroundCheckoutData {
+    pub fn new(user_id: Uuid, token_info: TokenInfo, available_coupons: Vec<Uuid>) -> Option<Self> {
+        let total_price = Decimal::from_i32(token_info.total_quantity)?.mul(token_info.unit_price);
+        Some(Self {
+            user_id,
+            total_quantity: token_info.total_quantity,
+            unit_price: token_info.unit_price,
+            available_coupons,
+            total_price,
+        })
     }
 }

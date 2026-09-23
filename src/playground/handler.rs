@@ -5,7 +5,8 @@ use uuid::Uuid;
 
 use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
-    ClaimTokenPayload, UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
+    ClaimTokenPayload, PlaygroundCheckoutData, UserPlaygroundAccount,
+    UserPlaygroundPurchaseResponse,
 };
 use crate::playground::service;
 use crate::{
@@ -77,7 +78,7 @@ pub async fn get_user_tickets(
     Extension(user): Extension<CurrentUser>,
 ) -> ApiResult<UserPlaygroundTickets> {
     let user_id = user.id;
-    let result = match store::get_user_tickets_info(&state.db, user_id).await? {
+    let result = match store::get_user_playground_account(&state.db, user_id).await? {
         Some(row) => row.into(),
         None => UserPlaygroundTickets {
             user_id,
@@ -134,5 +135,26 @@ pub async fn claim_free_ticket(
 ) -> ApiResult<UserPlaygroundAccount> {
     let user_id = user.id;
     let result = service::claim_free_ticket(&state.db, user_id).await?;
+    Ok(Json(result))
+}
+
+#[utoipa::path(patch,
+    path="/api/playground/checkout/{token_id}",
+    description = "Checkout page data for a playground token",
+    responses(
+        (status = 200, description = "Claimed Response", body = PlaygroundCheckoutData),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 500, description= "Internal server error")
+    ),
+    security(("bearer" = [])),
+    tag = "User Playground")]
+pub async fn get_checkout_data(
+    State(state): State<AppState>,
+    Path(token_id): Path<Uuid>,
+    Extension(user): Extension<CurrentUser>,
+) -> ApiResult<PlaygroundCheckoutData> {
+    let result =
+        service::get_playground_checkout_data_service(&state.db, user.id, token_id).await?;
     Ok(Json(result))
 }

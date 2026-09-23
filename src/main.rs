@@ -99,8 +99,7 @@ async fn main() -> Result<(), AppError> {
     let token_cleanup_handle =
         playground::spawn_expired_token_cleanup(pool.clone(), token_cleanup_interval);
 
-    let nonce_cleanup_handle =
-        payment::spawn_nonce_cleanup(pool.clone(), nonce_cleanup_interval);
+    let nonce_cleanup_handle = payment::spawn_nonce_cleanup(pool.clone(), nonce_cleanup_interval);
 
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(true)

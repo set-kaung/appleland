@@ -7,8 +7,34 @@ use super::model::{
 };
 use crate::{
     app_error::StoreError,
-    playground::model::{ClaimedTokenInfo, CouponStatus},
+    playground::model::{ClaimedTokenInfo, CouponStatus, TokenInfo},
 };
+
+pub async fn get_claim_token_info(pool: &PgPool, id: Uuid) -> Result<TokenInfo, StoreError> {
+    let result = sqlx::query_as!(
+        TokenInfo,
+        "SELECT total_quantity,unit_price FROM playground_purchase_tokens where id = $1",
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(result)
+}
+
+pub async fn get_available_user_coupons(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Vec<Uuid>, StoreError> {
+    let result = sqlx::query_scalar!(
+        "SELECT id FROM playground_coupons WHERE user_id = $1 AND is_used = false;",
+        user_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(result)
+}
 
 // created_by must be the admin who created the claim token
 pub async fn create_claim_token(
@@ -99,38 +125,13 @@ pub async fn update_expire_status(
     Ok(())
 }
 
-pub async fn get_user_tickets_info(
+pub async fn get_user_playground_account(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<Option<PlaygroundTicketsRow>, StoreError> {
     let result = sqlx::query_as!(PlaygroundTicketsRow,
         "select user_id, tickets_purchased, free_tickets_redeemed,free_ticket_eligible, created_at,updated_at from playground_accounts where user_id = $1", user_id)
         .fetch_optional(pool).await?;
-    Ok(result)
-}
-
-#[allow(dead_code)]
-pub async fn get_user_playground_account(
-    pool: &PgPool,
-    user_id: Uuid,
-) -> Result<PlaygroundAccountRow, StoreError> {
-    let result = sqlx::query_as!(
-        PlaygroundAccountRow,
-        r#"
-    SELECT
-        user_id,
-        tickets_purchased,
-        free_tickets_redeemed,
-        created_at,
-        updated_at,
-        free_ticket_eligible
-    FROM playground_accounts
-    WHERE user_id = $1
-"#,
-        user_id
-    )
-    .fetch_one(pool)
-    .await?;
     Ok(result)
 }
 

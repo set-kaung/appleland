@@ -24,4 +24,3 @@ impl PaginationQuery {
         (page_size, offset, page)
     }
 }
-

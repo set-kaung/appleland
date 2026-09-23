@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fq27K2ihjzUnWDshQo9UeCZ9fEvdZOwc2cHS8Q3zKpMtM0lkJACIbKfBWKBGR2Q
+\restrict hURi9Ab4UUKoMD6xPIhsque222KWamgwcosiK2XoJg16T5RcO8Ot2w6GlMFjA4v
 
 -- Dumped from database version 17.11 (Homebrew)
 -- Dumped by pg_dump version 17.11 (Homebrew)
@@ -144,41 +144,6 @@ CREATE TABLE public.inventory (
 ALTER TABLE public.inventory OWNER TO appleland_backend;
 
 --
--- Name: options; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.options (
-    id bigint NOT NULL,
-    question_id bigint NOT NULL,
-    text text NOT NULL,
-    is_correct boolean DEFAULT false NOT NULL
-);
-
-
-ALTER TABLE public.options OWNER TO appleland_backend;
-
---
--- Name: options_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.options_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.options_id_seq OWNER TO appleland_backend;
-
---
--- Name: options_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.options_id_seq OWNED BY public.options.id;
-
-
---
 -- Name: orders; Type: TABLE; Schema: public; Owner: appleland_backend
 --
 
@@ -307,159 +272,6 @@ CREATE TABLE public.products (
 ALTER TABLE public.products OWNER TO appleland_backend;
 
 --
--- Name: question_answers; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.question_answers (
-    id bigint NOT NULL,
-    quiz_attempt_id bigint NOT NULL,
-    question_id bigint NOT NULL,
-    selected_option bigint NOT NULL,
-    is_correct boolean NOT NULL
-);
-
-
-ALTER TABLE public.question_answers OWNER TO appleland_backend;
-
---
--- Name: question_answers_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.question_answers_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.question_answers_id_seq OWNER TO appleland_backend;
-
---
--- Name: question_answers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.question_answers_id_seq OWNED BY public.question_answers.id;
-
-
---
--- Name: questions; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.questions (
-    id bigint NOT NULL,
-    quiz_id bigint NOT NULL,
-    text text NOT NULL
-);
-
-
-ALTER TABLE public.questions OWNER TO appleland_backend;
-
---
--- Name: questions_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.questions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.questions_id_seq OWNER TO appleland_backend;
-
---
--- Name: questions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.questions_id_seq OWNED BY public.questions.id;
-
-
---
--- Name: quiz_attempts; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.quiz_attempts (
-    id bigint NOT NULL,
-    quiz_id bigint NOT NULL,
-    score bigint NOT NULL,
-    total_questions bigint NOT NULL,
-    created_at timestamp with time zone
-);
-
-
-ALTER TABLE public.quiz_attempts OWNER TO appleland_backend;
-
---
--- Name: quiz_attempts_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.quiz_attempts_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.quiz_attempts_id_seq OWNER TO appleland_backend;
-
---
--- Name: quiz_attempts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.quiz_attempts_id_seq OWNED BY public.quiz_attempts.id;
-
-
---
--- Name: quiz_tags; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.quiz_tags (
-    quiz_id bigint NOT NULL,
-    tag_id bigint NOT NULL
-);
-
-
-ALTER TABLE public.quiz_tags OWNER TO appleland_backend;
-
---
--- Name: quizzes; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.quizzes (
-    id bigint NOT NULL,
-    title text NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone
-);
-
-
-ALTER TABLE public.quizzes OWNER TO appleland_backend;
-
---
--- Name: quizzes_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.quizzes_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.quizzes_id_seq OWNER TO appleland_backend;
-
---
--- Name: quizzes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.quizzes_id_seq OWNED BY public.quizzes.id;
-
-
---
 -- Name: sale_items; Type: TABLE; Schema: public; Owner: appleland_backend
 --
 
@@ -496,39 +308,6 @@ CREATE TABLE public.sales (
 
 
 ALTER TABLE public.sales OWNER TO appleland_backend;
-
---
--- Name: tags; Type: TABLE; Schema: public; Owner: appleland_backend
---
-
-CREATE TABLE public.tags (
-    id bigint NOT NULL,
-    name text NOT NULL
-);
-
-
-ALTER TABLE public.tags OWNER TO appleland_backend;
-
---
--- Name: tags_id_seq; Type: SEQUENCE; Schema: public; Owner: appleland_backend
---
-
-CREATE SEQUENCE public.tags_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.tags_id_seq OWNER TO appleland_backend;
-
---
--- Name: tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: appleland_backend
---
-
-ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
-
 
 --
 -- Name: user_contact; Type: TABLE; Schema: public; Owner: appleland_backend
@@ -588,48 +367,6 @@ CREATE TABLE tower_sessions.session (
 ALTER TABLE tower_sessions.session OWNER TO appleland_backend;
 
 --
--- Name: options id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.options ALTER COLUMN id SET DEFAULT nextval('public.options_id_seq'::regclass);
-
-
---
--- Name: question_answers id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.question_answers ALTER COLUMN id SET DEFAULT nextval('public.question_answers_id_seq'::regclass);
-
-
---
--- Name: questions id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.questions ALTER COLUMN id SET DEFAULT nextval('public.questions_id_seq'::regclass);
-
-
---
--- Name: quiz_attempts id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quiz_attempts ALTER COLUMN id SET DEFAULT nextval('public.quiz_attempts_id_seq'::regclass);
-
-
---
--- Name: quizzes id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quizzes ALTER COLUMN id SET DEFAULT nextval('public.quizzes_id_seq'::regclass);
-
-
---
--- Name: tags id; Type: DEFAULT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
-
-
---
 -- Name: admin_sales admin_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
 --
 
@@ -659,14 +396,6 @@ ALTER TABLE ONLY public.categories
 
 ALTER TABLE ONLY public.inventory
     ADD CONSTRAINT inventory_pkey PRIMARY KEY (id);
-
-
---
--- Name: options options_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.options
-    ADD CONSTRAINT options_pkey PRIMARY KEY (id);
 
 
 --
@@ -734,46 +463,6 @@ ALTER TABLE ONLY public.products
 
 
 --
--- Name: question_answers question_answers_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.question_answers
-    ADD CONSTRAINT question_answers_pkey PRIMARY KEY (id);
-
-
---
--- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
-
-
---
--- Name: quiz_attempts quiz_attempts_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quiz_attempts
-    ADD CONSTRAINT quiz_attempts_pkey PRIMARY KEY (id);
-
-
---
--- Name: quiz_tags quiz_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quiz_tags
-    ADD CONSTRAINT quiz_tags_pkey PRIMARY KEY (quiz_id, tag_id);
-
-
---
--- Name: quizzes quizzes_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quizzes
-    ADD CONSTRAINT quizzes_pkey PRIMARY KEY (id);
-
-
---
 -- Name: sale_items sale_items_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
 --
 
@@ -803,14 +492,6 @@ ALTER TABLE ONLY public.sales
 
 ALTER TABLE ONLY public.delivery_contact
     ADD CONSTRAINT shipping_addresses_pkey PRIMARY KEY (id);
-
-
---
--- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.tags
-    ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
 
 
 --
@@ -854,24 +535,10 @@ ALTER TABLE ONLY tower_sessions.session
 
 
 --
--- Name: idx_attempt_question; Type: INDEX; Schema: public; Owner: appleland_backend
---
-
-CREATE UNIQUE INDEX idx_attempt_question ON public.question_answers USING btree (quiz_attempt_id, question_id);
-
-
---
 -- Name: idx_delivery_contact_user_id; Type: INDEX; Schema: public; Owner: appleland_backend
 --
 
 CREATE INDEX idx_delivery_contact_user_id ON public.user_contact USING btree (user_id);
-
-
---
--- Name: idx_options_question_id; Type: INDEX; Schema: public; Owner: appleland_backend
---
-
-CREATE INDEX idx_options_question_id ON public.options USING btree (question_id);
 
 
 --
@@ -886,20 +553,6 @@ CREATE INDEX idx_payment_webhook_nonces_consumed_at ON public.payment_webhook_no
 --
 
 CREATE UNIQUE INDEX idx_products_barcode_active ON public.products USING btree (barcode) WHERE (is_deleted IS FALSE);
-
-
---
--- Name: idx_questions_quiz_id; Type: INDEX; Schema: public; Owner: appleland_backend
---
-
-CREATE INDEX idx_questions_quiz_id ON public.questions USING btree (quiz_id);
-
-
---
--- Name: idx_quiz_created; Type: INDEX; Schema: public; Owner: appleland_backend
---
-
-CREATE INDEX idx_quiz_created ON public.quiz_attempts USING btree (quiz_id, created_at);
 
 
 --
@@ -921,13 +574,6 @@ CREATE INDEX idx_sales_admin ON public.admin_sales USING btree (admin_id);
 --
 
 CREATE INDEX idx_sales_created_at ON public.sales USING btree (created_at);
-
-
---
--- Name: idx_tags_name; Type: INDEX; Schema: public; Owner: appleland_backend
---
-
-CREATE UNIQUE INDEX idx_tags_name ON public.tags USING btree (name);
 
 
 --
@@ -1013,38 +659,6 @@ ALTER TABLE ONLY public.inventory
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT fk_products_updated_by FOREIGN KEY (updated_by) REFERENCES public.admins(id);
-
-
---
--- Name: options fk_questions_options; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.options
-    ADD CONSTRAINT fk_questions_options FOREIGN KEY (question_id) REFERENCES public.questions(id);
-
-
---
--- Name: quiz_tags fk_quiz_tags_quiz; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quiz_tags
-    ADD CONSTRAINT fk_quiz_tags_quiz FOREIGN KEY (quiz_id) REFERENCES public.quizzes(id);
-
-
---
--- Name: quiz_tags fk_quiz_tags_tag; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.quiz_tags
-    ADD CONSTRAINT fk_quiz_tags_tag FOREIGN KEY (tag_id) REFERENCES public.tags(id);
-
-
---
--- Name: questions fk_quizzes_questions; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
---
-
-ALTER TABLE ONLY public.questions
-    ADD CONSTRAINT fk_quizzes_questions FOREIGN KEY (quiz_id) REFERENCES public.quizzes(id);
 
 
 --
@@ -1207,5 +821,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE setkaung IN SCHEMA public GRANT ALL ON TABLES 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fq27K2ihjzUnWDshQo9UeCZ9fEvdZOwc2cHS8Q3zKpMtM0lkJACIbKfBWKBGR2Q
+\unrestrict hURi9Ab4UUKoMD6xPIhsque222KWamgwcosiK2XoJg16T5RcO8Ot2w6GlMFjA4v
 

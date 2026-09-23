@@ -28,6 +28,7 @@ pub mod auth;
 pub mod category;
 pub mod config;
 pub mod db;
+pub mod image_storage;
 pub mod inventory;
 pub mod middleware;
 pub mod orders;
@@ -37,7 +38,6 @@ pub mod playground;
 pub mod product;
 pub mod routes;
 pub mod sales;
-pub mod image_storage;
 pub mod user;
 
 pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;
