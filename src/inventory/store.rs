@@ -1,4 +1,4 @@
-use crate::inventory::model::InventoryRow;
+use crate::inventory::model::{InventoryRow, StockLevelRow};
 use crate::{app_error, inventory::model::NewInventoryRecord};
 
 use sqlx::{Executor, PgPool, Postgres, Transaction};
@@ -107,4 +107,29 @@ pub async fn get_product_inventory_records_paginated(
     .await?;
 
     Ok((result, total_items.unwrap_or(0)))
+}
+
+pub async fn get_product_stock_levels(
+    pool: &PgPool,
+    limit: i64,
+) -> Result<Vec<StockLevelRow>, app_error::StoreError> {
+    let rows = sqlx::query_as!(
+        StockLevelRow,
+        r#"
+        SELECT
+            product_id,
+            p.name as product_name,
+            SUM(quantity_remaining)::int AS "quantity_in_stock!"
+        FROM inventory
+        JOIN products p on p.id = product_id
+        GROUP BY product_id, product_name
+        ORDER BY SUM(quantity_remaining) ASC
+        LIMIT $1
+        "#,
+        limit
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
 }

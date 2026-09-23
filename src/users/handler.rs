@@ -2,8 +2,6 @@ use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SuperAdminRole, ValidatedJson};
 use crate::app_state::AppState;
 use crate::auth::Claims;
-use crate::pagination::PaginatedResponse;
-use crate::pagination::PaginationQuery;
 use crate::users::model::{CreateUserPayload, UserResponse};
 use crate::users::{service, store};
 use crate::{ApiResult, PaginatedApiResult, pagination};

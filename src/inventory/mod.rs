@@ -4,6 +4,7 @@ use axum::routing::{get, post};
 
 pub mod handler;
 pub mod model;
+pub mod service;
 pub mod store;
 
 use handler::{get_product_inventory_records, insert_inventory_record};

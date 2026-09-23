@@ -122,6 +122,21 @@ pub struct DeductInventoryPayload {
     pub quantity_to_deduct: i32,
 }
 
+#[derive(Debug, FromRow)]
+pub struct StockLevelRow {
+    pub product_name: String,
+    pub product_id: Uuid,
+    pub quantity_in_stock: i32,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct StockLevel {
+    pub product_id: Uuid,
+    pub product_name: String,
+    pub quantity_in_stock: i32,
+    pub is_low_stock: bool,
+}
+
 impl From<InventoryRow> for AdminInventory {
     fn from(value: InventoryRow) -> Self {
         Self {
