@@ -47,14 +47,9 @@ impl DeliveryStatus {
         let mut values = Vec::new();
         let mut current = Self::new();
         values.push(String::from(&current));
-        loop {
-            match current.next() {
-                Ok(v) => {
-                    values.push(String::from(&v));
-                    current = v;
-                }
-                Err(_) => break,
-            }
+        while let Ok(v) = current.next() {
+            values.push(String::from(&v));
+            current = v;
         }
         values
     }
