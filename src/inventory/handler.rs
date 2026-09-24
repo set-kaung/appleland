@@ -2,7 +2,10 @@ use super::store;
 use crate::app_extractor::{RequiresRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::session_admin_id;
-use crate::inventory::model::{AdminInventory, NewInventoryPayload, NewInventoryRecord};
+use crate::inventory::model::{
+    AdminInventory, NewInventoryPayload, NewInventoryRecord, StockLevel,
+};
+use crate::inventory::service;
 use crate::product::service as product_service;
 use crate::{ApiResult, PaginatedApiResult, pagination};
 use axum::Json;
@@ -86,4 +89,31 @@ pub async fn get_product_inventory_records(
         total_pages,
         current_page,
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/inventory/low-stock",
+    description = "List products ordered by total stock ascending, flagged when stock is at or below the low-stock threshold.",
+    params(
+        ("limit" = i64, Query, description = "Maximum number of products to return")
+    ),
+    responses(
+        (status = 200, description = "Products ordered by stock level", body = Vec<StockLevel>),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Inventory"
+)]
+pub async fn get_product_inventory_stock_level(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Query(limit): Query<i64>,
+) -> ApiResult<Vec<StockLevel>> {
+    let result = service::get_stock_levels(&state.db, limit).await?;
+    Ok(Json(result))
 }
