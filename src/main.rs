@@ -84,6 +84,7 @@ async fn main() -> Result<(), AppError> {
             conf.mmpay_publishable_key,
             conf.mmpay_sandbox,
         )),
+        conf.demo_mode,
     );
 
     let session_store = PostgresStore::new(pool.clone());

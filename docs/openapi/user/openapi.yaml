@@ -214,7 +214,7 @@ paths:
     post:
       tags:
       - User Sales
-      description: Create a new sale (checkout) with FIFO inventory deduction.
+      description: Create a new sale (checkout) with FIFO inventory deduction. In demo mode the payment confirmation check is skipped.
       operationId: create_user_sale
       requestBody:
         content:

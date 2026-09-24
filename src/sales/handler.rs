@@ -135,7 +135,7 @@ pub async fn sale_summary(
 #[utoipa::path(
     post,
     path = "/api/sales",
-    description = "Create a new sale (checkout) with FIFO inventory deduction.",
+    description = "Create a new sale (checkout) with FIFO inventory deduction. In demo mode the payment confirmation check is skipped.",
     request_body = CreateUserSalePayload,
     responses(
         (status = 201, description = "Sale created", body = Uuid),
@@ -155,22 +155,29 @@ pub async fn create_user_sale(
     Json(payload): Json<CreateUserSalePayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
-    let Some(payment_info) = state
-        .payment_provider
-        .is_paid(&payload.payment_order_id)
-        .await?
-    else {
-        return Err(APIError::PaymentNotConfirmed);
-    };
 
-    let expected_total = service::compute_sale_total(&state.db, &aggregated_products).await?;
-    let paid_amount = Decimal::from_f64(payment_info.amount)
-        .ok_or_else(|| APIError::BadRequest("invalid payment amount".into()))?;
-    if paid_amount != expected_total {
-        return Err(APIError::BadRequest(
-            "payment amount does not match sale total".into(),
-        ));
-    }
+    let payment_method = if state.demo_mode {
+        String::from("Demo")
+    } else {
+        let Some(payment_info) = state
+            .payment_provider
+            .is_paid(&payload.payment_order_id)
+            .await?
+        else {
+            return Err(APIError::PaymentNotConfirmed);
+        };
+
+        let expected_total = service::compute_sale_total(&state.db, &aggregated_products).await?;
+        let paid_amount = Decimal::from_f64(payment_info.amount)
+            .ok_or_else(|| APIError::BadRequest("invalid payment amount".into()))?;
+        if paid_amount != expected_total {
+            return Err(APIError::BadRequest(
+                "payment amount does not match sale total".into(),
+            ));
+        }
+
+        payment_info.method
+    };
 
     match service::perform_sale_user(
         &state.db,
@@ -178,7 +185,7 @@ pub async fn create_user_sale(
         &aggregated_products,
         &payload.payment_order_id,
         state.payment_provider.provider_name(),
-        &payment_info.method,
+        &payment_method,
     )
     .await
     {

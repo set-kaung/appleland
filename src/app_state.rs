@@ -12,6 +12,7 @@ pub struct AppState {
     pub supabase_storage_secret_key: String,
     pub image_bucket_name: String,
     pub payment_provider: Arc<dyn PaymentProvider>,
+    pub demo_mode: bool,
 }
 
 impl AppState {
@@ -23,6 +24,7 @@ impl AppState {
         supabase_storage_secret_key: String,
         image_bucket_name: String,
         payment_provider: Arc<dyn PaymentProvider>,
+        demo_mode: bool,
     ) -> Self {
         Self {
             db,
@@ -32,6 +34,7 @@ impl AppState {
             supabase_storage_secret_key,
             image_bucket_name,
             payment_provider,
+            demo_mode,
         }
     }
 }

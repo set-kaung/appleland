@@ -22,6 +22,9 @@ pub struct Config {
     #[serde(default = "default_per_sec")]
     pub per_sec: u64,
 
+    #[serde(default)]
+    pub demo_mode: bool,
+
     #[serde(default = "default_expiry_interval")]
     pub session_delete_interval: String,
 
@@ -53,6 +56,7 @@ impl std::fmt::Display for Config {
                 allowed_origins: {}
                 burst_size: {}
                 per_sec: {}
+                demo_mode: {}
                 session_delete_interval: {}
                 playground_token_cleanup_interval: {}
                 webhook_nonce_cleanup_interval: {}
@@ -69,6 +73,7 @@ impl std::fmt::Display for Config {
                 .join(" "),
             self.burst_size,
             self.per_sec,
+            self.demo_mode,
             self.session_delete_interval,
             self.playground_token_cleanup_interval,
             self.webhook_nonce_cleanup_interval,
