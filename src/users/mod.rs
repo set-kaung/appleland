@@ -3,7 +3,10 @@ pub mod model;
 pub mod service;
 mod store;
 
-use axum::{Router, routing::post};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
 use crate::app_state::AppState;
 
@@ -12,5 +15,5 @@ pub fn route_account_setup() -> Router<AppState> {
 }
 
 pub fn route_admin() -> Router<AppState> {
-    Router::new().route("/", post(handler::get_all_users_paginated))
+    Router::new().route("/", get(handler::get_all_users_paginated))
 }
