@@ -22,16 +22,6 @@ impl SettingValueType {
             SettingValueType::Boolean => "boolean",
         }
     }
-
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "string" => Some(SettingValueType::String),
-            "integer" => Some(SettingValueType::Integer),
-            "decimal" => Some(SettingValueType::Decimal),
-            "boolean" => Some(SettingValueType::Boolean),
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
