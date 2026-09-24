@@ -135,3 +135,90 @@ impl DBQueryFilter<Postgres> for AdminOrdersQuery {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct AdminOrderDetailRow {
+    pub id: Uuid,
+    pub sale_id: Uuid,
+    pub order_method: String,
+    pub delivery_status: String,
+    pub order_tracking_url: Option<String>,
+    pub customer: Option<String>,
+    pub total_amount: Decimal,
+    pub is_instore_sale: bool,
+    pub payment_method: Option<String>,
+    pub payment_provider: Option<String>,
+    pub payment_order_id: Option<String>,
+    pub shipping_address_line_1: String,
+    pub shipping_address_phone_number: String,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct AdminOrderItemRow {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub product_name: String,
+    pub quantity: i32,
+    pub selling_price: Decimal,
+    pub cost_price: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct AdminOrderStatusHistoryRow {
+    pub id: Uuid,
+    pub status: String,
+    pub changed_by: Option<Uuid>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminOrderDetail {
+    pub id: Uuid,
+    pub sale_id: Uuid,
+    pub order_method: String,
+    pub delivery_status: String,
+    pub order_tracking_url: Option<String>,
+    pub customer: Option<String>,
+    pub total_amount: Decimal,
+    pub is_instore_sale: bool,
+    pub payment_method: Option<String>,
+    pub payment_provider: Option<String>,
+    pub payment_order_id: Option<String>,
+    pub shipping_address: AdminOrderShippingAddress,
+    pub items: Vec<AdminOrderItem>,
+    pub status_history: Vec<AdminOrderStatusEntry>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminOrderShippingAddress {
+    pub address_line_1: String,
+    pub phone_number: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminOrderStatusEntry {
+    pub id: Uuid,
+    pub status: String,
+    pub changed_by: Option<Uuid>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminOrderItem {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub product_name: String,
+    pub quantity: i32,
+    pub selling_price: Decimal,
+    pub cost_price: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}

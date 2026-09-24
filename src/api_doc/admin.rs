@@ -8,7 +8,8 @@ use crate::category::model::{
 };
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, StockLevel};
 use crate::orders::model::{
-    AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
+    AdminOrderDetail, AdminOrderItem, AdminOrderRow, AdminOrderShippingAddress, AdminOrderStatusEntry,
+    AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
 };
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateAdminSalePayload, SaleItem, SaleProduct, SaleSummary,
@@ -71,6 +72,7 @@ use utoipa::OpenApi;
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
         orders::handler::get_all_orders_paginated,
+        orders::handler::get_admin_order_detail,
         staff::handler::get_all_admin_staff,
         users::handler::get_all_users_paginated,
         image_storage::upload_image,
@@ -107,6 +109,12 @@ use utoipa::OpenApi;
             playground::model::PlaygroundCheckoutDataAdmin,
             UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
+            AdminOrderRow,
+            AdminOrdersQuery,
+            AdminOrderDetail,
+            AdminOrderItem,
+            AdminOrderShippingAddress,
+            AdminOrderStatusEntry,
             AdminStaff,
             UserResponse,
             PaginatedResponse<UserResponse>,

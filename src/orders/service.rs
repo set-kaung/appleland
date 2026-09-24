@@ -1,7 +1,9 @@
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-use super::model::InsertOrder;
+use super::model::{
+    AdminOrderDetail, AdminOrderItem, AdminOrderShippingAddress, AdminOrderStatusEntry, InsertOrder,
+};
 use super::store;
 use crate::{
     app_error::{APIError, StoreError, log_err_convert},
@@ -18,7 +20,7 @@ pub async fn insert_user_order(
     let shipping_address_id =
         store::insert_delivery_contact(tx, address_line_1, phone_number).await?;
 
-    store::insert_order(
+    let order_id = store::insert_order(
         tx,
         InsertOrder {
             sale_id,
@@ -30,13 +32,22 @@ pub async fn insert_user_order(
     )
     .await?;
 
+    store::insert_order_status_history(
+        tx,
+        order_id,
+        String::from(&DeliveryStatus::Pending),
+        Some(user_id),
+    )
+    .await?;
+
     Ok(())
 }
 
 pub async fn update_order_delivery_status(
     pool: &PgPool,
     order_id: Uuid,
-) -> Result<super::model::UpdateOrderDeliveryStatusResponse, APIError> {
+    changed_by: Option<Uuid>,
+) -> Result<UpdateOrderDeliveryStatusResponse, APIError> {
     let mut tx = pool
         .begin()
         .await
@@ -55,6 +66,8 @@ pub async fn update_order_delivery_status(
         .map_err(|e| log_err_convert("failed to convert enum", e, APIError::InternalErr))?;
 
     store::update_order_delivery_status(&mut tx, order_id, String::from(&next_status)).await?;
+    store::insert_order_status_history(&mut tx, order_id, String::from(&next_status), changed_by)
+        .await?;
 
     if let Err(e) = tx.commit().await {
         return Err(log_err_convert(
@@ -66,5 +79,90 @@ pub async fn update_order_delivery_status(
     Ok(UpdateOrderDeliveryStatusResponse {
         id: order_id,
         delivery_status: next_status,
+    })
+}
+
+pub async fn update_order_tracking_url(
+    pool: &PgPool,
+    order_id: Uuid,
+    tracking_url: String,
+    changed_by: Option<Uuid>,
+) -> Result<Uuid, APIError> {
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| log_err_convert("failed to start transaction", e, APIError::InternalErr))?;
+
+    let order_id = store::update_order_tracking_url(&mut *tx, order_id, tracking_url).await?;
+    store::insert_order_status_history(
+        &mut tx,
+        order_id,
+        String::from(&DeliveryStatus::OnDelivery),
+        changed_by,
+    )
+    .await?;
+
+    if let Err(e) = tx.commit().await {
+        return Err(log_err_convert(
+            "failed to commit transaction",
+            e,
+            APIError::InternalErr,
+        ));
+    }
+    Ok(order_id)
+}
+
+pub async fn get_admin_order_detail(
+    pool: &PgPool,
+    order_id: Uuid,
+) -> Result<AdminOrderDetail, APIError> {
+    let (detail_row, item_rows, status_rows) = tokio::try_join!(
+        store::fetch_admin_order_detail(pool, order_id),
+        store::fetch_admin_order_items_by_order(pool, order_id),
+        store::fetch_order_status_history(pool, order_id)
+    )?;
+
+    let items = item_rows
+        .into_iter()
+        .map(|i| AdminOrderItem {
+            id: i.id,
+            product_id: i.product_id,
+            product_name: i.product_name,
+            quantity: i.quantity,
+            selling_price: i.selling_price,
+            cost_price: i.cost_price,
+            created_at: i.created_at,
+        })
+        .collect();
+
+    let status_history = status_rows
+        .into_iter()
+        .map(|s| AdminOrderStatusEntry {
+            id: s.id,
+            status: s.status,
+            changed_by: s.changed_by,
+            created_at: s.created_at,
+        })
+        .collect();
+
+    Ok(AdminOrderDetail {
+        id: detail_row.id,
+        sale_id: detail_row.sale_id,
+        order_method: detail_row.order_method,
+        delivery_status: detail_row.delivery_status,
+        order_tracking_url: detail_row.order_tracking_url,
+        customer: detail_row.customer,
+        total_amount: detail_row.total_amount,
+        is_instore_sale: detail_row.is_instore_sale,
+        payment_method: detail_row.payment_method,
+        payment_provider: detail_row.payment_provider,
+        payment_order_id: detail_row.payment_order_id,
+        shipping_address: AdminOrderShippingAddress {
+            address_line_1: detail_row.shipping_address_line_1,
+            phone_number: detail_row.shipping_address_phone_number,
+        },
+        items,
+        status_history,
+        created_at: detail_row.created_at,
     })
 }

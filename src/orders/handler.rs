@@ -2,8 +2,12 @@ use crate::{
     ApiResult, ApiResultWithStatusCode, PaginatedApiResult,
     app_extractor::{RequiresRole, SuperAdminRole},
     app_state::AppState,
+    auth::session_admin_id,
     orders::{
-        model::{AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload},
+        model::{
+            AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse,
+            UpdateOrderTrackingURLPayload,
+        },
         service, store,
     },
     pagination,
@@ -13,6 +17,7 @@ use axum::{
     extract::{Path, Query, State},
 };
 use reqwest::StatusCode;
+use tower_sessions::Session;
 use uuid::Uuid;
 
 #[utoipa::path(
@@ -50,6 +55,34 @@ pub async fn get_all_orders_paginated(
 }
 
 #[utoipa::path(
+    get,
+    path = "/admin/orders/{order_id}",
+    description = "Get full admin order detail including items, customer, shipping address, payment info, and delivery status history.",
+    params(
+        ("order_id" = Uuid, Path, description = "Order UUID")
+    ),
+    responses(
+        (status = 200, description = "Admin order detail", body = AdminOrderDetail),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Order not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Orders"
+)]
+pub async fn get_admin_order_detail(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Path(order_id): Path<Uuid>,
+) -> ApiResult<AdminOrderDetail> {
+    let result = service::get_admin_order_detail(&state.db, order_id).await?;
+    Ok(Json(result))
+}
+
+#[utoipa::path(
     patch,
     path = "/admin/orders/{order_id}",
     description = "Update an order tracking url.",
@@ -72,11 +105,18 @@ pub async fn get_all_orders_paginated(
 pub async fn update_order_tracking_url_handler(
     RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
+    session: Session,
     Path(order_id): Path<Uuid>,
     Json(payload): Json<UpdateOrderTrackingURLPayload>,
 ) -> ApiResultWithStatusCode<Uuid> {
-    let result =
-        store::update_order_tracking_url(&state.db, order_id, payload.order_tracking_url).await?;
+    let changed_by = Some(session_admin_id(session).await?);
+    let result = service::update_order_tracking_url(
+        &state.db,
+        order_id,
+        payload.order_tracking_url,
+        changed_by,
+    )
+    .await?;
     Ok((StatusCode::OK, Json(result)))
 }
 
@@ -99,8 +139,10 @@ pub async fn update_order_tracking_url_handler(
 pub async fn update_order_delivery_status(
     RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
+    session: Session,
     Path(order_id): Path<Uuid>,
 ) -> ApiResult<UpdateOrderDeliveryStatusResponse> {
-    let result = service::update_order_delivery_status(&state.db, order_id).await?;
+    let changed_by = Some(session_admin_id(session).await?);
+    let result = service::update_order_delivery_status(&state.db, order_id, changed_by).await?;
     Ok(Json(result))
 }

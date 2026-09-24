@@ -15,7 +15,10 @@ use crate::app_state::AppState;
 pub fn route_admin() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_orders_paginated))
-        .route("/{order_id}", patch(update_order_tracking_url_handler))
+        .route(
+            "/{order_id}",
+            get(get_admin_order_detail).patch(update_order_tracking_url_handler),
+        )
         .route(
             "/update_status/{order_id}",
             patch(update_order_delivery_status),
