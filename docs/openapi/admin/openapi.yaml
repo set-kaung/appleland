@@ -330,7 +330,7 @@ paths:
     get:
       tags:
       - Admin Playground
-      description: Checkout data for a playground claim token. When `user_id` is provided, that customer's available coupons are applied to the total price.
+      description: Checkout data for a playground claim token from the admin side. The claiming user (claimed_by) is read from the token itself; coupons are applied for that user. Unclaimed tokens return `claimed_by` = null.
       operationId: get_checkout_data_admin
       parameters:
       - name: token_id
@@ -340,19 +340,13 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: user_id
-        in: query
-        required: false
-        schema:
-          type: string
-          format: uuid
       responses:
         '200':
           description: Claimed Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlaygroundCheckoutData'
+                $ref: '#/components/schemas/PlaygroundCheckoutDataAdmin'
         '400':
           description: Bad Request
         '401':
@@ -950,14 +944,6 @@ components:
         updated_by:
           type: string
           format: uuid
-    AdminCheckoutQuery:
-      type: object
-      properties:
-        user_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
     AdminInventory:
       type: object
       required:
@@ -1503,31 +1489,39 @@ components:
           - integer
           - 'null'
           format: int64
-    PlaygroundCheckoutData:
+    PlaygroundCheckoutDataAdmin:
       type: object
       required:
       - total_quantity
       - unit_price
-      - total_price
       - available_coupons
+      - expires_at
+      - expired
       properties:
         available_coupons:
           type: array
           items:
             type: string
             format: uuid
-        total_price:
+        claimed_by:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        expired:
+          type: boolean
+        expires_at:
           type: string
+          format: date-time
+        total_price:
+          type:
+          - string
+          - 'null'
         total_quantity:
           type: integer
           format: int32
         unit_price:
           type: string
-        user_id:
-          type:
-          - string
-          - 'null'
-          format: uuid
     ProductFilter:
       type: object
       required:

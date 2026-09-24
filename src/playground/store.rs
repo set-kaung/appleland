@@ -4,8 +4,8 @@ use time::Date;
 use uuid::Uuid;
 
 use super::model::{
-    ExpiredStatus, PlaygroundAccountRow, PlaygroundPurchaseRow, PlaygroundTicketsRow,
-    TicketSaleSummary,
+    AdminTokenInfo, ExpiredStatus, PlaygroundAccountRow, PlaygroundPurchaseRow,
+    PlaygroundTicketsRow, TicketSaleSummary,
 };
 use crate::{
     app_error::StoreError,
@@ -19,6 +19,27 @@ pub async fn get_claim_token_info(pool: &PgPool, id: Uuid) -> Result<TokenInfo, 
         id
     )
     .fetch_one(pool)
+    .await?;
+
+    Ok(result)
+}
+
+pub async fn get_admin_token_info(
+    pool: &PgPool,
+    id: Uuid,
+) -> Result<Option<AdminTokenInfo>, StoreError> {
+    let result = sqlx::query_as!(
+        AdminTokenInfo,
+        r#"SELECT
+            total_quantity,
+            unit_price,
+            claimed_by as "claimed_by?",
+            expires_at,
+            (expires_at < NOW()) as "expired!"
+           FROM playground_purchase_tokens WHERE id = $1"#,
+        id
+    )
+    .fetch_optional(pool)
     .await?;
 
     Ok(result)
@@ -94,10 +115,11 @@ pub async fn sweep_expired_tokens(pool: &PgPool) -> Result<(u64, u64), StoreErro
         .execute(&mut *tx)
         .await?
         .rows_affected();
-
+    // 30 min grace period for admin data to check properly
+    // before being marked expire
     let marked = sqlx::query!(
         "UPDATE playground_purchase_tokens SET status = 'expired'
-         WHERE status = 'pending' AND expires_at < NOW()"
+         WHERE status = 'pending' AND expires_at + INTERVAL '30 min' < NOW()"
     )
     .execute(&mut *tx)
     .await?
@@ -139,20 +161,6 @@ pub async fn get_expired_status(
     .fetch_optional(&mut **tx)
     .await?;
     Ok(row)
-}
-
-pub async fn update_expire_status(
-    tx: &mut Transaction<'_, Postgres>,
-    token: Uuid,
-) -> Result<(), StoreError> {
-    sqlx::query!(
-        "UPDATE playground_purchase_tokens SET status = 'expired'
-                    WHERE id = $1 AND status = 'pending'",
-        token
-    )
-    .execute(&mut **tx)
-    .await?;
-    Ok(())
 }
 
 pub async fn get_user_playground_account(

@@ -149,10 +149,24 @@ pub struct PlaygroundCheckoutData {
     pub available_coupons: Vec<Uuid>,
 }
 
-#[derive(Debug, Deserialize, IntoParams, ToSchema)]
-#[into_params(parameter_in = Query)]
-pub struct AdminCheckoutQuery {
-    pub user_id: Option<Uuid>,
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct PlaygroundCheckoutDataAdmin {
+    pub claimed_by: Option<Uuid>,
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
+    pub total_price: Option<Decimal>,
+    pub available_coupons: Vec<Uuid>,
+    pub expires_at: OffsetDateTime,
+    pub expired: bool,
+}
+
+#[derive(Debug, FromRow)]
+pub struct AdminTokenInfo {
+    pub total_quantity: i32,
+    pub unit_price: Decimal,
+    pub claimed_by: Option<Uuid>,
+    pub expires_at: OffsetDateTime,
+    pub expired: bool,
 }
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]

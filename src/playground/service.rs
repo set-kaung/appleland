@@ -1,8 +1,14 @@
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashSet;
+use std::ops::Mul;
 use uuid::Uuid;
 
-use super::model::{UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseResponse};
+use super::model::{
+    PlaygroundCheckoutDataAdmin, UserPlaygroundAccount, UserPlaygroundPurchase,
+    UserPlaygroundPurchaseResponse,
+};
 use crate::{
     app_error::{APIError, log_err_convert},
     playground::{model::PlaygroundCheckoutData, store},
@@ -121,10 +127,6 @@ pub async fn claim_token(
             return Err(APIError::NotFound);
         };
         if r.expired || r.status == "expired" {
-            store::update_expire_status(&mut tx, token).await?;
-            tx.commit()
-                .await
-                .map_err(|e| log_err_convert("failed to commit", e, APIError::InternalErr))?;
             tracing::warn!("claiming on expired token: {token}");
             Err(APIError::TokenExpired)
         } else {
@@ -186,4 +188,36 @@ pub async fn get_playground_checkout_data_service(
     let result = PlaygroundCheckoutData::new(user_id, token_info, available_coupons)
         .ok_or(APIError::InternalErr)?;
     Ok(result)
+}
+
+pub async fn get_playground_checkout_data_admin_service(
+    pool: &PgPool,
+    token_id: Uuid,
+) -> Result<PlaygroundCheckoutDataAdmin, APIError> {
+    let Some(token_info) = store::get_admin_token_info(pool, token_id).await? else {
+        return Err(APIError::NotFound);
+    };
+
+    let (total_price, available_coupons) = match token_info.claimed_by {
+        Some(user_id) => {
+            let coupons = store::get_available_user_coupons(pool, user_id).await?;
+            let coupons_redeemed = coupons.len().min(token_info.total_quantity as usize) as i32;
+            let charged_quantity = token_info.total_quantity - coupons_redeemed;
+            let total_price = Decimal::from_i32(charged_quantity)
+                .ok_or(APIError::InternalErr)?
+                .mul(token_info.unit_price);
+            (Some(total_price), coupons)
+        }
+        None => (None, Vec::new()),
+    };
+
+    Ok(PlaygroundCheckoutDataAdmin {
+        claimed_by: token_info.claimed_by,
+        total_quantity: token_info.total_quantity,
+        unit_price: token_info.unit_price,
+        total_price,
+        available_coupons,
+        expires_at: token_info.expires_at,
+        expired: token_info.expired,
+    })
 }

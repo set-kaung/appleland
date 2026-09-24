@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
-    AdminCheckoutQuery, ClaimTokenPayload, PlaygroundCheckoutData, TicketSaleSummary,
+    ClaimTokenPayload, PlaygroundCheckoutData, PlaygroundCheckoutDataAdmin, TicketSaleSummary,
     TicketSaleSummaryFilter, UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
 };
 use crate::playground::service;
@@ -165,13 +165,12 @@ pub async fn get_checkout_data(
 #[utoipa::path(
     get,
     path = "/admin/playground/checkout/{token_id}",
-    description = "Checkout data for a playground claim token. When `user_id` is provided, that customer's available coupons are applied to the total price.",
+    description = "Checkout data for a playground claim token from the admin side. The claiming user (claimed_by) is read from the token itself; coupons are applied for that user. Unclaimed tokens return `claimed_by` = null.",
     params(
         ("token_id" = Uuid, Path, description = "Claim token id"),
-        AdminCheckoutQuery,
     ),
     responses(
-        (status = 200, description = "Claimed Response", body = PlaygroundCheckoutData),
+        (status = 200, description = "Claimed Response", body = PlaygroundCheckoutDataAdmin),
         (status = 400, description = "Bad Request"),
         (status = 401, description = "Unauthorized - Missing or invalid session"),
         (status = 403, description = "Forbidden - Insufficient privileges"),
@@ -183,10 +182,9 @@ pub async fn get_checkout_data_admin(
     RequiresRole(_role, _): RequiresRole<PlaygroundAdminRole>,
     State(state): State<AppState>,
     Path(token_id): Path<Uuid>,
-    Query(query): Query<AdminCheckoutQuery>,
-) -> ApiResult<PlaygroundCheckoutData> {
+) -> ApiResult<PlaygroundCheckoutDataAdmin> {
     let result =
-        service::get_playground_checkout_data_service(&state.db, query.user_id, token_id).await?;
+        service::get_playground_checkout_data_admin_service(&state.db, token_id).await?;
     Ok(Json(result))
 }
 
