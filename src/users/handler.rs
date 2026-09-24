@@ -35,7 +35,22 @@ pub async fn create_user(
     Ok(Json(user_id))
 }
 
-#[utoipa::path(get, path = "/admin/users")]
+#[utoipa::path(
+    get,
+    path = "/admin/users",
+    description = "List all users with pagination.",
+    params(pagination::PaginationQuery),
+    responses(
+        (status = 200, description = "Paginated list of users", body = pagination::PaginatedResponse<UserResponse>),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Users"
+)]
 pub async fn get_all_users_paginated(
     State(state): State<AppState>,
     _require_role: RequiresRole<SuperAdminRole>,

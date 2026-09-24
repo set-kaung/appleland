@@ -788,9 +788,37 @@ paths:
   /admin/users:
     get:
       tags:
-      - users::handler
+      - Admin Users
+      description: List all users with pagination.
       operationId: get_all_users_paginated
-      responses: {}
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_UserResponse'
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Insufficient privileges
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
 components:
   schemas:
     Admin:
