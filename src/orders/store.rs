@@ -160,7 +160,7 @@ pub async fn fetch_admin_order_detail(
             COALESCE(o.order_method, 'app order') as "order_method!",
             o.delivery_status as "delivery_status!",
             o.order_tracking_url as "order_tracking_url?",
-            COALESCE(u.username, a.username) as "customer?",
+            u.username as "customer?",
             s.total_amount as "total_amount!",
             s.is_instore as "is_instore_sale!",
             s.payment_method,
@@ -174,8 +174,6 @@ pub async fn fetch_admin_order_detail(
         JOIN delivery_contact dc ON dc.id = o.shipping_address_id
         LEFT JOIN user_sales us ON us.sale_id = o.sale_id
         LEFT JOIN users u ON u.id = us.user_id
-        LEFT JOIN admin_sales ads ON ads.sale_id = o.sale_id
-        LEFT JOIN admins a ON a.id = ads.admin_id
         WHERE o.id = $1
         "#,
         order_id
