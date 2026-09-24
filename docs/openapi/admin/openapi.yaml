@@ -125,8 +125,7 @@ paths:
       parameters:
       - name: limit
         in: query
-        description: Maximum number of products to return
-        required: true
+        required: false
         schema:
           type: integer
           format: int64
@@ -327,6 +326,43 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/playground/checkout/{token_id}:
+    get:
+      tags:
+      - Admin Playground
+      description: Checkout data for a playground claim token. When `user_id` is provided, that customer's available coupons are applied to the total price.
+      operationId: get_checkout_data_admin
+      parameters:
+      - name: token_id
+        in: path
+        description: Claim token id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Claimed Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaygroundCheckoutData'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Insufficient privileges
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/playground/summary:
     get:
       tags:
@@ -395,7 +431,7 @@ paths:
     get:
       tags:
       - Admin Products
-      description: List all products (active and inactive) with pagination.
+      description: List all products (shown online or not) with pagination.
       operationId: get_products_paginated_admin
       parameters:
       - name: page
@@ -914,6 +950,14 @@ components:
         updated_by:
           type: string
           format: uuid
+    AdminCheckoutQuery:
+      type: object
+      properties:
+        user_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
     AdminInventory:
       type: object
       required:
@@ -968,7 +1012,7 @@ components:
       - id
       - barcode
       - name
-      - is_active
+      - is_shown_online
       - selling_price
       - quantity_in_stock
       - created_at
@@ -1005,9 +1049,9 @@ components:
           type:
           - string
           - 'null'
-        is_active:
-          type: boolean
         is_perishable:
+          type: boolean
+        is_shown_online:
           type: boolean
         name:
           type: string
@@ -1126,7 +1170,7 @@ components:
       - name
       - barcode
       - selling_price
-      - is_active
+      - is_shown_online
       - is_perishable
       properties:
         barcode:
@@ -1148,9 +1192,9 @@ components:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/NewInventoryPayload'
-        is_active:
-          type: boolean
         is_perishable:
+          type: boolean
+        is_shown_online:
           type: boolean
         name:
           type: string
@@ -1305,7 +1349,7 @@ components:
             - id
             - barcode
             - name
-            - is_active
+            - is_shown_online
             - selling_price
             - quantity_in_stock
             - created_at
@@ -1342,9 +1386,9 @@ components:
                 type:
                 - string
                 - 'null'
-              is_active:
-                type: boolean
               is_perishable:
+                type: boolean
+              is_shown_online:
                 type: boolean
               name:
                 type: string
@@ -1426,16 +1470,18 @@ components:
             required:
             - id
             - username
-            - address_line_1
-            - phone_number
             properties:
               address_line_1:
-                type: string
+                type:
+                - string
+                - 'null'
               id:
                 type: string
                 format: uuid
               phone_number:
-                type: string
+                type:
+                - string
+                - 'null'
               username:
                 type: string
         total_items:
@@ -1457,6 +1503,31 @@ components:
           - integer
           - 'null'
           format: int64
+    PlaygroundCheckoutData:
+      type: object
+      required:
+      - total_quantity
+      - unit_price
+      - total_price
+      - available_coupons
+      properties:
+        available_coupons:
+          type: array
+          items:
+            type: string
+            format: uuid
+        total_price:
+          type: string
+        total_quantity:
+          type: integer
+          format: int32
+        unit_price:
+          type: string
+        user_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
     ProductFilter:
       type: object
       required:
@@ -1507,7 +1578,7 @@ components:
       - $ref: '#/components/schemas/ProductSearchParams'
       - type: object
         properties:
-          is_active:
+          is_shown_online:
             type:
             - boolean
             - 'null'
@@ -1698,7 +1769,7 @@ components:
       - barcode
       - name
       - category_id
-      - is_active
+      - is_shown_online
       - selling_price
       - is_perishable
       properties:
@@ -1715,9 +1786,9 @@ components:
           type:
           - string
           - 'null'
-        is_active:
-          type: boolean
         is_perishable:
+          type: boolean
+        is_shown_online:
           type: boolean
         name:
           type: string
@@ -1740,16 +1811,18 @@ components:
       required:
       - id
       - username
-      - address_line_1
-      - phone_number
       properties:
         address_line_1:
-          type: string
+          type:
+          - string
+          - 'null'
         id:
           type: string
           format: uuid
         phone_number:
-          type: string
+          type:
+          - string
+          - 'null'
         username:
           type: string
   securitySchemes:

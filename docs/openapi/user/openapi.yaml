@@ -102,7 +102,7 @@ paths:
     get:
       tags:
       - Products
-      description: List all active products with pagination.
+      description: List all products shown in the online store with pagination.
       operationId: get_products_paginated
       parameters:
       - name: page
@@ -377,7 +377,6 @@ components:
     PlaygroundCheckoutData:
       type: object
       required:
-      - user_id
       - total_quantity
       - unit_price
       - total_price
@@ -396,7 +395,9 @@ components:
         unit_price:
           type: string
         user_id:
-          type: string
+          type:
+          - string
+          - 'null'
           format: uuid
     ProductFilter:
       type: object

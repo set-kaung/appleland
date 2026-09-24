@@ -216,6 +216,7 @@ pub async fn get_ticket_sale_summary(
             "start_date must be on or before end_date".to_string(),
         ));
     }
-    let rows = store::get_ticket_sale_summary(&state.db, filter.start_date, filter.end_date).await?;
+    let rows =
+        store::get_ticket_sale_summary(&state.db, filter.start_date, filter.end_date).await?;
     Ok(Json(rows))
 }
