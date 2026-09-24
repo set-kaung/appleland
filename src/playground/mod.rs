@@ -43,7 +43,7 @@ pub fn route() -> Router<AppState> {
         .route("/tickets", get(get_user_tickets))
         .route("/tokens/{token_id}", patch(claim_token))
         .route("/tickets/claim_free", patch(claim_free_ticket))
-        .route("/playground/checkout/{token_id}", get(get_checkout_data))
+        .route("/checkout/{token_id}", get(get_checkout_data))
 }
 
 pub fn route_admin() -> Router<AppState> {
