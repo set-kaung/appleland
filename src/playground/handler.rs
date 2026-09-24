@@ -7,7 +7,8 @@ use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
     AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, ClaimTokenPayload,
     PlaygroundCheckoutData, PlaygroundCheckoutDataAdmin, TicketSaleSummary,
-    TicketSaleSummaryFilter, UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
+    TicketSaleSummaryFilter, UserPlaygroundAccount, UserPlaygroundPurchaseHistory,
+    UserPlaygroundPurchaseResponse, UserPlaygroundPurchasesQuery,
 };
 use crate::playground::service;
 use crate::{
@@ -64,9 +65,9 @@ pub async fn creat_playground_token(
 
 #[utoipa::path(get,
      path="/api/playground/tickets",
-     description = "Get Tickets History of a User",
+     description = "Get Tickets holdings of a User",
      responses(
-        (status = 200, description = "Ticket History", body = UserPlaygroundTickets),
+        (status = 200, description = "Ticket holdings", body = UserPlaygroundTickets),
         (status = 401, description = "Unauthorized - Missing or invalid JWT"),
         (status = 500, description= "Internal server error")
      ),
@@ -141,7 +142,6 @@ pub async fn claim_free_ticket(
     Ok(Json(result))
 }
 
-///api/playground/checkout/5a36d0c5-291e-4e56-96c8-ad270c433e77
 #[utoipa::path(
     get,
     path="/api/playground/checkout/{token_id}",
@@ -255,6 +255,50 @@ pub async fn get_admin_purchases_paginated(
 
     let (data, total_items) =
         service::get_admin_purchases_paginated(&state.db, &query, limit, offset).await?;
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/playground/purchases",
+    description = "Paginated ticket purchase history of the authenticated user, newest first. Optional filters: date range on Asia/Yangon calendar days (inclusive) and paid vs free redemption. `line_total` is quantity x unit_price for paid purchases and 0 for free redemptions.",
+    params(UserPlaygroundPurchasesQuery),
+    responses(
+        (status = 200, description = "Paginated purchase history of the caller", body = pagination::PaginatedResponse<UserPlaygroundPurchaseHistory>),
+        (status = 400, description = "Bad request - invalid or inverted date range"),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
+    ),
+    tag = "User Playground"
+)]
+pub async fn get_user_purchases_paginated(
+    State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
+    Query(query): Query<UserPlaygroundPurchasesQuery>,
+) -> PaginatedApiResult<UserPlaygroundPurchaseHistory> {
+    let inverted_range = query
+        .start_date
+        .zip(query.end_date)
+        .is_some_and(|(start_date, end_date)| start_date > end_date);
+    if inverted_range {
+        return Err(APIError::BadRequest(
+            "start_date must be on or before end_date".to_string(),
+        ));
+    }
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (data, total_items) =
+        service::get_user_purchases_paginated(&state.db, user.id, &query, limit, offset).await?;
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
 
     Ok(Json(pagination::PaginatedResponse {

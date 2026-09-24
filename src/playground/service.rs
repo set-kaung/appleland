@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 use super::model::{
     AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, PlaygroundCheckoutDataAdmin,
-    UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseResponse,
+    UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseHistory,
+    UserPlaygroundPurchaseResponse, UserPlaygroundPurchasesQuery,
 };
 use crate::{
     app_error::{APIError, log_err_convert},
@@ -228,5 +229,17 @@ pub async fn get_admin_purchases_paginated(
 ) -> Result<(Vec<AdminPlaygroundPurchase>, i64), APIError> {
     let (rows, total_items) =
         store::get_admin_purchases_paginated(pool, filter, limit, offset).await?;
+    Ok((rows.into_iter().map(Into::into).collect(), total_items))
+}
+
+pub async fn get_user_purchases_paginated(
+    pool: &PgPool,
+    user_id: Uuid,
+    filter: &UserPlaygroundPurchasesQuery,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<UserPlaygroundPurchaseHistory>, i64), APIError> {
+    let (rows, total_items) =
+        store::get_user_purchases_paginated(pool, user_id, filter, limit, offset).await?;
     Ok((rows.into_iter().map(Into::into).collect(), total_items))
 }

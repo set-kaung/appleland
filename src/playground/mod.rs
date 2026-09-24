@@ -10,7 +10,8 @@ use crate::{
     app_state::AppState,
     playground::handler::{
         claim_token, creat_playground_token, get_admin_purchases_paginated, get_checkout_data,
-        get_checkout_data_admin, get_ticket_sale_summary, get_user_tickets,
+        get_checkout_data_admin, get_ticket_sale_summary, get_user_purchases_paginated,
+        get_user_tickets,
     },
 };
 
@@ -41,6 +42,7 @@ pub fn spawn_expired_token_cleanup(pool: PgPool, interval: Duration) -> tokio::t
 pub fn route() -> Router<AppState> {
     Router::new()
         .route("/tickets", get(get_user_tickets))
+        .route("/purchases", get(get_user_purchases_paginated))
         .route("/tokens/{token_id}", patch(claim_token))
         .route("/tickets/claim_free", patch(claim_free_ticket))
         .route("/checkout/{token_id}", get(get_checkout_data))

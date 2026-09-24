@@ -1,6 +1,7 @@
 use crate::orders::model::{
     UserOrderDetail, UserOrderHistoryResponse, UserOrderItem, UserOrderStatusEntry,
 };
+use crate::playground::model::{UserPlaygroundPurchaseHistory, UserPlaygroundPurchasesQuery};
 use crate::product::model::UserProduct;
 use crate::sales::model::CreateUserSalePayload;
 use crate::users::model::CreateUserPayload;
@@ -23,6 +24,7 @@ use utoipa::OpenApi;
         product::handler::search_products,
         playground::handler::claim_token,
         playground::handler::get_user_tickets,
+        playground::handler::get_user_purchases_paginated,
         playground::handler::claim_free_ticket,
         playground::handler::get_checkout_data,
         users::handler::create_user,
@@ -41,6 +43,9 @@ use utoipa::OpenApi;
             playground::model::UserPlaygroundPurchase,
             playground::model::UserPlaygroundPurchaseResponse,
             playground::model::UserPlaygroundAccount,
+            UserPlaygroundPurchasesQuery,
+            UserPlaygroundPurchaseHistory,
+            PaginatedResponse<UserPlaygroundPurchaseHistory>,
             playground::model::PlaygroundCheckoutData,
             CreateUserPayload,
             CreateUserSalePayload,

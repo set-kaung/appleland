@@ -71,7 +71,6 @@ paths:
     get:
       tags:
       - User Playground
-      summary: api/playground/checkout/5a36d0c5-291e-4e56-96c8-ad270c433e77
       description: Checkout page data for a playground token
       operationId: get_checkout_data
       responses:
@@ -89,15 +88,66 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /api/playground/purchases:
+    get:
+      tags:
+      - User Playground
+      description: 'Paginated ticket purchase history of the authenticated user, newest first. Optional filters: date range on Asia/Yangon calendar days (inclusive) and paid vs free redemption. `line_total` is quantity x unit_price for paid purchases and 0 for free redemptions.'
+      operationId: get_user_purchases_paginated
+      parameters:
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: is_free_redemption
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated purchase history of the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_UserPlaygroundPurchaseHistory'
+        '400':
+          description: Bad request - invalid or inverted date range
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/playground/tickets:
     get:
       tags:
       - User Playground
-      description: Get Tickets History of a User
+      description: Get Tickets holdings of a User
       operationId: get_user_tickets
       responses:
         '200':
-          description: Ticket History
+          description: Ticket holdings
           content:
             application/json:
               schema:
@@ -413,6 +463,54 @@ components:
         total_pages:
           type: integer
           format: int64
+    PaginatedResponse_UserPlaygroundPurchaseHistory:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - user_id
+            - quantity
+            - unit_price
+            - is_free_redemption
+            - line_total
+            - created_at
+            properties:
+              created_at:
+                type: string
+                format: date-time
+              id:
+                type: string
+                format: uuid
+              is_free_redemption:
+                type: boolean
+              line_total:
+                type: string
+              quantity:
+                type: integer
+                format: int32
+              unit_price:
+                type: string
+              user_id:
+                type: string
+                format: uuid
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginatedResponse_UserProduct:
       type: object
       required:
@@ -660,6 +758,35 @@ components:
         user_id:
           type: string
           format: uuid
+    UserPlaygroundPurchaseHistory:
+      type: object
+      required:
+      - id
+      - user_id
+      - quantity
+      - unit_price
+      - is_free_redemption
+      - line_total
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        is_free_redemption:
+          type: boolean
+        line_total:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unit_price:
+          type: string
+        user_id:
+          type: string
+          format: uuid
     UserPlaygroundPurchaseResponse:
       type: object
       properties:
@@ -671,6 +798,33 @@ components:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/UserPlaygroundPurchase'
+    UserPlaygroundPurchasesQuery:
+      type: object
+      properties:
+        end_date:
+          type:
+          - string
+          - 'null'
+          format: date
+        is_free_redemption:
+          type:
+          - boolean
+          - 'null'
+        page:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        page_size:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        start_date:
+          type:
+          - string
+          - 'null'
+          format: date
     UserPlaygroundTickets:
       type: object
       required:

@@ -6,6 +6,7 @@ use uuid::Uuid;
 use super::model::{
     AdminPlaygroundPurchaseRow, AdminPlaygroundPurchasesQuery, AdminTokenInfo, ExpiredStatus,
     PlaygroundAccountRow, PlaygroundPurchaseRow, PlaygroundTicketsRow, TicketSaleSummary,
+    UserPlaygroundPurchaseHistoryRow, UserPlaygroundPurchasesQuery,
 };
 use crate::{
     app_error::StoreError,
@@ -108,6 +109,51 @@ pub async fn get_admin_purchases_paginated(
 
     let mut count_builder =
         QueryBuilder::new("SELECT COUNT(*) FROM playground_purchases pp WHERE 1 = 1");
+    filter.apply_filter(&mut count_builder);
+
+    let total_items = count_builder
+        .build_query_scalar::<i64>()
+        .fetch_one(pool)
+        .await?;
+
+    Ok((rows, total_items))
+}
+
+pub async fn get_user_purchases_paginated(
+    pool: &PgPool,
+    user_id: Uuid,
+    filter: &UserPlaygroundPurchasesQuery,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<UserPlaygroundPurchaseHistoryRow>, i64), StoreError> {
+    let mut query_builder = QueryBuilder::new(
+        r#"
+        SELECT
+            pp.id,
+            pp.user_id,
+            pp.quantity,
+            pp.unit_price,
+            pp.is_free_redemption,
+            pp.created_at
+        FROM playground_purchases pp
+        WHERE pp.user_id =
+        "#,
+    );
+    query_builder.push_bind(user_id);
+    filter.apply_filter(&mut query_builder);
+    query_builder.push(" ORDER BY pp.created_at DESC, pp.id DESC LIMIT ");
+    query_builder.push_bind(limit);
+    query_builder.push(" OFFSET ");
+    query_builder.push_bind(offset);
+
+    let rows = query_builder
+        .build_query_as::<UserPlaygroundPurchaseHistoryRow>()
+        .fetch_all(pool)
+        .await?;
+
+    let mut count_builder =
+        QueryBuilder::new("SELECT COUNT(*) FROM playground_purchases pp WHERE pp.user_id = ");
+    count_builder.push_bind(user_id);
     filter.apply_filter(&mut count_builder);
 
     let total_items = count_builder
