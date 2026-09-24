@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO delivery_contact (address_line_1, phone_number)\n         VALUES($1,$2)\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_contact",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f1ce3b535854829f0114729eb690f80765b223071ad9372a89b898b823edf73f"
+}

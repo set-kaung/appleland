@@ -18,6 +18,12 @@ pub struct UserRow {
     pub phone_number: Option<String>,
 }
 
+#[derive(Debug, FromRow)]
+pub struct UserContactRow {
+    pub address_line_1: String,
+    pub phone_number: String,
+}
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponse {
     pub id: Uuid,

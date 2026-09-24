@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT address_line_1, phone_number\n        FROM user_contact\n        WHERE user_id = $1\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "address_line_1",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_contact",
+            "name": "address_line_1"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "phone_number",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_contact",
+            "name": "phone_number"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "44de4914fa674e97a7729d27fb43f892dd34cd2d7a52132bcce987aa04ae330d"
+}

@@ -2,7 +2,7 @@ use axum::{Router, routing::patch};
 
 pub mod handler;
 pub mod model;
-mod service;
+pub mod service;
 mod store;
 
 use handler::*;

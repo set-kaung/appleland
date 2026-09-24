@@ -1,5 +1,8 @@
-use crate::{app_error::StoreError, users::model::UserRow};
-use sqlx::{PgPool, Postgres, Transaction};
+use crate::{
+    app_error::StoreError,
+    users::model::{UserContactRow, UserRow},
+};
+use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 pub async fn find_user_id_by_supabase_id(
@@ -45,6 +48,29 @@ pub async fn insert_into_user_contact(
     .execute(&mut **tx)
     .await?;
     Ok(())
+}
+
+pub async fn fetch_user_contact_by_user_id<'e, E>(
+    executor: E,
+    user_id: Uuid,
+) -> Result<Option<UserContactRow>, StoreError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    let result = sqlx::query_as!(
+        UserContactRow,
+        r#"
+        SELECT address_line_1, phone_number
+        FROM user_contact
+        WHERE user_id = $1
+        LIMIT 1
+        "#,
+        user_id
+    )
+    .fetch_optional(executor)
+    .await?;
+
+    Ok(result)
 }
 
 pub async fn get_all_users_paginated(

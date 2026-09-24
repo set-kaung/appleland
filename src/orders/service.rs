@@ -1,11 +1,37 @@
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
+use super::model::InsertOrder;
 use super::store;
 use crate::{
-    app_error::{APIError, log_err_convert},
+    app_error::{APIError, StoreError, log_err_convert},
     orders::model::{DeliveryStatus, UpdateOrderDeliveryStatusResponse},
 };
+
+pub async fn insert_user_order(
+    tx: &mut Transaction<'_, Postgres>,
+    sale_id: Uuid,
+    user_id: Uuid,
+    address_line_1: String,
+    phone_number: String,
+) -> Result<(), StoreError> {
+    let shipping_address_id =
+        store::insert_delivery_contact(tx, address_line_1, phone_number).await?;
+
+    store::insert_order(
+        tx,
+        InsertOrder {
+            sale_id,
+            shipping_address_id,
+            order_method: String::from("app order"),
+            created_by: user_id,
+            updated_by: user_id,
+        },
+    )
+    .await?;
+
+    Ok(())
+}
 
 pub async fn update_order_delivery_status(
     pool: &PgPool,

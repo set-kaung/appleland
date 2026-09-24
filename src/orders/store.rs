@@ -1,28 +1,45 @@
 use sqlx::{Executor, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
-use super::model::DeliveryStatus;
+use super::model::{DeliveryStatus, InsertOrder};
 // use crate::{app_error::StoreError, orders::model::InsertOrder};
 use crate::app_error::StoreError;
 
-// pub async fn insert_order(
-//     tx: &mut Transaction<'_, Postgres>,
-//     insert_order: InsertOrder,
-// ) -> Result<Uuid, StoreError> {
-//     let result: Uuid = sqlx::query_scalar!(
-//         "INSERT INTO orders (sale_id, shipping_address_id, order_method,created_by, updated_by)
-//          VALUES($1,$2,$3,$4,$5)
-//          RETURNING id",
-//         insert_order.sale_id,
-//         insert_order.shipping_address_id,
-//         insert_order.order_method,
-//         insert_order.created_by,
-//         insert_order.updated_by
-//     )
-//     .fetch_one(&mut **tx)
-//     .await?;
-//     Ok(result)
-// }
+pub async fn insert_delivery_contact(
+    tx: &mut Transaction<'_, Postgres>,
+    address_line_1: String,
+    phone_number: String,
+) -> Result<Uuid, StoreError> {
+    let result: Uuid = sqlx::query_scalar!(
+        "INSERT INTO delivery_contact (address_line_1, phone_number)
+         VALUES($1,$2)
+         RETURNING id",
+        address_line_1,
+        phone_number
+    )
+    .fetch_one(&mut **tx)
+    .await?;
+    Ok(result)
+}
+
+pub async fn insert_order(
+    tx: &mut Transaction<'_, Postgres>,
+    insert_order: InsertOrder,
+) -> Result<Uuid, StoreError> {
+    let result: Uuid = sqlx::query_scalar!(
+        "INSERT INTO orders (sale_id, shipping_address_id, order_method,created_by, updated_by)
+         VALUES($1,$2,$3,$4,$5)
+         RETURNING id",
+        insert_order.sale_id,
+        insert_order.shipping_address_id,
+        insert_order.order_method,
+        insert_order.created_by,
+        insert_order.updated_by
+    )
+    .fetch_one(&mut **tx)
+    .await?;
+    Ok(result)
+}
 
 pub async fn update_order_tracking_url(
     pool: &PgPool,

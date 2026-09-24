@@ -1,7 +1,7 @@
 pub mod handler;
 pub mod model;
 pub mod service;
-mod store;
+pub mod store;
 
 use axum::{
     Router,

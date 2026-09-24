@@ -6,7 +6,9 @@ use uuid::Uuid;
 
 use crate::app_error::{APIError, StoreError};
 use crate::inventory;
+use crate::orders;
 use crate::sales::model::{AdminSaleDetails, SaleActor, SaleProduct, SaleProductDTO};
+use crate::users;
 
 type InventoryDeduction = (Uuid, i32);
 type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
@@ -54,6 +56,7 @@ pub async fn perform_sale_user(
     payment_provider: &str,
     payment_method: &str,
 ) -> Result<Uuid, StoreError> {
+    tracing::debug!("perfrom_sale_user called");
     perform_sale(
         pool,
         products,
@@ -117,12 +120,37 @@ async fn perform_sale(
         }
         SaleActor::User(user_id) => {
             sale_store::insert_user_sale(&mut tx, sale_id, user_id).await?;
+            insert_user_order(&mut tx, sale_id, user_id).await?;
         }
     }
 
     tx.commit().await?;
 
     Ok(sale_id)
+}
+
+// copies the user's delivery contact into a new delivery_contact row,
+// then attaches an order to the sale. fails the sale if the user has no
+// saved contact.
+async fn insert_user_order(
+    tx: &mut Transaction<'_, Postgres>,
+    sale_id: Uuid,
+    user_id: Uuid,
+) -> Result<(), StoreError> {
+    let user_contact = users::store::fetch_user_contact_by_user_id(&mut **tx, user_id)
+        .await?
+        .ok_or_else(|| {
+            StoreError::InvalidInput("user has no saved delivery contact".to_string())
+        })?;
+
+    orders::service::insert_user_order(
+        tx,
+        sale_id,
+        user_id,
+        user_contact.address_line_1,
+        user_contact.phone_number,
+    )
+    .await
 }
 
 pub fn validate_aggregate_sale_products(
