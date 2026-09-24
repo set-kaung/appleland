@@ -16,7 +16,10 @@ use crate::sales::model::{
     SaleSummaryFilter,
 };
 
-use crate::playground::model::{CreateClaimTokenPayload, TicketSaleSummary, TicketSaleSummaryFilter};
+use crate::playground::model::{
+    AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, CreateClaimTokenPayload, TicketSaleSummary,
+    TicketSaleSummaryFilter,
+};
 use crate::staff::model::AdminStaff;
 use crate::users::model::UserResponse;
 
@@ -57,6 +60,7 @@ use utoipa::OpenApi;
         playground::handler::creat_playground_token,
         playground::handler::get_checkout_data_admin,
         playground::handler::get_ticket_sale_summary,
+        playground::handler::get_admin_purchases_paginated,
         product::handler::get_all_products,
         product::handler::get_products_paginated_admin,
         product::handler::get_product_by_id_admin,
@@ -107,6 +111,9 @@ use utoipa::OpenApi;
             TicketSaleSummary,
             TicketSaleSummaryFilter,
             playground::model::PlaygroundCheckoutDataAdmin,
+            AdminPlaygroundPurchasesQuery,
+            AdminPlaygroundPurchase,
+            PaginatedResponse<AdminPlaygroundPurchase>,
             UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
             AdminOrderRow,

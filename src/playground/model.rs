@@ -1,11 +1,13 @@
 use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Postgres, QueryBuilder};
 use std::ops::Mul;
 use time::{Date, OffsetDateTime};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
+
+use crate::db::DBQueryFilter;
 
 #[derive(Deserialize, Debug, Clone, ToSchema)]
 pub struct CreateClaimTokenPayload {
@@ -190,8 +192,9 @@ impl PlaygroundCheckoutData {
         token_info: TokenInfo,
         available_coupons: Vec<Uuid>,
     ) -> Option<Self> {
-        let coupons_redeemed =
-            available_coupons.len().min(token_info.total_quantity as usize) as i32;
+        let coupons_redeemed = available_coupons
+            .len()
+            .min(token_info.total_quantity as usize) as i32;
         let charged_quantity = token_info.total_quantity - coupons_redeemed;
         let total_price = Decimal::from_i32(charged_quantity)?.mul(token_info.unit_price);
         Some(Self {
@@ -201,5 +204,86 @@ impl PlaygroundCheckoutData {
             available_coupons,
             total_price,
         })
+    }
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct AdminPlaygroundPurchasesQuery {
+    pub start_date: Option<Date>,
+    pub end_date: Option<Date>,
+    pub is_free_redemption: Option<bool>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+impl AdminPlaygroundPurchasesQuery {
+    pub fn get_limit_and_offset(&self) -> (i64, i64, i64) {
+        let page_size = self.page_size.unwrap_or(10).clamp(1, 100);
+        let page = self.page.unwrap_or(1).max(1);
+        let offset = (page - 1).saturating_mul(page_size);
+
+        (page_size, offset, page)
+    }
+}
+
+impl DBQueryFilter<Postgres> for AdminPlaygroundPurchasesQuery {
+    fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
+        if let Some(start_date) = self.start_date {
+            query_builder.push(" AND (pp.created_at AT TIME ZONE 'Asia/Yangon')::date >= ");
+            query_builder.push_bind(start_date);
+        }
+        if let Some(end_date) = self.end_date {
+            query_builder.push(" AND (pp.created_at AT TIME ZONE 'Asia/Yangon')::date <= ");
+            query_builder.push_bind(end_date);
+        }
+        if let Some(is_free_redemption) = self.is_free_redemption {
+            query_builder.push(" AND pp.is_free_redemption = ");
+            query_builder.push_bind(is_free_redemption);
+        }
+    }
+}
+
+#[derive(Debug, FromRow)]
+pub struct AdminPlaygroundPurchaseRow {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub username: String,
+    pub quantity: i32,
+    pub unit_price: Decimal,
+    pub is_free_redemption: bool,
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminPlaygroundPurchase {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub username: String,
+    pub quantity: i32,
+    pub unit_price: Decimal,
+    pub is_free_redemption: bool,
+    pub line_total: Decimal,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+impl From<AdminPlaygroundPurchaseRow> for AdminPlaygroundPurchase {
+    fn from(value: AdminPlaygroundPurchaseRow) -> Self {
+        let line_total = if value.is_free_redemption {
+            Decimal::ZERO
+        } else {
+            value.unit_price * Decimal::from(value.quantity)
+        };
+        Self {
+            id: value.id,
+            user_id: value.user_id,
+            username: value.username,
+            quantity: value.quantity,
+            unit_price: value.unit_price,
+            is_free_redemption: value.is_free_redemption,
+            line_total,
+            created_at: value.created_at,
+        }
     }
 }

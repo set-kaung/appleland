@@ -33,15 +33,25 @@ async fn main() -> Result<(), AppError> {
     let json_logs =
         std::env::var("LOG_JSON").is_ok_and(|v| v.eq_ignore_ascii_case("true") || v == "1");
 
+    let env_level: String = std::env::var("ENV").unwrap_or("prod".to_string());
+
     let env_filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new("appleland=info,tower_http=warn"))
         .map_err(|e| AppError::StartupErr(format!("failed to set up tracing: {e}")))?;
 
     if json_logs {
-        tracing_subscriber::fmt()
-            .with_env_filter(env_filter)
-            .json()
-            .init();
+        if env_level.eq_ignore_ascii_case("dev") {
+            tracing_subscriber::fmt()
+                .with_env_filter(env_filter)
+                .json()
+                .pretty()
+                .init();
+        } else {
+            tracing_subscriber::fmt()
+                .with_env_filter(env_filter)
+                .json()
+                .init();
+        }
     } else {
         tracing_subscriber::fmt().with_env_filter(env_filter).init();
     }

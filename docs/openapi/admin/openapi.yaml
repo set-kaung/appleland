@@ -460,6 +460,59 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/playground/purchases:
+    get:
+      tags:
+      - Admin Playground
+      description: 'Paginated list of playground ticket purchases, newest first. Optional filters: date range on Asia/Yangon calendar days (inclusive) and paid vs free redemption. `line_total` is quantity x unit_price for paid purchases and 0 for free redemptions.'
+      operationId: get_admin_purchases_paginated
+      parameters:
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: is_free_redemption
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Paginated list of playground purchases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_AdminPlaygroundPurchase'
+        '400':
+          description: Bad request - invalid or inverted date range
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Insufficient privileges
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/playground/summary:
     get:
       tags:
@@ -1213,6 +1266,65 @@ components:
           type:
           - string
           - 'null'
+    AdminPlaygroundPurchase:
+      type: object
+      required:
+      - id
+      - user_id
+      - username
+      - quantity
+      - unit_price
+      - is_free_redemption
+      - line_total
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        is_free_redemption:
+          type: boolean
+        line_total:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unit_price:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+    AdminPlaygroundPurchasesQuery:
+      type: object
+      properties:
+        end_date:
+          type:
+          - string
+          - 'null'
+          format: date
+        is_free_redemption:
+          type:
+          - boolean
+          - 'null'
+        page:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        page_size:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        start_date:
+          type:
+          - string
+          - 'null'
+          format: date
     AdminProduct:
       type: object
       required:
@@ -1638,6 +1750,57 @@ components:
                 type: string
                 format: uuid
               total_amount:
+                type: string
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+    PaginatedResponse_AdminPlaygroundPurchase:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - user_id
+            - username
+            - quantity
+            - unit_price
+            - is_free_redemption
+            - line_total
+            - created_at
+            properties:
+              created_at:
+                type: string
+                format: date-time
+              id:
+                type: string
+                format: uuid
+              is_free_redemption:
+                type: boolean
+              line_total:
+                type: string
+              quantity:
+                type: integer
+                format: int32
+              unit_price:
+                type: string
+              user_id:
+                type: string
+                format: uuid
+              username:
                 type: string
         total_items:
           type: integer

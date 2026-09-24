@@ -1,14 +1,15 @@
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{PgPool, Postgres, QueryBuilder, Transaction};
 use time::Date;
 use uuid::Uuid;
 
 use super::model::{
-    AdminTokenInfo, ExpiredStatus, PlaygroundAccountRow, PlaygroundPurchaseRow,
-    PlaygroundTicketsRow, TicketSaleSummary,
+    AdminPlaygroundPurchaseRow, AdminPlaygroundPurchasesQuery, AdminTokenInfo, ExpiredStatus,
+    PlaygroundAccountRow, PlaygroundPurchaseRow, PlaygroundTicketsRow, TicketSaleSummary,
 };
 use crate::{
     app_error::StoreError,
+    db::DBQueryFilter,
     playground::model::{ClaimedTokenInfo, CouponStatus, TokenInfo},
 };
 
@@ -71,6 +72,50 @@ pub async fn get_ticket_sale_summary(
     .await?;
 
     Ok(rows)
+}
+
+pub async fn get_admin_purchases_paginated(
+    pool: &PgPool,
+    filter: &AdminPlaygroundPurchasesQuery,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<AdminPlaygroundPurchaseRow>, i64), StoreError> {
+    let mut query_builder = QueryBuilder::new(
+        r#"
+        SELECT
+            pp.id,
+            pp.user_id,
+            u.username,
+            pp.quantity,
+            pp.unit_price,
+            pp.is_free_redemption,
+            pp.created_at
+        FROM playground_purchases pp
+        JOIN users u ON u.id = pp.user_id
+        WHERE 1 = 1
+        "#,
+    );
+    filter.apply_filter(&mut query_builder);
+    query_builder.push(" ORDER BY pp.created_at DESC, pp.id DESC LIMIT ");
+    query_builder.push_bind(limit);
+    query_builder.push(" OFFSET ");
+    query_builder.push_bind(offset);
+
+    let rows = query_builder
+        .build_query_as::<AdminPlaygroundPurchaseRow>()
+        .fetch_all(pool)
+        .await?;
+
+    let mut count_builder =
+        QueryBuilder::new("SELECT COUNT(*) FROM playground_purchases pp WHERE 1 = 1");
+    filter.apply_filter(&mut count_builder);
+
+    let total_items = count_builder
+        .build_query_scalar::<i64>()
+        .fetch_one(pool)
+        .await?;
+
+    Ok((rows, total_items))
 }
 
 pub async fn get_available_user_coupons(

@@ -5,16 +5,18 @@ use uuid::Uuid;
 
 use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
-    ClaimTokenPayload, PlaygroundCheckoutData, PlaygroundCheckoutDataAdmin, TicketSaleSummary,
+    AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, ClaimTokenPayload,
+    PlaygroundCheckoutData, PlaygroundCheckoutDataAdmin, TicketSaleSummary,
     TicketSaleSummaryFilter, UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
 };
 use crate::playground::service;
 use crate::{
-    ApiResult,
+    ApiResult, PaginatedApiResult,
     app_error::APIError,
     app_extractor::{PlaygroundAdminRole, RequiresRole, SuperAdminRole},
     app_state::AppState,
     auth::{CurrentUser, session_admin_id},
+    pagination,
     playground::{
         model::{CreateClaimTokenPayload, UserPlaygroundTickets},
         store,
@@ -183,8 +185,7 @@ pub async fn get_checkout_data_admin(
     State(state): State<AppState>,
     Path(token_id): Path<Uuid>,
 ) -> ApiResult<PlaygroundCheckoutDataAdmin> {
-    let result =
-        service::get_playground_checkout_data_admin_service(&state.db, token_id).await?;
+    let result = service::get_playground_checkout_data_admin_service(&state.db, token_id).await?;
     Ok(Json(result))
 }
 
@@ -217,4 +218,49 @@ pub async fn get_ticket_sale_summary(
     let rows =
         store::get_ticket_sale_summary(&state.db, filter.start_date, filter.end_date).await?;
     Ok(Json(rows))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/playground/purchases",
+    description = "Paginated list of playground ticket purchases, newest first. Optional filters: date range on Asia/Yangon calendar days (inclusive) and paid vs free redemption. `line_total` is quantity x unit_price for paid purchases and 0 for free redemptions.",
+    params(AdminPlaygroundPurchasesQuery),
+    responses(
+        (status = 200, description = "Paginated list of playground purchases", body = pagination::PaginatedResponse<AdminPlaygroundPurchase>),
+        (status = 400, description = "Bad request - invalid or inverted date range"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Playground"
+)]
+pub async fn get_admin_purchases_paginated(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Query(query): Query<AdminPlaygroundPurchasesQuery>,
+) -> PaginatedApiResult<AdminPlaygroundPurchase> {
+    let inverted_range = query
+        .start_date
+        .zip(query.end_date)
+        .is_some_and(|(start_date, end_date)| start_date > end_date);
+    if inverted_range {
+        return Err(APIError::BadRequest(
+            "start_date must be on or before end_date".to_string(),
+        ));
+    }
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (data, total_items) =
+        service::get_admin_purchases_paginated(&state.db, &query, limit, offset).await?;
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
 }

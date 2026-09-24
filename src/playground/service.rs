@@ -1,13 +1,13 @@
-use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::collections::HashSet;
 use std::ops::Mul;
 use uuid::Uuid;
 
 use super::model::{
-    PlaygroundCheckoutDataAdmin, UserPlaygroundAccount, UserPlaygroundPurchase,
-    UserPlaygroundPurchaseResponse,
+    AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, PlaygroundCheckoutDataAdmin,
+    UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseResponse,
 };
 use crate::{
     app_error::{APIError, log_err_convert},
@@ -176,15 +176,13 @@ pub async fn get_playground_checkout_data_service(
     user_id: Option<Uuid>,
     token_id: Uuid,
 ) -> Result<PlaygroundCheckoutData, APIError> {
-    let (token_info, available_coupons) = tokio::try_join!(
-        store::get_claim_token_info(pool, token_id),
-        async {
+    let (token_info, available_coupons) =
+        tokio::try_join!(store::get_claim_token_info(pool, token_id), async {
             match user_id {
                 Some(uid) => store::get_available_user_coupons(pool, uid).await,
                 None => Ok(Vec::new()),
             }
-        }
-    )?;
+        })?;
     let result = PlaygroundCheckoutData::new(user_id, token_info, available_coupons)
         .ok_or(APIError::InternalErr)?;
     Ok(result)
@@ -220,4 +218,15 @@ pub async fn get_playground_checkout_data_admin_service(
         expires_at: token_info.expires_at,
         expired: token_info.expired,
     })
+}
+
+pub async fn get_admin_purchases_paginated(
+    pool: &PgPool,
+    filter: &AdminPlaygroundPurchasesQuery,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<AdminPlaygroundPurchase>, i64), APIError> {
+    let (rows, total_items) =
+        store::get_admin_purchases_paginated(pool, filter, limit, offset).await?;
+    Ok((rows.into_iter().map(Into::into).collect(), total_items))
 }
