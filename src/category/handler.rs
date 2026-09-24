@@ -6,11 +6,11 @@ use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::admin::handler::session_admin_id;
 use crate::category::model::{
-    AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, InsertCategory, UpdateCategory,
-    UpdateCategoryPayload,
+    AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, GetCategoriesQuery,
+    InsertCategory, UpdateCategory, UpdateCategoryPayload,
 };
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use tower_sessions::Session;
 use tracing::error;
@@ -76,8 +76,9 @@ pub async fn create_category(
 )]
 pub async fn get_all_categories(
     State(s): State<AppState>,
+    Query(q): Query<GetCategoriesQuery>,
 ) -> Result<Json<Vec<AdminCategory>>, APIError> {
-    let categories = store::get_all_categories(&s.db)
+    let categories = store::get_all_categories(&s.db, q.is_deleted_shown)
         .await?
         .into_iter()
         .map(|e| e.into())

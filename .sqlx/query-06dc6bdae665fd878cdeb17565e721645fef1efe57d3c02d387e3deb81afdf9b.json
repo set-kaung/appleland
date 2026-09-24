@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, created_by, created_at, updated_by, updated_at,is_deleted, deleted_at as \"deleted_at?\", deleted_by as \"deleted_by?\" FROM categories",
+  "query": "\n        SELECT\n            id,\n            name,\n            created_by,\n            created_at,\n            updated_by,\n            updated_at,\n            is_deleted,\n            deleted_at as \"deleted_at?\",\n            deleted_by as \"deleted_by?\"\n        FROM categories\n        WHERE $1 OR is_deleted = false\n        ",
   "describe": {
     "columns": [
       {
@@ -104,7 +104,9 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Bool"
+      ]
     },
     "nullable": [
       false,
@@ -118,5 +120,5 @@
       true
     ]
   },
-  "hash": "35558207f8934d241af280f3370a880f3fdfd688c6a72de002c1893954d4133d"
+  "hash": "06dc6bdae665fd878cdeb17565e721645fef1efe57d3c02d387e3deb81afdf9b"
 }

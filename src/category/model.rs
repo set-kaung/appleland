@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 #[derive(FromRow, Serialize, Deserialize, ToSchema)]
@@ -30,6 +30,13 @@ pub struct InsertCategory {
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct CreateCategoryPayload {
     pub name: String,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct GetCategoriesQuery {
+    #[serde(default)]
+    pub is_deleted_shown: bool,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]

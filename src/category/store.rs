@@ -22,14 +22,31 @@ pub async fn create_category(
     .await?;
     Ok(category_row)
 }
-pub async fn get_all_categories(pool: &PgPool) -> Result<Vec<CategoryRow>, StoreError> {
-    sqlx::query_as!(
+pub async fn get_all_categories(
+    pool: &PgPool,
+    is_deleted_shown: bool,
+) -> Result<Vec<CategoryRow>, StoreError> {
+    let rows = sqlx::query_as!(
         CategoryRow,
-        r#"SELECT id, name, created_by, created_at, updated_by, updated_at,is_deleted, deleted_at as "deleted_at?", deleted_by as "deleted_by?" FROM categories"#
+        r#"
+        SELECT
+            id,
+            name,
+            created_by,
+            created_at,
+            updated_by,
+            updated_at,
+            is_deleted,
+            deleted_at as "deleted_at?",
+            deleted_by as "deleted_by?"
+        FROM categories
+        WHERE $1 OR is_deleted = false
+        "#,
+        is_deleted_shown,
     )
     .fetch_all(pool)
-    .await
-    .map_err(Into::into)
+    .await?;
+    Ok(rows)
 }
 
 pub async fn update_category(
