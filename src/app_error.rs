@@ -95,6 +95,9 @@ pub enum APIError {
 
     #[error("upstream gateway timed out")]
     GatewayTimeout,
+
+    #[error("resource conflict: {0}")]
+    Conflict(String),
 }
 
 impl IntoResponse for APIError {
@@ -127,6 +130,7 @@ impl IntoResponse for APIError {
             APIError::GatewayTimeout => {
                 (StatusCode::GATEWAY_TIMEOUT, "upstream gateway timed out").into_response()
             }
+            APIError::Conflict(e) => (StatusCode::CONFLICT, e).into_response(),
         }
     }
 }

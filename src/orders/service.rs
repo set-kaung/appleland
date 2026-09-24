@@ -61,9 +61,7 @@ pub async fn update_order_delivery_status(
         )
     })?;
 
-    let next_status = delivery_status_enum
-        .next()
-        .map_err(|e| log_err_convert("failed to convert enum", e, APIError::InternalErr))?;
+    let next_status = delivery_status_enum.next()?;
 
     store::update_order_delivery_status(&mut tx, order_id, String::from(&next_status)).await?;
     store::insert_order_status_history(&mut tx, order_id, String::from(&next_status), changed_by)

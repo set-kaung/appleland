@@ -1,4 +1,4 @@
-use crate::app_error::AppError;
+use crate::app_error::{APIError, AppError};
 use crate::db::DBQueryFilter;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -55,11 +55,13 @@ impl DeliveryStatus {
         }
         values
     }
-    pub fn next(&self) -> Result<Self, AppError> {
+    pub fn next(&self) -> Result<Self, APIError> {
         match self {
             DeliveryStatus::Pending => Ok(DeliveryStatus::OnDelivery),
             DeliveryStatus::OnDelivery => Ok(DeliveryStatus::Received),
-            DeliveryStatus::Received => Err(AppError::InvalidOperation),
+            DeliveryStatus::Received => Err(APIError::Conflict(
+                "already recevied, can't advance".to_string(),
+            )),
         }
     }
 }
