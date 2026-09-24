@@ -3,7 +3,7 @@ use crate::app_extractor::{RequiresRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::session_admin_id;
 use crate::inventory::model::{
-    AdminInventory, NewInventoryPayload, NewInventoryRecord, StockLevel,
+    AdminInventory, LowStockQuery, NewInventoryPayload, NewInventoryRecord, StockLevel,
 };
 use crate::inventory::service;
 use crate::product::service as product_service;
@@ -95,9 +95,7 @@ pub async fn get_product_inventory_records(
     get,
     path = "/admin/inventory/low-stock",
     description = "List products ordered by total stock ascending, flagged when stock is at or below the low-stock threshold.",
-    params(
-        ("limit" = i64, Query, description = "Maximum number of products to return")
-    ),
+    params(LowStockQuery),
     responses(
         (status = 200, description = "Products ordered by stock level", body = Vec<StockLevel>),
         (status = 401, description = "Unauthorized - Missing or invalid session"),
@@ -112,8 +110,9 @@ pub async fn get_product_inventory_records(
 pub async fn get_product_inventory_stock_level(
     RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
-    Query(limit): Query<i64>,
+    Query(query): Query<LowStockQuery>,
 ) -> ApiResult<Vec<StockLevel>> {
+    let limit = query.limit.unwrap_or(10);
     let result = service::get_stock_levels(&state.db, limit).await?;
     Ok(Json(result))
 }

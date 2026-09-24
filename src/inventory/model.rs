@@ -2,10 +2,16 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::app_error::APIError;
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct LowStockQuery {
+    pub limit: Option<i64>,
+}
 
 #[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AdminInventory {
