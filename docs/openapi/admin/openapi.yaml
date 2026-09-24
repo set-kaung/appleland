@@ -6,6 +6,28 @@ info:
     name: ''
   version: 0.9.0
 paths:
+  /admin/ai/chat:
+    post:
+      tags:
+      - Admin AI Assistant
+      description: |-
+        Relay a prompt to the Gemini assistant. The request body is passed through unchanged and the
+        Gemini response (status code and body) is returned unchanged. Only super admins may call this,
+        and every admin has a per-day message limit.
+      operationId: chat
+      responses:
+        '200':
+          description: Gemini response relayed unchanged
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '403':
+          description: Forbidden - Super admin role required
+        '429':
+          description: Daily message limit exceeded
+        '504':
+          description: Upstream Gemini request timed out
+      security:
+      - session_cookie: []
   /admin/categories:
     get:
       tags:
@@ -1841,3 +1863,5 @@ tags:
   description: Order tracking and delivery management
 - name: Admin Staff
   description: Staff account management
+- name: Admin AI Assistant
+  description: Gemini-powered chat assistant for admins

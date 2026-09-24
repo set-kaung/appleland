@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT request_count\n        FROM admin_ai_chat_usage\n        WHERE admin_id = $1\n          AND usage_date = (NOW() AT TIME ZONE 'Asia/Yangon')::date\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "request_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "admin_ai_chat_usage",
+            "name": "request_count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6ce51b8a67b1a9ce07432aa97bc2b5a103afe6b4a510868e87d34ffccff2238d"
+}

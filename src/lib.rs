@@ -21,6 +21,7 @@ use axum::Json;
 use axum::http::StatusCode;
 
 pub mod admin_settings;
+pub mod ai;
 pub mod api_doc;
 pub mod app_error;
 pub mod app_extractor;

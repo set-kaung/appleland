@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO admin_ai_chat_usage (admin_id, usage_date, request_count)\n        VALUES ($1, (NOW() AT TIME ZONE 'Asia/Yangon')::date, 1)\n        ON CONFLICT (admin_id, usage_date)\n        DO UPDATE SET request_count = admin_ai_chat_usage.request_count + 1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "45b097ed7fade4852f4fa697e6043811f6db61cd7061111cae3f1b82161cf84e"
+}

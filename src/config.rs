@@ -25,6 +25,11 @@ pub struct Config {
     #[serde(default)]
     pub demo_mode: bool,
 
+    pub gemini_api_key: String,
+
+    #[serde(default = "default_ai_chat_daily_limit")]
+    pub ai_chat_daily_limit: u32,
+
     #[serde(default = "default_expiry_interval")]
     pub session_delete_interval: String,
 
@@ -57,6 +62,7 @@ impl std::fmt::Display for Config {
                 burst_size: {}
                 per_sec: {}
                 demo_mode: {}
+                ai_chat_daily_limit: {}
                 session_delete_interval: {}
                 playground_token_cleanup_interval: {}
                 webhook_nonce_cleanup_interval: {}
@@ -74,6 +80,7 @@ impl std::fmt::Display for Config {
             self.burst_size,
             self.per_sec,
             self.demo_mode,
+            self.ai_chat_daily_limit,
             self.session_delete_interval,
             self.playground_token_cleanup_interval,
             self.webhook_nonce_cleanup_interval,
@@ -131,6 +138,10 @@ fn default_image_bucket_name() -> String {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_ai_chat_daily_limit() -> u32 {
+    20
 }
 
 pub fn load_config() -> Result<Config, AppError> {

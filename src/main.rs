@@ -8,7 +8,7 @@
 
 use appleland::api_doc;
 use appleland::app_error::AppError;
-use appleland::app_state::{AppState, StorageConfig};
+use appleland::app_state::{AiConfig, AppState, StorageConfig};
 use appleland::auth;
 use appleland::config;
 use appleland::db;
@@ -87,6 +87,10 @@ async fn main() -> Result<(), AppError> {
             conf.mmpay_sandbox,
         )),
         conf.demo_mode,
+        AiConfig {
+            gemini_api_key: conf.gemini_api_key,
+            daily_limit: conf.ai_chat_daily_limit,
+        },
     );
 
     let session_store = PostgresStore::new(pool.clone());

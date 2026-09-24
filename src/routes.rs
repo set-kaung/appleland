@@ -1,17 +1,22 @@
 use axum::{
     Json, Router,
     extract::State,
-    http::{HeaderValue, StatusCode},
+    http::{
+        HeaderValue, Method, StatusCode,
+        header::{AUTHORIZATION, CONTENT_TYPE},
+    },
     middleware as axum_middleware,
     routing::get,
 };
 use serde::Serialize;
 use sqlx::PgPool;
+use std::time::Duration;
 use tower_sessions::SessionManagerLayer;
 use tower_sessions_sqlx_store::PostgresStore;
+use tower_http::cors::CorsLayer;
 
 use crate::app_state::AppState;
-use crate::{app_error::AppError, orders, staff};
+use crate::{ai, app_error::AppError, orders, staff};
 use crate::{
     auth, category, image_storage, inventory, middleware, playground, product, sales, users,
 };
@@ -88,10 +93,25 @@ pub fn create_app(
         .route("/login", axum::routing::post(auth::admin_login_handler))
         .route("/logout", axum::routing::post(auth::admin_logout_handler))
         .merge(admin_protected_routes)
+        .layer(session_layer.clone())
+        .layer(axum_middleware::from_fn(
+            middleware::partitioned_cookie_middleware,
+        ))
+        .with_state(state.clone());
+
+    let ai_routes = ai::route()
         .layer(session_layer)
         .layer(axum_middleware::from_fn(
             middleware::partitioned_cookie_middleware,
         ))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(allowed_origins.clone())
+                .allow_credentials(true)
+                .allow_methods([Method::POST])
+                .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+                .max_age(Duration::from_secs(3600)),
+        )
         .with_state(state.clone());
 
     let webhook_routes = state.payment_provider.webhook_route();
@@ -103,5 +123,8 @@ pub fn create_app(
         .nest("/admin", admin_routes)
         .with_state(state);
 
+    // The AI chat route lives outside the global middleware so it is not rate limited
+    // nor cut off by the 10s TimeoutLayer (Gemini responses can take far longer).
     middleware::with_global_middleware(app_router, allowed_origins, burst_size, per_sec)
+        .map(|router| router.merge(ai_routes))
 }

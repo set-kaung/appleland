@@ -12,12 +12,19 @@ pub struct StorageConfig {
 }
 
 #[derive(Clone)]
+pub struct AiConfig {
+    pub gemini_api_key: String,
+    pub daily_limit: u32,
+}
+
+#[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub auth: Arc<dyn AuthProvider>,
     pub storage: StorageConfig,
     pub payment_provider: Arc<dyn PaymentProvider>,
     pub demo_mode: bool,
+    pub ai: AiConfig,
 }
 
 impl AppState {
@@ -27,6 +34,7 @@ impl AppState {
         storage: StorageConfig,
         payment_provider: Arc<dyn PaymentProvider>,
         demo_mode: bool,
+        ai: AiConfig,
     ) -> Self {
         Self {
             db,
@@ -34,6 +42,7 @@ impl AppState {
             storage,
             payment_provider,
             demo_mode,
+            ai,
         }
     }
 }

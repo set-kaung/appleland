@@ -89,6 +89,12 @@ pub enum APIError {
 
     #[error("payment not confirmed for order")]
     PaymentNotConfirmed,
+
+    #[error("too many requests: {0}")]
+    TooManyRequests(String),
+
+    #[error("upstream gateway timed out")]
+    GatewayTimeout,
 }
 
 impl IntoResponse for APIError {
@@ -116,6 +122,10 @@ impl IntoResponse for APIError {
             }
             APIError::PaymentNotConfirmed => {
                 (StatusCode::PAYMENT_REQUIRED, "payment not confirmed").into_response()
+            }
+            APIError::TooManyRequests(e) => (StatusCode::TOO_MANY_REQUESTS, e).into_response(),
+            APIError::GatewayTimeout => {
+                (StatusCode::GATEWAY_TIMEOUT, "upstream gateway timed out").into_response()
             }
         }
     }

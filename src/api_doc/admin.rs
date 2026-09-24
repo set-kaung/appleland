@@ -18,6 +18,7 @@ use crate::staff::model::AdminStaff;
 use crate::users::model::UserResponse;
 
 use crate::auth::admin as admin_auth;
+use crate::ai;
 use crate::category;
 use crate::image_storage;
 use crate::inventory;
@@ -40,6 +41,7 @@ use utoipa::OpenApi;
     ),
     modifiers(&SessionCookieSecurityAddon),
     paths(
+        ai::handler::chat,
         category::handler::create_category,
         category::handler::get_all_categories,
         category::handler::update_category,
@@ -119,6 +121,7 @@ use utoipa::OpenApi;
         (name = "Admin Playground", description = "Playground ticket management"),
         (name = "Admin Orders", description = "Order tracking and delivery management"),
         (name = "Admin Staff", description = "Staff account management"),
+        (name = "Admin AI Assistant", description = "Gemini-powered chat assistant for admins"),
     )
 )]
 pub struct AdminApiDoc;
