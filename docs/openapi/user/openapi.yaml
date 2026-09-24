@@ -6,6 +6,28 @@ info:
     name: ''
   version: 0.9.0
 paths:
+  /api/playground/checkout/{token_id}:
+    get:
+      tags:
+      - User Playground
+      summary: api/playground/checkout/5a36d0c5-291e-4e56-96c8-ad270c433e77
+      description: Checkout page data for a playground token
+      operationId: get_checkout_data
+      responses:
+        '200':
+          description: Claimed Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaygroundCheckoutData'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/playground/tickets:
     get:
       tags:
@@ -352,6 +374,30 @@ components:
           - integer
           - 'null'
           format: int64
+    PlaygroundCheckoutData:
+      type: object
+      required:
+      - user_id
+      - total_quantity
+      - unit_price
+      - total_price
+      - available_coupons
+      properties:
+        available_coupons:
+          type: array
+          items:
+            type: string
+            format: uuid
+        total_price:
+          type: string
+        total_quantity:
+          type: integer
+          format: int32
+        unit_price:
+          type: string
+        user_id:
+          type: string
+          format: uuid
     ProductFilter:
       type: object
       required:
@@ -490,8 +536,8 @@ components:
 tags:
 - name: Products
   description: Browse and search the product catalog
-- name: Playground
-  description: Check playground tickets,eligibility, claim
+- name: User Playground
+  description: Playground tickets, eligibility, claim
 - name: User
   description: User account management
 - name: User Sales

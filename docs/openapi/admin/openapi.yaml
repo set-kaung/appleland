@@ -315,9 +315,10 @@ paths:
         '200':
           description: Order tracking url updated
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/UpdateOrderTrackingURLPayload'
+                type: string
+                format: uuid
         '400':
           description: Bad request
         '401':
@@ -684,7 +685,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserSalePayload'
+              $ref: '#/components/schemas/CreateAdminSalePayload'
         required: true
       responses:
         '201':
@@ -770,7 +771,7 @@ paths:
   /admin/staff:
     get:
       tags:
-      - Admin Orders
+      - Admin Staff
       description: Get all staff
       operationId: get_all_admin_staff
       responses:
@@ -779,7 +780,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminStaff'
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminStaff'
         '400':
           description: Bad request
         '401':
@@ -815,7 +818,7 @@ paths:
         '500':
           description: Internal server error
       security:
-      - bearer: []
+      - session_cookie: []
   /admin/users:
     get:
       tags:
@@ -1158,18 +1161,6 @@ components:
           - string
           - 'null'
           format: uuid
-    CreateUserSalePayload:
-      type: object
-      required:
-      - payment_order_id
-      - sale_products
-      properties:
-        payment_order_id:
-          type: string
-        sale_products:
-          type: array
-          items:
-            $ref: '#/components/schemas/SaleProduct'
     DeleteCategoryResponse:
       type: object
       required:
@@ -1783,3 +1774,7 @@ tags:
   description: User account management for staff
 - name: Admin Playground
   description: Playground ticket management
+- name: Admin Orders
+  description: Order tracking and delivery management
+- name: Admin Staff
+  description: Staff account management
