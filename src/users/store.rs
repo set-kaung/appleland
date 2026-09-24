@@ -18,10 +18,12 @@ pub async fn find_user_id_by_supabase_id(
 pub async fn insert_into_users_supabase(
     tx: &mut Transaction<'_, Postgres>,
     supabase_id: Uuid,
+    username: String,
 ) -> Result<Uuid, StoreError> {
     let result = sqlx::query_scalar!(
-        r#"INSERT INTO users (supabase_id) VALUES($1) RETURNING id"#,
-        supabase_id
+        r#"INSERT INTO users (supabase_id, username) VALUES($1,$2) RETURNING id"#,
+        supabase_id,
+        username
     )
     .fetch_one(&mut **tx)
     .await?;

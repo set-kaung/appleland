@@ -24,7 +24,9 @@ pub async fn new_user_account_creation(
         .map_err(|e| log_err_convert("cannot begin transaction", e, APIError::InternalErr))?;
 
     // link application user id with supabase id
-    let user_id = store::insert_into_users_supabase(&mut tx, supabase_id).await?;
+    let user_id =
+        store::insert_into_users_supabase(&mut tx, supabase_id, user_creation_payload.username)
+            .await?;
 
     // insert user contact
     store::insert_into_user_contact(
