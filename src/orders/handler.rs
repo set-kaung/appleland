@@ -1,5 +1,6 @@
 use crate::{
     ApiResult, ApiResultWithStatusCode,
+    app_extractor::{RequiresRole, SuperAdminRole},
     app_state::AppState,
     orders::{
         model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload},
@@ -34,6 +35,7 @@ use uuid::Uuid;
 )]
 
 pub async fn update_order_tracking_url_handler(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
     Json(payload): Json<UpdateOrderTrackingURLPayload>,
@@ -60,6 +62,7 @@ pub async fn update_order_tracking_url_handler(
     tag = "Admin Orders"
 )]
 pub async fn update_order_delivery_status(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
 ) -> ApiResult<UpdateOrderDeliveryStatusResponse> {

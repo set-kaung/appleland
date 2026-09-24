@@ -1,7 +1,7 @@
 use super::store;
 use crate::ApiResult;
 use crate::app_error::APIError;
-use crate::app_extractor::{RequiresRole, SuperAdminRole, ValidatedJson};
+use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole, ValidatedJson};
 use crate::app_state;
 use crate::app_state::AppState;
 use crate::auth::admin::handler::session_admin_id;
@@ -75,6 +75,7 @@ pub async fn create_category(
     tag = "Admin Categories"
 )]
 pub async fn get_all_categories(
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(s): State<AppState>,
     Query(q): Query<GetCategoriesQuery>,
 ) -> Result<Json<Vec<AdminCategory>>, APIError> {

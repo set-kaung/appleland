@@ -175,6 +175,7 @@ pub async fn get_product_by_id(
     tag = "Admin Products"
 )]
 pub async fn get_product_by_id_admin(
+    RequiresRole(_role, _): RequiresRole<SaleAdminRole>,
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,
 ) -> ApiResult<AdminProduct> {
@@ -200,6 +201,7 @@ pub async fn get_product_by_id_admin(
     tag = "Admin Products"
 )]
 pub async fn create_product(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
     State(state): State<AppState>,
     session: Session,
     ValidatedJson(payload): ValidatedJson<CreateProductPayload>,
