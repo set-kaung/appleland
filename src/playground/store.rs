@@ -33,14 +33,15 @@ pub async fn get_ticket_sale_summary(
         TicketSaleSummary,
         r#"
         SELECT
-            created_at::date AS "sale_date!",
+            (created_at AT TIME ZONE 'Asia/Yangon')::date AS "sale_date!",
             SUM(CASE WHEN is_free_redemption = false THEN quantity ELSE 0 END)::int AS "tickets_sold!",
             SUM(CASE WHEN is_free_redemption = true THEN quantity ELSE 0 END)::int AS "free_tickets_redeemed!",
             COALESCE(SUM(CASE WHEN is_free_redemption = false THEN quantity * unit_price ELSE 0 END), 0) AS "total_sale!"
         FROM playground_purchases
-        WHERE created_at::date >= $1 AND created_at::date <= $2
-        GROUP BY created_at::date
-        ORDER BY created_at::date ASC
+        WHERE (created_at AT TIME ZONE 'Asia/Yangon')::date >= $1
+            AND (created_at AT TIME ZONE 'Asia/Yangon')::date <= $2
+        GROUP BY (created_at AT TIME ZONE 'Asia/Yangon')::date
+        ORDER BY (created_at AT TIME ZONE 'Asia/Yangon')::date ASC
         "#,
         start_date,
         end_date

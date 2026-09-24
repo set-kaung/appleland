@@ -251,7 +251,7 @@ pub async fn get_sale_summary(
         WITH filtered_sales AS (
             SELECT
                 s.id,
-                s.created_at::date AS sale_date,
+                (s.created_at AT TIME ZONE 'Asia/Yangon')::date AS sale_date,
                 s.total_amount,
                 s.is_instore AS is_instore_sale
             FROM sales s

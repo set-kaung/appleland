@@ -105,11 +105,11 @@ pub struct SaleSummaryFilter {
 impl DBQueryFilter<Postgres> for SaleSummaryFilter {
     fn apply_filter(&self, query_builder: &mut sqlx::QueryBuilder<Postgres>) {
         if let Some(start_date) = self.start_date {
-            query_builder.push(" AND s.created_at::date >= ");
+            query_builder.push(" AND (s.created_at AT TIME ZONE 'Asia/Yangon')::date >= ");
             query_builder.push_bind(start_date);
         }
         if let Some(end_date) = self.end_date {
-            query_builder.push(" AND s.created_at::date <= ");
+            query_builder.push(" AND (s.created_at AT TIME ZONE 'Asia/Yangon')::date <= ");
             query_builder.push_bind(end_date);
         }
     }
