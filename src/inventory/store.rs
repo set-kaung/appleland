@@ -117,13 +117,14 @@ pub async fn get_product_stock_levels(
         StockLevelRow,
         r#"
         SELECT
-            product_id,
-            p.name as product_name,
-            SUM(quantity_remaining)::int AS "quantity_in_stock!"
-        FROM inventory
-        JOIN products p on p.id = product_id
-        GROUP BY product_id, product_name
-        ORDER BY SUM(quantity_remaining) ASC
+            p.id AS product_id,
+            p.name AS product_name,
+            COALESCE(SUM(i.quantity_remaining), 0)::int AS "quantity_in_stock!"
+        FROM products p
+        LEFT JOIN inventory i ON i.product_id = p.id
+        WHERE p.is_active = true AND p.is_deleted IS FALSE
+        GROUP BY p.id, p.name
+        ORDER BY COALESCE(SUM(i.quantity_remaining), 0) ASC
         LIMIT $1
         "#,
         limit
