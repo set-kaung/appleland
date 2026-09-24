@@ -21,6 +21,7 @@ use utoipa::OpenApi;
         playground::handler::claim_token,
         playground::handler::get_user_tickets,
         playground::handler::claim_free_ticket,
+        playground::handler::get_checkout_data,
         users::handler::create_user,
         sales::handler::create_user_sale,
     ),
@@ -35,6 +36,7 @@ use utoipa::OpenApi;
             playground::model::UserPlaygroundPurchase,
             playground::model::UserPlaygroundPurchaseResponse,
             playground::model::UserPlaygroundAccount,
+            playground::model::PlaygroundCheckoutData,
             CreateUserPayload,
             CreateUserSalePayload,
             sales::model::SaleProduct,
@@ -42,7 +44,7 @@ use utoipa::OpenApi;
     ),
     tags(
         (name = "Products", description = "Browse and search the product catalog"),
-        (name = "Playground", description = "Check playground tickets,eligibility, claim"),
+        (name = "User Playground", description = "Playground tickets, eligibility, claim"),
         (name = "User", description = "User account management"),
         (name = "User Sales", description = "Checkout and sales for users"),
     )

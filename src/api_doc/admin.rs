@@ -115,6 +115,8 @@ use utoipa::OpenApi;
         (name = "Uploads", description = "File upload utilities"),
         (name = "Admin Users", description = "User account management for staff"),
         (name = "Admin Playground", description = "Playground ticket management"),
+        (name = "Admin Orders", description = "Order tracking and delivery management"),
+        (name = "Admin Staff", description = "Staff account management"),
     )
 )]
 pub struct AdminApiDoc;
