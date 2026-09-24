@@ -25,7 +25,7 @@ pub struct UploadResponse {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("bearer" = [])
+        ("session_cookie" = [])
     ),
     tag = "Uploads"
 )]

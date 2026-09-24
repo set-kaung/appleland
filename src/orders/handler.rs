@@ -22,7 +22,7 @@ use uuid::Uuid;
     ),
     request_body = UpdateOrderTrackingURLPayload,
     responses(
-        (status = 200, description = "Order tracking url updated", body = UpdateOrderTrackingURLPayload),
+        (status = 200, description = "Order tracking url updated", body = Uuid),
         (status = 400, description = "Bad request"),
         (status = 401, description = "Unauthorized - Missing or invalid session"),
         (status = 500, description = "Internal server error")

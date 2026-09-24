@@ -83,7 +83,7 @@ pub async fn get_sale_detail_by_id(
     post,
     path = "/admin/sales",
     description = "Create a new sale (POS checkout) with FIFO inventory deduction.",
-    request_body = CreateUserSalePayload,
+    request_body = CreateAdminSalePayload,
     responses(
         (status = 201, description = "Sale created", body = Uuid),
         (status = 400, description = "Invalid request or insufficient inventory"),

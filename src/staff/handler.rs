@@ -11,7 +11,7 @@ use axum::extract::State;
     path = "/admin/staff",
     description = "Get all staff",
     responses(
-        (status = 200, description = "All staff", body = AdminStaff),
+        (status = 200, description = "All staff", body = Vec<AdminStaff>),
         (status = 400, description = "Bad request"),
         (status = 401, description = "Unauthorized - Missing or invalid session"),
         (status = 500, description = "Internal server error")
