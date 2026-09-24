@@ -197,7 +197,8 @@ pub fn with_global_middleware(
                         Method::DELETE,
                     ])
                     .allow_headers(vec![CONTENT_TYPE, AUTHORIZATION, ACCEPT])
-                    .allow_credentials(true),
+                    .allow_credentials(true)
+                    .max_age(Duration::from_secs(3600)),
             )
             .layer(axum::middleware::from_fn(request_id_middleware))
             .layer(
