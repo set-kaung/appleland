@@ -19,7 +19,7 @@ use axum::extract::State;
     security(
         ("session_cookie" = [])
     ),
-    tag = "Admin Orders"
+    tag = "Admin Staff"
 )]
 pub async fn get_all_admin_staff(
     State(state): State<AppState>,
