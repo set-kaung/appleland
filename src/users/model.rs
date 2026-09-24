@@ -14,16 +14,16 @@ pub struct CreateUserPayload {
 pub struct UserRow {
     pub id: Uuid,
     pub username: String,
-    pub address_line_1: String,
-    pub phone_number: String,
+    pub address_line_1: Option<String>,
+    pub phone_number: Option<String>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponse {
     pub id: Uuid,
     pub username: String,
-    pub address_line_1: String,
-    pub phone_number: String,
+    pub address_line_1: Option<String>,
+    pub phone_number: Option<String>,
 }
 
 impl From<UserRow> for UserResponse {

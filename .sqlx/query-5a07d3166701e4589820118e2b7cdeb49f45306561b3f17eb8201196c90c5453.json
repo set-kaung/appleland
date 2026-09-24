@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT users.id, username, uc.address_line_1, uc.phone_number FROM users JOIN user_contact uc ON users.id = uc.user_id LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT users.id, users.username, uc.address_line_1, uc.phone_number\n        FROM users\n        LEFT JOIN LATERAL (\n            SELECT address_line_1, phone_number\n            FROM user_contact\n            WHERE user_id = users.id\n            ORDER BY created_at ASC, id ASC\n            LIMIT 1\n        ) uc ON TRUE\n        ORDER BY users.created_at DESC\n        LIMIT $1 OFFSET $2\n        ",
   "describe": {
     "columns": [
       {
@@ -61,5 +61,5 @@
       false
     ]
   },
-  "hash": "eb8c59312c48611e96dfab7fff339f2a8136dbd0c9fde38c3eacfd7f87446dd8"
+  "hash": "5a07d3166701e4589820118e2b7cdeb49f45306561b3f17eb8201196c90c5453"
 }

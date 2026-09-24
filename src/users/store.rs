@@ -54,7 +54,19 @@ pub async fn get_all_users_paginated(
 ) -> Result<(Vec<UserRow>, i64), StoreError> {
     let result = sqlx::query_as!(
         UserRow,
-        "SELECT users.id, username, uc.address_line_1, uc.phone_number FROM users JOIN user_contact uc ON users.id = uc.user_id LIMIT $1 OFFSET $2",
+        r#"
+        SELECT users.id, users.username, uc.address_line_1, uc.phone_number
+        FROM users
+        LEFT JOIN LATERAL (
+            SELECT address_line_1, phone_number
+            FROM user_contact
+            WHERE user_id = users.id
+            ORDER BY created_at ASC, id ASC
+            LIMIT 1
+        ) uc ON TRUE
+        ORDER BY users.created_at DESC
+        LIMIT $1 OFFSET $2
+        "#,
         limit,
         offset
     )
