@@ -38,6 +38,35 @@ paths:
           description: Internal server error
       security:
       - bearer: []
+  /api/orders/{order_id}:
+    get:
+      tags:
+      - User Orders
+      description: 'Get the full detail of one of the current user''s orders: items, shipping address, payment info, delivery status, tracking url and status history. Returns 404 if the order does not exist or belongs to another user.'
+      operationId: get_user_order_detail
+      parameters:
+      - name: order_id
+        in: path
+        description: Order UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserOrderDetail'
+        '401':
+          description: Unauthorized - Missing or invalid JWT
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+      security:
+      - bearer: []
   /api/playground/checkout/{token_id}:
     get:
       tags:
@@ -337,6 +366,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleProduct'
+    OrderShippingAddress:
+      type: object
+      required:
+      - address_line_1
+      - phone_number
+      properties:
+        address_line_1:
+          type: string
+        phone_number:
+          type: string
     PaginatedResponse_UserOrderHistoryResponse:
       type: object
       required:
@@ -492,6 +531,49 @@ components:
         quantity:
           type: integer
           format: int32
+    UserOrderDetail:
+      type: object
+      required:
+      - id
+      - delivery_status
+      - total_amount
+      - shipping_address
+      - items
+      - status_history
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        delivery_status:
+          type: string
+        id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOrderItem'
+        order_tracking_url:
+          type:
+          - string
+          - 'null'
+        payment_method:
+          type:
+          - string
+          - 'null'
+        payment_provider:
+          type:
+          - string
+          - 'null'
+        shipping_address:
+          $ref: '#/components/schemas/OrderShippingAddress'
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserOrderStatusEntry'
+        total_amount:
+          type: string
     UserOrderHistoryResponse:
       type: object
       required:
@@ -509,6 +591,35 @@ components:
           type: string
           format: uuid
         total_amount:
+          type: string
+    UserOrderItem:
+      type: object
+      required:
+      - product_id
+      - product_name
+      - quantity
+      - selling_price
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        selling_price:
+          type: string
+    UserOrderStatusEntry:
+      type: object
+      required:
+      - status
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        status:
           type: string
     UserPlaygroundAccount:
       type: object

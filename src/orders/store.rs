@@ -2,8 +2,8 @@ use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
 use uuid::Uuid;
 
 use super::model::{
-    AdminOrderDetailRow, AdminOrderItemRow, AdminOrderRow, AdminOrderStatusHistoryRow,
-    AdminOrdersQuery, DeliveryStatus, InsertOrder,
+    AdminOrderRow, AdminOrdersQuery, DeliveryStatus, InsertOrder, OrderDetailRow, OrderItemRow,
+    OrderStatusHistoryRow,
 };
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
@@ -144,14 +144,12 @@ pub async fn update_order_delivery_status(
     Ok(())
 }
 
-// pub async fn get_all_orders_paged(pool: &PgPool, limit: i64,offset: i64)
-
-pub async fn fetch_admin_order_detail(
+pub async fn fetch_order_detail(
     pool: &PgPool,
     order_id: Uuid,
-) -> Result<AdminOrderDetailRow, StoreError> {
+) -> Result<OrderDetailRow, StoreError> {
     let row = sqlx::query_as!(
-        AdminOrderDetailRow,
+        OrderDetailRow,
         r#"
         SELECT
             o.id as "id!",
@@ -183,12 +181,51 @@ pub async fn fetch_admin_order_detail(
     Ok(row)
 }
 
-pub async fn fetch_admin_order_items_by_order(
+pub async fn fetch_order_detail_for_user(
     pool: &PgPool,
     order_id: Uuid,
-) -> Result<Vec<AdminOrderItemRow>, StoreError> {
+    user_id: Uuid,
+) -> Result<Option<OrderDetailRow>, StoreError> {
+    let row = sqlx::query_as!(
+        OrderDetailRow,
+        r#"
+        SELECT
+            o.id as "id!",
+            o.sale_id as "sale_id!",
+            COALESCE(o.order_method, 'app order') as "order_method!",
+            o.delivery_status as "delivery_status!",
+            o.order_tracking_url as "order_tracking_url?",
+            u.username as "customer?",
+            s.total_amount as "total_amount!",
+            s.is_instore as "is_instore_sale!",
+            s.payment_method,
+            s.payment_provider,
+            s.payment_order_id,
+            dc.address_line_1 as "shipping_address_line_1!",
+            dc.phone_number as "shipping_address_phone_number!",
+            o.created_at as "created_at!"
+        FROM orders o
+        JOIN sales s ON s.id = o.sale_id
+        JOIN delivery_contact dc ON dc.id = o.shipping_address_id
+        LEFT JOIN user_sales us ON us.sale_id = o.sale_id
+        LEFT JOIN users u ON u.id = us.user_id
+        WHERE o.id = $1 AND o.created_by = $2
+        "#,
+        order_id,
+        user_id
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(row)
+}
+
+pub async fn fetch_order_items(
+    pool: &PgPool,
+    order_id: Uuid,
+) -> Result<Vec<OrderItemRow>, StoreError> {
     let rows = sqlx::query_as!(
-        AdminOrderItemRow,
+        OrderItemRow,
         r#"
         SELECT
             si.id,
@@ -214,9 +251,9 @@ pub async fn fetch_admin_order_items_by_order(
 pub async fn fetch_order_status_history(
     pool: &PgPool,
     order_id: Uuid,
-) -> Result<Vec<AdminOrderStatusHistoryRow>, StoreError> {
+) -> Result<Vec<OrderStatusHistoryRow>, StoreError> {
     let rows = sqlx::query_as!(
-        AdminOrderStatusHistoryRow,
+        OrderStatusHistoryRow,
         r#"
         SELECT
             id,

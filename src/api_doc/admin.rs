@@ -8,8 +8,8 @@ use crate::category::model::{
 };
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, StockLevel};
 use crate::orders::model::{
-    AdminOrderDetail, AdminOrderItem, AdminOrderRow, AdminOrderShippingAddress, AdminOrderStatusEntry,
-    AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
+    AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, OrderItem, OrderShippingAddress,
+    OrderStatusEntry, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
 };
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateAdminSalePayload, SaleItem, SaleProduct, SaleSummary,
@@ -112,9 +112,9 @@ use utoipa::OpenApi;
             AdminOrderRow,
             AdminOrdersQuery,
             AdminOrderDetail,
-            AdminOrderItem,
-            AdminOrderShippingAddress,
-            AdminOrderStatusEntry,
+            OrderItem,
+            OrderShippingAddress,
+            OrderStatusEntry,
             AdminStaff,
             UserResponse,
             PaginatedResponse<UserResponse>,

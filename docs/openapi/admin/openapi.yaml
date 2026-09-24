@@ -1126,7 +1126,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/AdminOrderItem'
+            $ref: '#/components/schemas/OrderItem'
         order_method:
           type: string
         order_tracking_url:
@@ -1149,41 +1149,12 @@ components:
           type: string
           format: uuid
         shipping_address:
-          $ref: '#/components/schemas/AdminOrderShippingAddress'
+          $ref: '#/components/schemas/OrderShippingAddress'
         status_history:
           type: array
           items:
-            $ref: '#/components/schemas/AdminOrderStatusEntry'
+            $ref: '#/components/schemas/OrderStatusEntry'
         total_amount:
-          type: string
-    AdminOrderItem:
-      type: object
-      required:
-      - id
-      - product_id
-      - product_name
-      - quantity
-      - selling_price
-      - cost_price
-      - created_at
-      properties:
-        cost_price:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        id:
-          type: string
-          format: uuid
-        product_id:
-          type: string
-          format: uuid
-        product_name:
-          type: string
-        quantity:
-          type: integer
-          format: int32
-        selling_price:
           type: string
     AdminOrderRow:
       type: object
@@ -1214,36 +1185,6 @@ components:
           type: string
           format: uuid
         total_amount:
-          type: string
-    AdminOrderShippingAddress:
-      type: object
-      required:
-      - address_line_1
-      - phone_number
-      properties:
-        address_line_1:
-          type: string
-        phone_number:
-          type: string
-    AdminOrderStatusEntry:
-      type: object
-      required:
-      - id
-      - status
-      - created_at
-      properties:
-        changed_by:
-          type:
-          - string
-          - 'null'
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
-        id:
-          type: string
-          format: uuid
-        status:
           type: string
     AdminOrdersQuery:
       type: object
@@ -1528,6 +1469,65 @@ components:
           - 'null'
           format: date-time
         unit_cost:
+          type: string
+    OrderItem:
+      type: object
+      required:
+      - id
+      - product_id
+      - product_name
+      - quantity
+      - selling_price
+      - cost_price
+      - created_at
+      properties:
+        cost_price:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        selling_price:
+          type: string
+    OrderShippingAddress:
+      type: object
+      required:
+      - address_line_1
+      - phone_number
+      properties:
+        address_line_1:
+          type: string
+        phone_number:
+          type: string
+    OrderStatusEntry:
+      type: object
+      required:
+      - id
+      - status
+      - created_at
+      properties:
+        changed_by:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        status:
           type: string
     PaginatedResponse_AdminInventory:
       type: object

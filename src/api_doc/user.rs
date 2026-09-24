@@ -1,4 +1,6 @@
-use crate::orders::model::UserOrderHistoryResponse;
+use crate::orders::model::{
+    UserOrderDetail, UserOrderHistoryResponse, UserOrderItem, UserOrderStatusEntry,
+};
 use crate::product::model::UserProduct;
 use crate::sales::model::CreateUserSalePayload;
 use crate::users::model::CreateUserPayload;
@@ -26,6 +28,7 @@ use utoipa::OpenApi;
         users::handler::create_user,
         sales::handler::create_user_sale,
         orders::handler::get_user_orders_paginated,
+        orders::handler::get_user_order_detail,
     ),
     components(
         schemas(
@@ -44,6 +47,10 @@ use utoipa::OpenApi;
             sales::model::SaleProduct,
             UserOrderHistoryResponse,
             PaginatedResponse<UserOrderHistoryResponse>,
+            UserOrderDetail,
+            UserOrderItem,
+            UserOrderStatusEntry,
+            orders::model::OrderShippingAddress,
         )
     ),
     tags(

@@ -6,7 +6,7 @@ use crate::{
     orders::{
         model::{
             AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse,
-            UpdateOrderTrackingURLPayload, UserOrderHistoryResponse,
+            UpdateOrderTrackingURLPayload, UserOrderDetail, UserOrderHistoryResponse,
         },
         service, store,
     },
@@ -181,4 +181,31 @@ pub async fn get_user_orders_paginated(
         total_pages,
         current_page,
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/orders/{order_id}",
+    description = "Get the full detail of one of the current user's orders: items, shipping address, payment info, delivery status, tracking url and status history. Returns 404 if the order does not exist or belongs to another user.",
+    params(
+        ("order_id" = Uuid, Path, description = "Order UUID")
+    ),
+    responses(
+        (status = 200, description = "Order detail", body = UserOrderDetail),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 404, description = "Order not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
+    ),
+    tag = "User Orders"
+)]
+pub async fn get_user_order_detail(
+    State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
+    Path(order_id): Path<Uuid>,
+) -> ApiResult<UserOrderDetail> {
+    let result = service::get_user_order_detail(&state.db, order_id, user.id).await?;
+    Ok(Json(result))
 }

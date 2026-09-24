@@ -137,7 +137,7 @@ impl DBQueryFilter<Postgres> for AdminOrdersQuery {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct AdminOrderDetailRow {
+pub struct OrderDetailRow {
     pub id: Uuid,
     pub sale_id: Uuid,
     pub order_method: String,
@@ -156,7 +156,7 @@ pub struct AdminOrderDetailRow {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct AdminOrderItemRow {
+pub struct OrderItemRow {
     pub id: Uuid,
     pub product_id: Uuid,
     pub product_name: String,
@@ -168,10 +168,30 @@ pub struct AdminOrderItemRow {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct AdminOrderStatusHistoryRow {
+pub struct OrderStatusHistoryRow {
     pub id: Uuid,
     pub status: String,
     pub changed_by: Option<Uuid>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct OrderDetail {
+    pub id: Uuid,
+    pub sale_id: Uuid,
+    pub order_method: String,
+    pub delivery_status: String,
+    pub order_tracking_url: Option<String>,
+    pub customer: Option<String>,
+    pub total_amount: Decimal,
+    pub is_instore_sale: bool,
+    pub payment_method: Option<String>,
+    pub payment_provider: Option<String>,
+    pub payment_order_id: Option<String>,
+    pub shipping_address: OrderShippingAddress,
+    pub items: Vec<OrderItem>,
+    pub status_history: Vec<OrderStatusEntry>,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
@@ -189,21 +209,43 @@ pub struct AdminOrderDetail {
     pub payment_method: Option<String>,
     pub payment_provider: Option<String>,
     pub payment_order_id: Option<String>,
-    pub shipping_address: AdminOrderShippingAddress,
-    pub items: Vec<AdminOrderItem>,
-    pub status_history: Vec<AdminOrderStatusEntry>,
+    pub shipping_address: OrderShippingAddress,
+    pub items: Vec<OrderItem>,
+    pub status_history: Vec<OrderStatusEntry>,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 
+impl From<OrderDetail> for AdminOrderDetail {
+    fn from(value: OrderDetail) -> Self {
+        Self {
+            id: value.id,
+            sale_id: value.sale_id,
+            order_method: value.order_method,
+            delivery_status: value.delivery_status,
+            order_tracking_url: value.order_tracking_url,
+            customer: value.customer,
+            total_amount: value.total_amount,
+            is_instore_sale: value.is_instore_sale,
+            payment_method: value.payment_method,
+            payment_provider: value.payment_provider,
+            payment_order_id: value.payment_order_id,
+            shipping_address: value.shipping_address,
+            items: value.items,
+            status_history: value.status_history,
+            created_at: value.created_at,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, ToSchema)]
-pub struct AdminOrderShippingAddress {
+pub struct OrderShippingAddress {
     pub address_line_1: String,
     pub phone_number: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct AdminOrderStatusEntry {
+pub struct OrderStatusEntry {
     pub id: Uuid,
     pub status: String,
     pub changed_by: Option<Uuid>,
@@ -211,8 +253,19 @@ pub struct AdminOrderStatusEntry {
     pub created_at: OffsetDateTime,
 }
 
+impl From<OrderStatusHistoryRow> for OrderStatusEntry {
+    fn from(value: OrderStatusHistoryRow) -> Self {
+        Self {
+            id: value.id,
+            status: value.status,
+            changed_by: value.changed_by,
+            created_at: value.created_at,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, ToSchema)]
-pub struct AdminOrderItem {
+pub struct OrderItem {
     pub id: Uuid,
     pub product_id: Uuid,
     pub product_name: String,
@@ -221,6 +274,83 @@ pub struct AdminOrderItem {
     pub cost_price: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+}
+
+impl From<OrderItemRow> for OrderItem {
+    fn from(value: OrderItemRow) -> Self {
+        Self {
+            id: value.id,
+            product_id: value.product_id,
+            product_name: value.product_name,
+            quantity: value.quantity,
+            selling_price: value.selling_price,
+            cost_price: value.cost_price,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserOrderDetail {
+    pub id: Uuid,
+    pub delivery_status: String,
+    pub order_tracking_url: Option<String>,
+    pub total_amount: Decimal,
+    pub payment_method: Option<String>,
+    pub payment_provider: Option<String>,
+    pub shipping_address: OrderShippingAddress,
+    pub items: Vec<UserOrderItem>,
+    pub status_history: Vec<UserOrderStatusEntry>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserOrderItem {
+    pub product_id: Uuid,
+    pub product_name: String,
+    pub quantity: i32,
+    pub selling_price: Decimal,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserOrderStatusEntry {
+    pub status: String,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+impl From<OrderDetail> for UserOrderDetail {
+    fn from(value: OrderDetail) -> Self {
+        Self {
+            id: value.id,
+            delivery_status: value.delivery_status,
+            order_tracking_url: value.order_tracking_url,
+            total_amount: value.total_amount,
+            payment_method: value.payment_method,
+            payment_provider: value.payment_provider,
+            shipping_address: value.shipping_address,
+            items: value
+                .items
+                .into_iter()
+                .map(|i| UserOrderItem {
+                    product_id: i.product_id,
+                    product_name: i.product_name,
+                    quantity: i.quantity,
+                    selling_price: i.selling_price,
+                })
+                .collect(),
+            status_history: value
+                .status_history
+                .into_iter()
+                .map(|s| UserOrderStatusEntry {
+                    status: s.status,
+                    created_at: s.created_at,
+                })
+                .collect(),
+            created_at: value.created_at,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, FromRow)]

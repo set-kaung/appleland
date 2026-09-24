@@ -6,7 +6,6 @@
     clippy::indexing_slicing
 )]
 
-#[allow(clippy::too_many_lines)]
 use appleland::api_doc;
 use appleland::app_error::AppError;
 use appleland::app_state::{AiConfig, AppState, StorageConfig};
@@ -28,6 +27,7 @@ use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::PostgresStore;
 use tracing_subscriber::EnvFilter;
 
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
     let json_logs =

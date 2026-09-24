@@ -1,0 +1,180 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            o.id as \"id!\",\n            o.sale_id as \"sale_id!\",\n            COALESCE(o.order_method, 'app order') as \"order_method!\",\n            o.delivery_status as \"delivery_status!\",\n            o.order_tracking_url as \"order_tracking_url?\",\n            u.username as \"customer?\",\n            s.total_amount as \"total_amount!\",\n            s.is_instore as \"is_instore_sale!\",\n            s.payment_method,\n            s.payment_provider,\n            s.payment_order_id,\n            dc.address_line_1 as \"shipping_address_line_1!\",\n            dc.phone_number as \"shipping_address_phone_number!\",\n            o.created_at as \"created_at!\"\n        FROM orders o\n        JOIN sales s ON s.id = o.sale_id\n        JOIN delivery_contact dc ON dc.id = o.shipping_address_id\n        LEFT JOIN user_sales us ON us.sale_id = o.sale_id\n        LEFT JOIN users u ON u.id = us.user_id\n        WHERE o.id = $1 AND o.created_by = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "orders",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "sale_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "orders",
+            "name": "sale_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "order_method!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "delivery_status!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "orders",
+            "name": "delivery_status"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "order_tracking_url?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "orders",
+            "name": "order_tracking_url"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "customer?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "username"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "total_amount!",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "total_amount"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "is_instore_sale!",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "is_instore"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "payment_method",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "payment_method"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "payment_provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "payment_provider"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "payment_order_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sales",
+            "name": "payment_order_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "shipping_address_line_1!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_contact",
+            "name": "address_line_1"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "shipping_address_phone_number!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_contact",
+            "name": "phone_number"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "orders",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "0b8bae15c1ff63b67d8340cb8556edc1dde44cda57da85161f22d49bdb34bdc0"
+}

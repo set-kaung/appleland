@@ -2,7 +2,8 @@ use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 use super::model::{
-    AdminOrderDetail, AdminOrderItem, AdminOrderShippingAddress, AdminOrderStatusEntry, InsertOrder,
+    AdminOrderDetail, InsertOrder, OrderDetail, OrderDetailRow, OrderItemRow,
+    OrderShippingAddress, OrderStatusHistoryRow, UserOrderDetail,
 };
 use super::store;
 use crate::{
@@ -112,40 +113,15 @@ pub async fn update_order_tracking_url(
     Ok(order_id)
 }
 
-pub async fn get_admin_order_detail(
-    pool: &PgPool,
-    order_id: Uuid,
-) -> Result<AdminOrderDetail, APIError> {
-    let (detail_row, item_rows, status_rows) = tokio::try_join!(
-        store::fetch_admin_order_detail(pool, order_id),
-        store::fetch_admin_order_items_by_order(pool, order_id),
-        store::fetch_order_status_history(pool, order_id)
-    )?;
+fn assemble_order_detail(
+    detail_row: OrderDetailRow,
+    item_rows: Vec<OrderItemRow>,
+    status_rows: Vec<OrderStatusHistoryRow>,
+) -> OrderDetail {
+    let items = item_rows.into_iter().map(Into::into).collect();
+    let status_history = status_rows.into_iter().map(Into::into).collect();
 
-    let items = item_rows
-        .into_iter()
-        .map(|i| AdminOrderItem {
-            id: i.id,
-            product_id: i.product_id,
-            product_name: i.product_name,
-            quantity: i.quantity,
-            selling_price: i.selling_price,
-            cost_price: i.cost_price,
-            created_at: i.created_at,
-        })
-        .collect();
-
-    let status_history = status_rows
-        .into_iter()
-        .map(|s| AdminOrderStatusEntry {
-            id: s.id,
-            status: s.status,
-            changed_by: s.changed_by,
-            created_at: s.created_at,
-        })
-        .collect();
-
-    Ok(AdminOrderDetail {
+    OrderDetail {
         id: detail_row.id,
         sale_id: detail_row.sale_id,
         order_method: detail_row.order_method,
@@ -157,12 +133,48 @@ pub async fn get_admin_order_detail(
         payment_method: detail_row.payment_method,
         payment_provider: detail_row.payment_provider,
         payment_order_id: detail_row.payment_order_id,
-        shipping_address: AdminOrderShippingAddress {
+        shipping_address: OrderShippingAddress {
             address_line_1: detail_row.shipping_address_line_1,
             phone_number: detail_row.shipping_address_phone_number,
         },
         items,
         status_history,
         created_at: detail_row.created_at,
-    })
+    }
+}
+
+pub async fn get_order_detail(pool: &PgPool, order_id: Uuid) -> Result<OrderDetail, APIError> {
+    let (detail_row, item_rows, status_rows) = tokio::try_join!(
+        store::fetch_order_detail(pool, order_id),
+        store::fetch_order_items(pool, order_id),
+        store::fetch_order_status_history(pool, order_id)
+    )?;
+
+    Ok(assemble_order_detail(detail_row, item_rows, status_rows))
+}
+
+pub async fn get_admin_order_detail(
+    pool: &PgPool,
+    order_id: Uuid,
+) -> Result<AdminOrderDetail, APIError> {
+    let detail = get_order_detail(pool, order_id).await?;
+    Ok(detail.into())
+}
+
+pub async fn get_user_order_detail(
+    pool: &PgPool,
+    order_id: Uuid,
+    user_id: Uuid,
+) -> Result<UserOrderDetail, APIError> {
+    let detail_row = store::fetch_order_detail_for_user(pool, order_id, user_id)
+        .await?
+        .ok_or(APIError::NotFound)?;
+
+    let (item_rows, status_rows) = tokio::try_join!(
+        store::fetch_order_items(pool, order_id),
+        store::fetch_order_status_history(pool, order_id)
+    )?;
+
+    let detail = assemble_order_detail(detail_row, item_rows, status_rows);
+    Ok(detail.into())
 }
