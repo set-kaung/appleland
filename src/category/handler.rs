@@ -78,7 +78,7 @@ pub async fn get_all_categories(
     State(s): State<AppState>,
     Query(q): Query<GetCategoriesQuery>,
 ) -> Result<Json<Vec<AdminCategory>>, APIError> {
-    let categories = store::get_all_categories(&s.db, q.is_deleted_shown)
+    let categories = store::get_all_categories(&s.db, q.include_deleted)
         .await?
         .into_iter()
         .map(|e| e.into())

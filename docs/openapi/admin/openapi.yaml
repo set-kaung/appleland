@@ -1738,13 +1738,9 @@ components:
       type: object
       required:
       - name
-      - updated_by
       properties:
         name:
           type: string
-        updated_by:
-          type: string
-          format: uuid
     UpdateOrderDeliveryStatusResponse:
       type: object
       required:

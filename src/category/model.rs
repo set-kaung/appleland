@@ -36,7 +36,7 @@ pub struct CreateCategoryPayload {
 #[into_params(parameter_in = Query)]
 pub struct GetCategoriesQuery {
     #[serde(default)]
-    pub is_deleted_shown: bool,
+    pub include_deleted: bool,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -58,7 +58,6 @@ pub struct AdminCategory {
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct UpdateCategoryPayload {
     pub name: String,
-    pub updated_by: Uuid,
 }
 
 pub struct UpdateCategory {
