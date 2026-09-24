@@ -142,11 +142,17 @@ impl From<PlaygroundAccountRow> for UserPlaygroundAccount {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct PlaygroundCheckoutData {
-    pub user_id: Uuid,
+    pub user_id: Option<Uuid>,
     pub total_quantity: i32,
     pub unit_price: Decimal,
     pub total_price: Decimal,
     pub available_coupons: Vec<Uuid>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct AdminCheckoutQuery {
+    pub user_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
@@ -165,8 +171,15 @@ pub struct TicketSaleSummary {
 }
 
 impl PlaygroundCheckoutData {
-    pub fn new(user_id: Uuid, token_info: TokenInfo, available_coupons: Vec<Uuid>) -> Option<Self> {
-        let total_price = Decimal::from_i32(token_info.total_quantity)?.mul(token_info.unit_price);
+    pub fn new(
+        user_id: Option<Uuid>,
+        token_info: TokenInfo,
+        available_coupons: Vec<Uuid>,
+    ) -> Option<Self> {
+        let coupons_redeemed =
+            available_coupons.len().min(token_info.total_quantity as usize) as i32;
+        let charged_quantity = token_info.total_quantity - coupons_redeemed;
+        let total_price = Decimal::from_i32(charged_quantity)?.mul(token_info.unit_price);
         Some(Self {
             user_id,
             total_quantity: token_info.total_quantity,

@@ -9,8 +9,8 @@ use crate::playground::handler::claim_free_ticket;
 use crate::{
     app_state::AppState,
     playground::handler::{
-        claim_token, creat_playground_token, get_checkout_data, get_ticket_sale_summary,
-        get_user_tickets,
+        claim_token, creat_playground_token, get_checkout_data, get_checkout_data_admin,
+        get_ticket_sale_summary, get_user_tickets,
     },
 };
 
@@ -49,5 +49,6 @@ pub fn route() -> Router<AppState> {
 pub fn route_admin() -> Router<AppState> {
     Router::new()
         .route("/tokens", post(creat_playground_token))
+        .route("/checkout/{token_id}", get(get_checkout_data_admin))
         .route("/summary", get(get_ticket_sale_summary))
 }

@@ -171,12 +171,17 @@ pub async fn create_playground_account(
 
 pub async fn get_playground_checkout_data_service(
     pool: &PgPool,
-    user_id: Uuid,
+    user_id: Option<Uuid>,
     token_id: Uuid,
 ) -> Result<PlaygroundCheckoutData, APIError> {
     let (token_info, available_coupons) = tokio::try_join!(
         store::get_claim_token_info(pool, token_id),
-        store::get_available_user_coupons(pool, user_id)
+        async {
+            match user_id {
+                Some(uid) => store::get_available_user_coupons(pool, uid).await,
+                None => Ok(Vec::new()),
+            }
+        }
     )?;
     let result = PlaygroundCheckoutData::new(user_id, token_info, available_coupons)
         .ok_or(APIError::InternalErr)?;

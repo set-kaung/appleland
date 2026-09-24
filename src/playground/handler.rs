@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
-    ClaimTokenPayload, PlaygroundCheckoutData, TicketSaleSummary, TicketSaleSummaryFilter,
-    UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
+    AdminCheckoutQuery, ClaimTokenPayload, PlaygroundCheckoutData, TicketSaleSummary,
+    TicketSaleSummaryFilter, UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
 };
 use crate::playground::service;
 use crate::{
@@ -158,7 +158,35 @@ pub async fn get_checkout_data(
     Extension(user): Extension<CurrentUser>,
 ) -> ApiResult<PlaygroundCheckoutData> {
     let result =
-        service::get_playground_checkout_data_service(&state.db, user.id, token_id).await?;
+        service::get_playground_checkout_data_service(&state.db, Some(user.id), token_id).await?;
+    Ok(Json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/playground/checkout/{token_id}",
+    description = "Checkout data for a playground claim token. When `user_id` is provided, that customer's available coupons are applied to the total price.",
+    params(
+        ("token_id" = Uuid, Path, description = "Claim token id"),
+        AdminCheckoutQuery,
+    ),
+    responses(
+        (status = 200, description = "Claimed Response", body = PlaygroundCheckoutData),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("session_cookie" = [])),
+    tag = "Admin Playground")]
+pub async fn get_checkout_data_admin(
+    RequiresRole(_role, _): RequiresRole<PlaygroundAdminRole>,
+    State(state): State<AppState>,
+    Path(token_id): Path<Uuid>,
+    Query(query): Query<AdminCheckoutQuery>,
+) -> ApiResult<PlaygroundCheckoutData> {
+    let result =
+        service::get_playground_checkout_data_service(&state.db, query.user_id, token_id).await?;
     Ok(Json(result))
 }
 
