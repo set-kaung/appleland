@@ -19,7 +19,7 @@ pub async fn get_all_orders_paginated(
         SELECT
             o.id,
             o.sale_id,
-            COALESCE(u.username, a.username) AS customer,
+            u.username AS customer,
             s.total_amount,
             o.delivery_status,
             o.order_tracking_url,
@@ -28,8 +28,6 @@ pub async fn get_all_orders_paginated(
         JOIN sales s ON s.id = o.sale_id
         LEFT JOIN user_sales us ON us.sale_id = o.sale_id
         LEFT JOIN users u ON u.id = us.user_id
-        LEFT JOIN admin_sales ads ON ads.sale_id = o.sale_id
-        LEFT JOIN admins a ON a.id = ads.admin_id
         WHERE 1 = 1
         "#,
     );
