@@ -20,6 +20,7 @@
 use axum::Json;
 use axum::http::StatusCode;
 
+pub mod admin_settings;
 pub mod api_doc;
 pub mod app_error;
 pub mod app_extractor;
@@ -38,7 +39,7 @@ pub mod playground;
 pub mod product;
 pub mod routes;
 pub mod sales;
-mod staff;
+pub mod staff;
 pub mod users;
 
 pub type ApiResult<T> = Result<Json<T>, app_error::APIError>;
