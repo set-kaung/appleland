@@ -18,7 +18,7 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
                 c1.name as category,
                 p.sub_category_id,
                 c2.name as sub_category,
-                p.is_active as "is_active!",
+                p.is_shown_online as "is_shown_online!",
                 p.selling_price as "selling_price!",
                 p.created_at as "created_at!",
                 p.updated_at as "updated_at!",
@@ -43,7 +43,7 @@ pub async fn fetch_paginated(
     pool: &PgPool,
     limit: i64,
     offset: i64,
-    is_active: bool,
+    is_shown_online: bool,
 ) -> Result<(Vec<ProductRow>, i64), StoreError> {
     let products = sqlx::query_as!(
         ProductRow,
@@ -57,7 +57,7 @@ pub async fn fetch_paginated(
             c1.name as "category?",
             p.sub_category_id,
             c2.name as "sub_category?",
-            p.is_active,
+            p.is_shown_online,
             p.selling_price,
             p.created_at,
             p.updated_at,
@@ -69,19 +69,19 @@ pub async fn fetch_paginated(
         FROM products p
         LEFT JOIN categories c1 on c1.id = p.category_id
         LEFT JOIN categories c2 on c2.id = p.sub_category_id
-        WHERE p.is_active = $3 AND p.is_deleted IS FALSE
+        WHERE p.is_shown_online = $3 AND p.is_deleted IS FALSE
         ORDER BY p.created_at DESC, p.id DESC
         LIMIT $1 OFFSET $2"#,
         limit,
         offset,
-        is_active,
+        is_shown_online,
     )
         .fetch_all(pool)
         .await?;
 
     let total_items = sqlx::query_scalar!(
-        "SELECT COUNT(*) FROM products WHERE is_active = $1 AND is_deleted IS FALSE",
-        is_active
+        "SELECT COUNT(*) FROM products WHERE is_shown_online = $1 AND is_deleted IS FALSE",
+        is_shown_online
     )
     .fetch_one(pool)
     .await?;
@@ -106,7 +106,7 @@ pub async fn fetch_paginated_admin(
             c1.name as "category?",
             p.sub_category_id,
             c2.name as "sub_category?",
-            p.is_active,
+            p.is_shown_online,
             p.selling_price,
             p.created_at,
             p.updated_at,
@@ -151,7 +151,7 @@ where
             c1.name as "category?",
             p.sub_category_id,
             c2.name as "sub_category?",
-            p.is_active as "is_active!",
+            p.is_shown_online as "is_shown_online!",
             p.selling_price as "selling_price!",
             p.created_at as "created_at!",
             p.updated_at as "updated_at!",
@@ -180,7 +180,7 @@ pub async fn create(
 ) -> Result<Uuid, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by, is_perishable)
+        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_shown_online,image_url,created_by,updated_by, is_perishable)
         VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)
         RETURNING
             id
@@ -191,7 +191,7 @@ pub async fn create(
         payload.category_id,
         payload.sub_category_id,
         payload.selling_price,
-        payload.is_active,
+        payload.is_shown_online,
         payload.image_url,
         payload.created_by,
         payload.is_perishable
@@ -207,7 +207,7 @@ pub async fn update(
 ) -> Result<ProductRow, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_active = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10
+       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_shown_online = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10
        WHERE id = $11 AND is_deleted IS FALSE
        RETURNING id
         "#,
@@ -217,7 +217,7 @@ pub async fn update(
         payload.category_id,
         payload.sub_category_id,
         payload.selling_price,
-        payload.is_active,
+        payload.is_shown_online,
         payload.image_url,
         payload.updated_by,
         payload.is_perishable,
@@ -274,7 +274,7 @@ where
                 c1.name as category,
                 sub_category_id,
                 c2.name as sub_category,
-                is_active,
+                is_shown_online,
                 p.selling_price,
                 p.created_at,
                 p.updated_at,
@@ -328,7 +328,7 @@ pub async fn fetch_products_search(
                     c1.name as category,
                     sub_category_id,
                     c2.name as sub_category,
-                    is_active,
+                    is_shown_online,
                     p.selling_price,
                     p.created_at,
                     p.updated_at,

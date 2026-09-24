@@ -25,7 +25,7 @@ use axum::{
 #[utoipa::path(
     get,
     path = "/api/products",
-    description = "List all active products with pagination.",
+    description = "List all products shown in the online store with pagination.",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<UserProduct>),
@@ -65,7 +65,7 @@ pub async fn get_products_paginated(
 #[utoipa::path(
     get,
     path = "/admin/products",
-    description = "List all products (active and inactive) with pagination.",
+    description = "List all products (shown online or not) with pagination.",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of products", body = pagination::PaginatedResponse<AdminProduct>),
@@ -218,7 +218,7 @@ pub async fn create_product(
         description: payload.description,
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
-        is_active: payload.is_active,
+        is_shown_online: payload.is_shown_online,
         selling_price: payload.selling_price,
         image_url: payload.image_url,
         created_by: admin_id,
@@ -288,7 +288,7 @@ pub async fn update_product(
         description: payload.description,
         category_id: payload.category_id,
         sub_category_id: payload.sub_category_id,
-        is_active: payload.is_active,
+        is_shown_online: payload.is_shown_online,
         selling_price: payload.selling_price,
         image_url: payload.image_url,
         updated_by: admin_id,

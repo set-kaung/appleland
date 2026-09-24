@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_active,image_url,created_by,updated_by, is_perishable)\n        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)\n        RETURNING\n            id\n        ",
+  "query": "\n        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_shown_online,image_url,created_by,updated_by, is_perishable)\n        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)\n        RETURNING\n            id\n        ",
   "describe": {
     "columns": [
       {
@@ -33,5 +33,5 @@
       false
     ]
   },
-  "hash": "6fb98df4d3b14927be6af1772e13adabc40316556292b53e6fa133a9b0c2da44"
+  "hash": "2e8a4509e7d5b84b1a5a1c79f757668529ea2dce494dc4d09c54a45e1047765a"
 }

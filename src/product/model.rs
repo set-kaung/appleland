@@ -18,7 +18,7 @@ pub struct AdminProduct {
     pub category: Option<String>,
     pub sub_category_id: Option<Uuid>,
     pub sub_category: Option<String>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub image_url: Option<String>,
     pub selling_price: Decimal,
     pub quantity_in_stock: i32,
@@ -52,7 +52,7 @@ pub struct CreateProductPayload {
     pub category_id: Option<Uuid>,
     pub selling_price: Decimal,
     pub sub_category_id: Option<Uuid>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub image_url: Option<String>,
     pub inventory: Option<NewInventoryPayload>,
     pub is_perishable: bool,
@@ -86,7 +86,7 @@ pub struct InsertProduct {
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
     pub sub_category_id: Option<Uuid>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub selling_price: Decimal,
     pub image_url: Option<String>,
     pub created_by: Uuid,
@@ -101,7 +101,7 @@ pub struct UpdateProductPayload {
     pub description: Option<String>,
     pub category_id: Uuid,
     pub sub_category_id: Option<Uuid>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub selling_price: Decimal,
     pub image_url: Option<String>,
     pub is_perishable: bool,
@@ -136,7 +136,7 @@ pub struct UpdateProduct {
     pub description: Option<String>,
     pub category_id: Uuid,
     pub sub_category_id: Option<Uuid>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub selling_price: Decimal,
     pub updated_by: Uuid,
     pub image_url: Option<String>,
@@ -153,7 +153,7 @@ pub struct ProductRow {
     pub category: Option<String>,
     pub sub_category_id: Option<Uuid>,
     pub sub_category: Option<String>,
-    pub is_active: bool,
+    pub is_shown_online: bool,
     pub selling_price: Decimal,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
@@ -191,7 +191,7 @@ impl From<ProductRow> for AdminProduct {
             category: row.category,
             sub_category_id: row.sub_category_id,
             sub_category: row.sub_category,
-            is_active: row.is_active,
+            is_shown_online: row.is_shown_online,
             selling_price: row.selling_price,
             created_at: row.created_at,
             updated_at: row.updated_at,
@@ -218,9 +218,9 @@ pub struct ProductSearchParams {
 pub struct ProductSearchParamsAdmin {
     #[serde(flatten)]
     pub common: ProductSearchParams,
-    // exists to provide admin to filter between active and inactive items
+    // optional filter on whether the product is shown in the online store
     // not intended for user facing searches
-    pub is_active: Option<bool>,
+    pub is_shown_online: Option<bool>,
 }
 
 impl DBQueryFilter<Postgres> for ProductSearchParams {
@@ -268,8 +268,8 @@ pub struct ProductFilter {
 impl DBQueryFilter<Postgres> for ProductSearchParamsAdmin {
     fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
         self.common.apply_filter(query_builder);
-        if let Some(active) = self.is_active {
-            query_builder.push(" AND p.is_active = ");
+        if let Some(active) = self.is_shown_online {
+            query_builder.push(" AND p.is_shown_online = ");
             query_builder.push_bind(active);
         }
     }

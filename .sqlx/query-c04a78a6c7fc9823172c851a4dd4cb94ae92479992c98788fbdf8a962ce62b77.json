@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_active as \"is_active!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url,\n                p.is_perishable as \"is_perishable!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            WHERE p.is_deleted IS FALSE\n            ",
+  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_shown_online as \"is_shown_online!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url,\n                p.is_perishable as \"is_perishable!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            WHERE p.is_deleted IS FALSE\n            ",
   "describe": {
     "columns": [
       {
@@ -93,12 +93,12 @@
       },
       {
         "ordinal": 8,
-        "name": "is_active!",
+        "name": "is_shown_online!",
         "type_info": "Bool",
         "origin": {
           "Table": {
             "table": "products",
-            "name": "is_active"
+            "name": "is_shown_online"
           }
         }
       },
@@ -209,5 +209,5 @@
       false
     ]
   },
-  "hash": "5ce33a697a70b6eae6dc6e74bec69669fc39c4ca4f46f69c4369743080c1946d"
+  "hash": "c04a78a6c7fc9823172c851a4dd4cb94ae92479992c98788fbdf8a962ce62b77"
 }

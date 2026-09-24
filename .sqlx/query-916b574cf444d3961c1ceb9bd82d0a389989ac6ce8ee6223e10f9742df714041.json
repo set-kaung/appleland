@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_active,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS \"quantity_in_stock!\",\n            p.image_url as \"image_url?\",\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_active = $3 AND p.is_deleted IS FALSE\n        ORDER BY p.created_at DESC, p.id DESC\n        LIMIT $1 OFFSET $2",
+  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_shown_online,\n            p.selling_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS \"quantity_in_stock!\",\n            p.image_url as \"image_url?\",\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_shown_online = $3 AND p.is_deleted IS FALSE\n        ORDER BY p.created_at DESC, p.id DESC\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
@@ -93,12 +93,12 @@
       },
       {
         "ordinal": 8,
-        "name": "is_active",
+        "name": "is_shown_online",
         "type_info": "Bool",
         "origin": {
           "Table": {
             "table": "products",
-            "name": "is_active"
+            "name": "is_shown_online"
           }
         }
       },
@@ -213,5 +213,5 @@
       false
     ]
   },
-  "hash": "7736548eaf6604d521e64bdeb31eb6fc43959dd8d0eb5ac024187eaa6fe6908b"
+  "hash": "916b574cf444d3961c1ceb9bd82d0a389989ac6ce8ee6223e10f9742df714041"
 }
