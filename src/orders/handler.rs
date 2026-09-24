@@ -2,18 +2,18 @@ use crate::{
     ApiResult, ApiResultWithStatusCode, PaginatedApiResult,
     app_extractor::{RequiresRole, SuperAdminRole},
     app_state::AppState,
-    auth::session_admin_id,
+    auth::{CurrentUser, session_admin_id},
     orders::{
         model::{
             AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse,
-            UpdateOrderTrackingURLPayload,
+            UpdateOrderTrackingURLPayload, UserOrderHistoryResponse,
         },
         service, store,
     },
     pagination,
 };
 use axum::{
-    Json,
+    Extension, Json,
     extract::{Path, Query, State},
 };
 use reqwest::StatusCode;
@@ -43,7 +43,8 @@ pub async fn get_all_orders_paginated(
 ) -> PaginatedApiResult<AdminOrderRow> {
     let (limit, offset, current_page) = query.get_limit_and_offset();
 
-    let (data, total_items) = store::get_all_orders_paginated(&state.db, &query, limit, offset).await?;
+    let (data, total_items) =
+        store::get_all_orders_paginated(&state.db, &query, limit, offset).await?;
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
 
     Ok(Json(pagination::PaginatedResponse {
@@ -145,4 +146,39 @@ pub async fn update_order_delivery_status(
     let changed_by = Some(session_admin_id(session).await?);
     let result = service::update_order_delivery_status(&state.db, order_id, changed_by).await?;
     Ok(Json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/orders",
+    description = "List the current user's past orders (overview) with delivery status, order time and total amount, paginated.",
+    params(pagination::PaginationQuery),
+    responses(
+        (status = 200, description = "Paginated list of the user's orders", body = pagination::PaginatedResponse<UserOrderHistoryResponse>),
+        (status = 401, description = "Unauthorized - Missing or invalid JWT"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("bearer" = [])
+    ),
+    tag = "User Orders"
+)]
+pub async fn get_user_orders_paginated(
+    State(state): State<AppState>,
+    Extension(user): Extension<CurrentUser>,
+    Query(query): Query<pagination::PaginationQuery>,
+) -> PaginatedApiResult<UserOrderHistoryResponse> {
+    let user_id = user.id;
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+    let (rows, total_items) =
+        store::fetch_user_orders_paginated(&state.db, user_id, limit, offset).await?;
+    let data = rows.into_iter().map(Into::into).collect();
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
 }

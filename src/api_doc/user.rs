@@ -1,10 +1,11 @@
+use crate::orders::model::UserOrderHistoryResponse;
 use crate::product::model::UserProduct;
 use crate::sales::model::CreateUserSalePayload;
 use crate::users::model::CreateUserPayload;
 
 use super::super::pagination::{PaginatedResponse, PaginationQuery};
 use super::BearerSecurityAddon;
-use crate::{playground, product, sales, users};
+use crate::{orders, playground, product, sales, users};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
@@ -24,6 +25,7 @@ use utoipa::OpenApi;
         playground::handler::get_checkout_data,
         users::handler::create_user,
         sales::handler::create_user_sale,
+        orders::handler::get_user_orders_paginated,
     ),
     components(
         schemas(
@@ -40,6 +42,8 @@ use utoipa::OpenApi;
             CreateUserPayload,
             CreateUserSalePayload,
             sales::model::SaleProduct,
+            UserOrderHistoryResponse,
+            PaginatedResponse<UserOrderHistoryResponse>,
         )
     ),
     tags(
@@ -47,6 +51,7 @@ use utoipa::OpenApi;
         (name = "User Playground", description = "Playground tickets, eligibility, claim"),
         (name = "User", description = "User account management"),
         (name = "User Sales", description = "Checkout and sales for users"),
+        (name = "User Orders", description = "Order history and delivery tracking for users"),
     )
 )]
 pub struct ApiDoc;

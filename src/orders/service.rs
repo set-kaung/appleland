@@ -61,7 +61,9 @@ pub async fn update_order_delivery_status(
         )
     })?;
 
-    let next_status = delivery_status_enum.next()?;
+    let next_status = delivery_status_enum
+        .next()
+        .map_err(|_| APIError::Conflict("can't advance past received state".to_string()))?;
 
     store::update_order_delivery_status(&mut tx, order_id, String::from(&next_status)).await?;
     store::insert_order_status_history(&mut tx, order_id, String::from(&next_status), changed_by)

@@ -65,6 +65,7 @@ pub fn create_app(
         .nest("/products", product::route())
         .nest("/playground", playground::route())
         .nest("/sales", sales::route())
+        .nest("/orders", orders::route())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             middleware::user_row_middleware,

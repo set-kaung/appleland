@@ -6,6 +6,7 @@
     clippy::indexing_slicing
 )]
 
+#[allow(clippy::too_many_lines)]
 use appleland::api_doc;
 use appleland::app_error::AppError;
 use appleland::app_state::{AiConfig, AppState, StorageConfig};

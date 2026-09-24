@@ -1,4 +1,4 @@
-use crate::app_error::{APIError, AppError};
+use crate::app_error::AppError;
 use crate::db::DBQueryFilter;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -55,13 +55,11 @@ impl DeliveryStatus {
         }
         values
     }
-    pub fn next(&self) -> Result<Self, APIError> {
+    pub fn next(&self) -> Result<Self, AppError> {
         match self {
             DeliveryStatus::Pending => Ok(DeliveryStatus::OnDelivery),
             DeliveryStatus::OnDelivery => Ok(DeliveryStatus::Received),
-            DeliveryStatus::Received => Err(APIError::Conflict(
-                "already recevied, can't advance".to_string(),
-            )),
+            DeliveryStatus::Received => Err(AppError::InvalidOperation),
         }
     }
 }
@@ -223,4 +221,33 @@ pub struct AdminOrderItem {
     pub cost_price: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct UserOrderHistoryRow {
+    pub id: Uuid,
+    pub delivery_status: String,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    pub total_amount: Decimal,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserOrderHistoryResponse {
+    pub id: Uuid,
+    pub delivery_status: String,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    pub total_amount: Decimal,
+}
+
+impl From<UserOrderHistoryRow> for UserOrderHistoryResponse {
+    fn from(value: UserOrderHistoryRow) -> Self {
+        Self {
+            id: value.id,
+            delivery_status: value.delivery_status,
+            created_at: value.created_at,
+            total_amount: value.total_amount,
+        }
+    }
 }

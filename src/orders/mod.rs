@@ -12,6 +12,10 @@ use handler::*;
 
 use crate::app_state::AppState;
 
+pub fn route() -> Router<AppState> {
+    Router::new().route("/", get(get_user_orders_paginated))
+}
+
 pub fn route_admin() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_orders_paginated))

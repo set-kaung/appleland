@@ -7,6 +7,7 @@ use super::model::{
 };
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
+use crate::orders::model::UserOrderHistoryRow;
 
 pub async fn get_all_orders_paginated(
     pool: &PgPool,
@@ -249,4 +250,39 @@ pub async fn insert_order_status_history(
     .execute(&mut **tx)
     .await?;
     Ok(())
+}
+
+pub async fn fetch_user_orders_paginated(
+    pool: &PgPool,
+    user_id: Uuid,
+    limit: i64,
+    offset: i64,
+) -> Result<(Vec<UserOrderHistoryRow>, i64), StoreError> {
+    let result = sqlx::query_as!(
+        UserOrderHistoryRow,
+        r#"
+        SELECT
+            o.id as "id!",
+            o.delivery_status as "delivery_status!",
+            o.created_at as "created_at!",
+            s.total_amount as "total_amount!"
+        FROM orders o
+        JOIN sales s ON s.id = o.sale_id
+        WHERE o.created_by = $1
+        ORDER BY o.created_at DESC, o.id ASC
+        LIMIT $2 OFFSET $3
+        "#,
+        user_id,
+        limit,
+        offset
+    )
+    .fetch_all(pool)
+    .await?;
+    let total_rows = sqlx::query_scalar!(
+        "SELECT COUNT (*) FROM orders WHERE created_by = $1",
+        user_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok((result, total_rows.unwrap_or(0)))
 }
