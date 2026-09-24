@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            p.id AS product_id,\n            p.name AS product_name,\n            COALESCE(SUM(i.quantity_remaining), 0)::int AS \"quantity_in_stock!\"\n        FROM products p\n        LEFT JOIN inventory i ON i.product_id = p.id\n        WHERE p.is_active = true AND p.is_deleted IS FALSE\n        GROUP BY p.id, p.name\n        ORDER BY COALESCE(SUM(i.quantity_remaining), 0) ASC\n        LIMIT $1\n        ",
+  "query": "\n        SELECT\n            p.id AS product_id,\n            p.name AS product_name,\n            COALESCE(SUM(i.quantity_remaining), 0)::int AS \"quantity_in_stock!\"\n        FROM products p\n        LEFT JOIN inventory i ON i.product_id = p.id\n        WHERE p.is_deleted IS FALSE\n        GROUP BY p.id, p.name\n        ORDER BY COALESCE(SUM(i.quantity_remaining), 0) ASC\n        LIMIT $1\n        ",
   "describe": {
     "columns": [
       {
@@ -43,5 +43,5 @@
       null
     ]
   },
-  "hash": "8369fd5bb5d9551c3822c10037b1eb53be7b8941de5ceeb82c211ad2085e6329"
+  "hash": "3cb7281bfcb1f350473f3bfe7abd7182efff2e23b31779a0d5508edd84b8cc03"
 }

@@ -122,7 +122,7 @@ pub async fn get_product_stock_levels(
             COALESCE(SUM(i.quantity_remaining), 0)::int AS "quantity_in_stock!"
         FROM products p
         LEFT JOIN inventory i ON i.product_id = p.id
-        WHERE p.is_active = true AND p.is_deleted IS FALSE
+        WHERE p.is_deleted IS FALSE
         GROUP BY p.id, p.name
         ORDER BY COALESCE(SUM(i.quantity_remaining), 0) ASC
         LIMIT $1
