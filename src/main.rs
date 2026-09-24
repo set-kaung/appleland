@@ -8,7 +8,7 @@
 
 use appleland::api_doc;
 use appleland::app_error::AppError;
-use appleland::app_state::AppState;
+use appleland::app_state::{AppState, StorageConfig};
 use appleland::auth;
 use appleland::config;
 use appleland::db;
@@ -75,10 +75,12 @@ async fn main() -> Result<(), AppError> {
     let state = AppState::new(
         Arc::new(auth::SupabaseAuth::new(&conf.supabase_auth_ref)),
         pool.clone(),
-        conf.supabase_storage_ref,
-        conf.supabase_storage_url,
-        conf.supabase_storage_secret_key,
-        conf.image_bucket_name,
+        StorageConfig {
+            supabase_storage_ref: conf.supabase_storage_ref,
+            supabase_storage_url: conf.supabase_storage_url,
+            supabase_storage_secret_key: conf.supabase_storage_secret_key,
+            image_bucket_name: conf.image_bucket_name,
+        },
         Arc::new(MyanMyanPay::new(
             conf.mmpay_webhook_secret,
             conf.mmpay_publishable_key,

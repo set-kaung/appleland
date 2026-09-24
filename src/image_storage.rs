@@ -77,19 +77,19 @@ pub async fn upload_image(
         "uploading image to supabase storage"
     );
 
-    let bucket = &state.image_bucket_name;
+    let bucket = &state.storage.image_bucket_name;
     let upload_url = format!(
         "{}/storage/v1/object/{}/{}",
-        state.supabase_storage_url, bucket, filename
+        state.storage.supabase_storage_url, bucket, filename
     );
 
     let client = reqwest::Client::new();
     let res = client
         .post(&upload_url)
-        .header("apikey", &state.supabase_storage_secret_key)
+        .header("apikey", &state.storage.supabase_storage_secret_key)
         .header(
             "Authorization",
-            format!("Bearer {}", state.supabase_storage_secret_key),
+            format!("Bearer {}", state.storage.supabase_storage_secret_key),
         )
         .header("Content-Type", &content_type)
         .header("x-upsert", "true")
@@ -110,7 +110,7 @@ pub async fn upload_image(
 
     let file_url = format!(
         "{}/storage/v1/object/public/{}/{}",
-        state.supabase_storage_url, bucket, filename
+        state.storage.supabase_storage_url, bucket, filename
     );
 
     tracing::debug!(filename, file_url, "image uploaded successfully");
