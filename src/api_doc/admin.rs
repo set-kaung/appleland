@@ -13,7 +13,7 @@ use crate::sales::model::{
     SaleSummaryFilter,
 };
 
-use crate::playground::model::CreateClaimTokenPayload;
+use crate::playground::model::{CreateClaimTokenPayload, TicketSaleSummary, TicketSaleSummaryFilter};
 use crate::staff::model::AdminStaff;
 use crate::users::model::UserResponse;
 
@@ -49,6 +49,7 @@ use utoipa::OpenApi;
         admin_auth::handler::admin_login_handler,
         admin_auth::handler::admin_logout_handler,
         playground::handler::creat_playground_token,
+        playground::handler::get_ticket_sale_summary,
         product::handler::get_all_products,
         product::handler::get_products_paginated_admin,
         product::handler::get_product_by_id_admin,
@@ -93,6 +94,8 @@ use utoipa::OpenApi;
             AdminInventory,
             NewInventoryPayload,
             CreateClaimTokenPayload,
+            TicketSaleSummary,
+            TicketSaleSummaryFilter,
             UpdateOrderDeliveryStatusResponse,
             UpdateOrderTrackingURLPayload,
             AdminStaff,
@@ -109,6 +112,7 @@ use utoipa::OpenApi;
         (name = "Authentication", description = "Admin login and logout"),
         (name = "Uploads", description = "File upload utilities"),
         (name = "Admin Users", description = "User account management for staff"),
+        (name = "Admin Playground", description = "Playground ticket management"),
     )
 )]
 pub struct AdminApiDoc;

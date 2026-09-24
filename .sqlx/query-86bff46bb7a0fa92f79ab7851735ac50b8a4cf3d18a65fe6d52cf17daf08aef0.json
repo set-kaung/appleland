@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            created_at::date AS \"sale_date!\",\n            SUM(CASE WHEN is_free_redemption = false THEN quantity ELSE 0 END)::int AS \"tickets_sold!\",\n            SUM(CASE WHEN is_free_redemption = true THEN quantity ELSE 0 END)::int AS \"free_tickets_redeemed!\",\n            COALESCE(SUM(CASE WHEN is_free_redemption = false THEN quantity * unit_price ELSE 0 END), 0) AS \"total_sale!\"\n        FROM playground_purchases\n        WHERE created_at::date >= $1 AND created_at::date <= $2\n        GROUP BY created_at::date\n        ORDER BY created_at::date ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sale_date!",
+        "type_info": "Date",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "tickets_sold!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "free_tickets_redeemed!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "total_sale!",
+        "type_info": "Numeric",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "86bff46bb7a0fa92f79ab7851735ac50b8a4cf3d18a65fe6d52cf17daf08aef0"
+}

@@ -1,18 +1,18 @@
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::{Extension, Json, extract::State};
 use tower_sessions::Session;
 use uuid::Uuid;
 
 use crate::app_extractor::ValidatedJson;
 use crate::playground::model::{
-    ClaimTokenPayload, PlaygroundCheckoutData, UserPlaygroundAccount,
-    UserPlaygroundPurchaseResponse,
+    ClaimTokenPayload, PlaygroundCheckoutData, TicketSaleSummary, TicketSaleSummaryFilter,
+    UserPlaygroundAccount, UserPlaygroundPurchaseResponse,
 };
 use crate::playground::service;
 use crate::{
     ApiResult,
     app_error::APIError,
-    app_extractor::{PlaygroundAdminRole, RequiresRole},
+    app_extractor::{PlaygroundAdminRole, RequiresRole, SuperAdminRole},
     app_state::AppState,
     auth::{CurrentUser, session_admin_id},
     playground::{
@@ -90,7 +90,8 @@ pub async fn get_user_tickets(
     Ok(Json(result))
 }
 
-#[utoipa::path(patch,
+#[utoipa::path(
+    patch,
     path="/api/playground/tokens/{token_id}",
     description = "Claim a ticket sale token by a user",
     request_body(
@@ -138,7 +139,9 @@ pub async fn claim_free_ticket(
     Ok(Json(result))
 }
 
-#[utoipa::path(patch,
+///api/playground/checkout/5a36d0c5-291e-4e56-96c8-ad270c433e77
+#[utoipa::path(
+    get,
     path="/api/playground/checkout/{token_id}",
     description = "Checkout page data for a playground token",
     responses(
@@ -157,4 +160,34 @@ pub async fn get_checkout_data(
     let result =
         service::get_playground_checkout_data_service(&state.db, user.id, token_id).await?;
     Ok(Json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/playground/summary",
+    description = "Daily playground ticket sales summary (paid tickets only) between the given dates, inclusive.",
+    params(TicketSaleSummaryFilter),
+    responses(
+        (status = 200, description = "Daily ticket sales summary", body = Vec<TicketSaleSummary>),
+        (status = 400, description = "Bad request - invalid or inverted date range"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Playground"
+)]
+pub async fn get_ticket_sale_summary(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Query(filter): Query<TicketSaleSummaryFilter>,
+) -> ApiResult<Vec<TicketSaleSummary>> {
+    if filter.start_date > filter.end_date {
+        return Err(APIError::BadRequest(
+            "start_date must be on or before end_date".to_string(),
+        ));
+    }
+    let rows = store::get_ticket_sale_summary(&state.db, filter.start_date, filter.end_date).await?;
+    Ok(Json(rows))
 }

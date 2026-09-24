@@ -1,9 +1,11 @@
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, Transaction};
+use time::Date;
 use uuid::Uuid;
 
 use super::model::{
     ExpiredStatus, PlaygroundAccountRow, PlaygroundPurchaseRow, PlaygroundTicketsRow,
+    TicketSaleSummary,
 };
 use crate::{
     app_error::StoreError,
@@ -20,6 +22,33 @@ pub async fn get_claim_token_info(pool: &PgPool, id: Uuid) -> Result<TokenInfo, 
     .await?;
 
     Ok(result)
+}
+
+pub async fn get_ticket_sale_summary(
+    pool: &PgPool,
+    start_date: Date,
+    end_date: Date,
+) -> Result<Vec<TicketSaleSummary>, StoreError> {
+    let rows = sqlx::query_as!(
+        TicketSaleSummary,
+        r#"
+        SELECT
+            created_at::date AS "sale_date!",
+            SUM(CASE WHEN is_free_redemption = false THEN quantity ELSE 0 END)::int AS "tickets_sold!",
+            SUM(CASE WHEN is_free_redemption = true THEN quantity ELSE 0 END)::int AS "free_tickets_redeemed!",
+            COALESCE(SUM(CASE WHEN is_free_redemption = false THEN quantity * unit_price ELSE 0 END), 0) AS "total_sale!"
+        FROM playground_purchases
+        WHERE created_at::date >= $1 AND created_at::date <= $2
+        GROUP BY created_at::date
+        ORDER BY created_at::date ASC
+        "#,
+        start_date,
+        end_date
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
 }
 
 pub async fn get_available_user_coupons(

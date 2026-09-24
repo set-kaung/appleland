@@ -8,7 +8,10 @@ use std::time::Duration;
 use crate::playground::handler::claim_free_ticket;
 use crate::{
     app_state::AppState,
-    playground::handler::{claim_token, creat_playground_token, get_user_tickets,get_checkout_data},
+    playground::handler::{
+        claim_token, creat_playground_token, get_checkout_data, get_ticket_sale_summary,
+        get_user_tickets,
+    },
 };
 
 pub mod handler;
@@ -44,5 +47,7 @@ pub fn route() -> Router<AppState> {
 }
 
 pub fn route_admin() -> Router<AppState> {
-    Router::new().route("/tokens", post(creat_playground_token))
+    Router::new()
+        .route("/tokens", post(creat_playground_token))
+        .route("/summary", get(get_ticket_sale_summary))
 }

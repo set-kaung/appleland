@@ -3,8 +3,8 @@ use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::ops::Mul;
-use time::OffsetDateTime;
-use utoipa::ToSchema;
+use time::{Date, OffsetDateTime};
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 #[derive(Deserialize, Debug, Clone, ToSchema)]
@@ -147,6 +147,21 @@ pub struct PlaygroundCheckoutData {
     pub unit_price: Decimal,
     pub total_price: Decimal,
     pub available_coupons: Vec<Uuid>,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct TicketSaleSummaryFilter {
+    pub start_date: Date,
+    pub end_date: Date,
+}
+
+#[derive(Debug, FromRow, Serialize, ToSchema)]
+pub struct TicketSaleSummary {
+    pub sale_date: Date,
+    pub tickets_sold: i32,
+    pub free_tickets_redeemed: i32,
+    pub total_sale: Decimal,
 }
 
 impl PlaygroundCheckoutData {

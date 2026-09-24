@@ -295,6 +295,42 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/playground/summary:
+    get:
+      tags:
+      - Admin Playground
+      description: Daily playground ticket sales summary (paid tickets only) between the given dates, inclusive.
+      operationId: get_ticket_sale_summary
+      parameters:
+      - name: start_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: Daily ticket sales summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TicketSaleSummary'
+        '400':
+          description: Bad request - invalid or inverted date range
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/playground/tokens:
     post:
       tags:
@@ -1528,6 +1564,37 @@ components:
           - string
           - 'null'
           format: date
+    TicketSaleSummary:
+      type: object
+      required:
+      - sale_date
+      - tickets_sold
+      - free_tickets_redeemed
+      - total_sale
+      properties:
+        free_tickets_redeemed:
+          type: integer
+          format: int32
+        sale_date:
+          type: string
+          format: date
+        tickets_sold:
+          type: integer
+          format: int32
+        total_sale:
+          type: string
+    TicketSaleSummaryFilter:
+      type: object
+      required:
+      - start_date
+      - end_date
+      properties:
+        end_date:
+          type: string
+          format: date
+        start_date:
+          type: string
+          format: date
     UpdateCategoryPayload:
       type: object
       required:
@@ -1637,3 +1704,5 @@ tags:
   description: File upload utilities
 - name: Admin Users
   description: User account management for staff
+- name: Admin Playground
+  description: Playground ticket management
