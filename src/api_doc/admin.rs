@@ -7,7 +7,9 @@ use crate::category::model::{
     AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, UpdateCategoryPayload,
 };
 use crate::inventory::model::{AdminInventory, NewInventoryPayload, StockLevel};
-use crate::orders::model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload};
+use crate::orders::model::{
+    AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
+};
 use crate::sales::model::{
     AdminSale, AdminSaleDetails, CreateAdminSalePayload, SaleItem, SaleProduct, SaleSummary,
     SaleSummaryFilter,
@@ -68,6 +70,7 @@ use utoipa::OpenApi;
         sales::handler::sale_summary,
         orders::handler::update_order_tracking_url_handler,
         orders::handler::update_order_delivery_status,
+        orders::handler::get_all_orders_paginated,
         staff::handler::get_all_admin_staff,
         users::handler::get_all_users_paginated,
         image_storage::upload_image,

@@ -1,9 +1,11 @@
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use utoipa::ToSchema;
-use uuid::Uuid;
-
 use crate::app_error::AppError;
+use crate::db::DBQueryFilter;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, Postgres, QueryBuilder};
+use time::{Date, OffsetDateTime};
+use utoipa::{IntoParams, ToSchema};
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct InsertOrder {
@@ -81,6 +83,55 @@ impl From<&DeliveryStatus> for String {
             DeliveryStatus::Pending => "pending".to_string(),
             DeliveryStatus::OnDelivery => "on_delivery".to_string(),
             DeliveryStatus::Received => "received".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, FromRow, Serialize, ToSchema)]
+pub struct AdminOrderRow {
+    pub id: Uuid,
+    pub sale_id: Uuid,
+    pub customer: Option<String>,
+    pub total_amount: Decimal,
+    pub delivery_status: String,
+    pub order_tracking_url: Option<String>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+}
+
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+#[into_params(parameter_in = Query)]
+pub struct AdminOrdersQuery {
+    pub status: Option<String>,
+    pub start_date: Option<Date>,
+    pub end_date: Option<Date>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+impl AdminOrdersQuery {
+    pub fn get_limit_and_offset(&self) -> (i64, i64, i64) {
+        let page_size = self.page_size.unwrap_or(10).clamp(1, 100);
+        let page = self.page.unwrap_or(1).max(1);
+        let offset = (page - 1).saturating_mul(page_size);
+
+        (page_size, offset, page)
+    }
+}
+
+impl DBQueryFilter<Postgres> for AdminOrdersQuery {
+    fn apply_filter(&self, query_builder: &mut QueryBuilder<Postgres>) {
+        if let Some(active_status) = &self.status {
+            query_builder.push(" AND o.delivery_status = ");
+            query_builder.push_bind(active_status);
+        }
+        if let Some(new_start_date) = self.start_date {
+            query_builder.push(" AND (o.created_at AT TIME ZONE 'Asia/Yangon')::date >= ");
+            query_builder.push_bind(new_start_date);
+        }
+        if let Some(new_end_date) = self.end_date {
+            query_builder.push(" AND (o.created_at AT TIME ZONE 'Asia/Yangon')::date <= ");
+            query_builder.push_bind(new_end_date);
         }
     }
 }

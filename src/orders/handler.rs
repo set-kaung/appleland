@@ -1,18 +1,53 @@
 use crate::{
-    ApiResult, ApiResultWithStatusCode,
+    ApiResult, ApiResultWithStatusCode, PaginatedApiResult,
     app_extractor::{RequiresRole, SuperAdminRole},
     app_state::AppState,
     orders::{
-        model::{UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload},
+        model::{AdminOrderRow, AdminOrdersQuery, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload},
         service, store,
     },
+    pagination,
 };
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use reqwest::StatusCode;
 use uuid::Uuid;
+
+#[utoipa::path(
+    get,
+    path = "/admin/orders",
+    description = "List paginated orders with optional status and date range filters.",
+    params(AdminOrdersQuery),
+    responses(
+        (status = 200, description = "Paginated list of orders", body = pagination::PaginatedResponse<AdminOrderRow>),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 403, description = "Forbidden - Insufficient privileges"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Orders"
+)]
+pub async fn get_all_orders_paginated(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Query(query): Query<AdminOrdersQuery>,
+) -> PaginatedApiResult<AdminOrderRow> {
+    let (limit, offset, current_page) = query.get_limit_and_offset();
+
+    let (data, total_items) = store::get_all_orders_paginated(&state.db, &query, limit, offset).await?;
+    let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
+
+    Ok(Json(pagination::PaginatedResponse {
+        data,
+        total_items,
+        total_pages,
+        current_page,
+    }))
+}
 
 #[utoipa::path(
     patch,
