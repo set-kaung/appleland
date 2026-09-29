@@ -21,6 +21,7 @@ pub struct AdminProduct {
     pub is_shown_online: bool,
     pub image_url: Option<String>,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub quantity_in_stock: i32,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
@@ -40,6 +41,7 @@ pub struct UserProduct {
     pub category: Option<String>,
     pub sub_category: Option<String>,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub quantity_in_stock: i32,
     pub image_url: Option<String>,
 }
@@ -51,6 +53,7 @@ pub struct CreateProductPayload {
     pub description: Option<String>,
     pub category_id: Option<Uuid>,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub sub_category_id: Option<Uuid>,
     pub is_shown_online: bool,
     pub image_url: Option<String>,
@@ -75,6 +78,13 @@ impl CreateProductPayload {
                 "selling price must not be negative".to_string(),
             ));
         }
+        if let Some(original_price) = self.original_price
+            && original_price <= self.selling_price
+        {
+            return Err(APIError::BadRequest(
+                "original price must be greater than the selling price".to_string(),
+            ));
+        }
         Ok(())
     }
 }
@@ -88,6 +98,7 @@ pub struct InsertProduct {
     pub sub_category_id: Option<Uuid>,
     pub is_shown_online: bool,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub image_url: Option<String>,
     pub created_by: Uuid,
     pub updated_by: Uuid,
@@ -103,6 +114,7 @@ pub struct UpdateProductPayload {
     pub sub_category_id: Option<Uuid>,
     pub is_shown_online: bool,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub image_url: Option<String>,
     pub is_perishable: bool,
 }
@@ -124,6 +136,13 @@ impl UpdateProductPayload {
                 "selling price must not be negative".to_string(),
             ));
         }
+        if let Some(original_price) = self.original_price
+            && original_price <= self.selling_price
+        {
+            return Err(APIError::BadRequest(
+                "original price must be greater than the selling price".to_string(),
+            ));
+        }
         Ok(())
     }
 }
@@ -138,6 +157,7 @@ pub struct UpdateProduct {
     pub sub_category_id: Option<Uuid>,
     pub is_shown_online: bool,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub updated_by: Uuid,
     pub image_url: Option<String>,
     pub is_perishable: bool,
@@ -155,6 +175,7 @@ pub struct ProductRow {
     pub sub_category: Option<String>,
     pub is_shown_online: bool,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
     pub created_by: Uuid,
@@ -174,6 +195,7 @@ impl From<ProductRow> for UserProduct {
             category: row.category,
             sub_category: row.sub_category,
             selling_price: row.selling_price,
+            original_price: row.original_price,
             quantity_in_stock: row.quantity_in_stock,
             image_url: row.image_url,
         }
@@ -193,6 +215,7 @@ impl From<ProductRow> for AdminProduct {
             sub_category: row.sub_category,
             is_shown_online: row.is_shown_online,
             selling_price: row.selling_price,
+            original_price: row.original_price,
             created_at: row.created_at,
             updated_at: row.updated_at,
             created_by: row.created_by,

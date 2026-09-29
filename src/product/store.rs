@@ -20,6 +20,7 @@ pub async fn fetch_all(pool: &PgPool) -> Result<Vec<ProductRow>, StoreError> {
                 c2.name as sub_category,
                 p.is_shown_online as "is_shown_online!",
                 p.selling_price as "selling_price!",
+                p.original_price,
                 p.created_at as "created_at!",
                 p.updated_at as "updated_at!",
                 p.created_by as "created_by!",
@@ -59,6 +60,7 @@ pub async fn fetch_paginated(
             c2.name as "sub_category?",
             p.is_shown_online,
             p.selling_price,
+            p.original_price,
             p.created_at,
             p.updated_at,
             p.created_by,
@@ -108,6 +110,7 @@ pub async fn fetch_paginated_admin(
             c2.name as "sub_category?",
             p.is_shown_online,
             p.selling_price,
+            p.original_price,
             p.created_at,
             p.updated_at,
             p.created_by,
@@ -153,6 +156,7 @@ where
             c2.name as "sub_category?",
             p.is_shown_online as "is_shown_online!",
             p.selling_price as "selling_price!",
+            p.original_price,
             p.created_at as "created_at!",
             p.updated_at as "updated_at!",
             p.created_by as "created_by!",
@@ -180,8 +184,8 @@ pub async fn create(
 ) -> Result<Uuid, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_shown_online,image_url,created_by,updated_by, is_perishable)
-        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)
+        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,original_price,is_shown_online,image_url,created_by,updated_by, is_perishable)
+        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$10,$10,$11)
         RETURNING
             id
         "#,
@@ -191,6 +195,7 @@ pub async fn create(
         payload.category_id,
         payload.sub_category_id,
         payload.selling_price,
+        payload.original_price,
         payload.is_shown_online,
         payload.image_url,
         payload.created_by,
@@ -207,8 +212,8 @@ pub async fn update(
 ) -> Result<ProductRow, StoreError> {
     let product_id = sqlx::query_scalar!(
         r#"UPDATE products
-       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_shown_online = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10
-       WHERE id = $11 AND is_deleted IS FALSE
+       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, original_price = $7, is_shown_online = $8, image_url = $9, updated_by= $10, updated_at = NOW(), is_perishable = $11
+       WHERE id = $12 AND is_deleted IS FALSE
        RETURNING id
         "#,
         payload.barcode,
@@ -217,6 +222,7 @@ pub async fn update(
         payload.category_id,
         payload.sub_category_id,
         payload.selling_price,
+        payload.original_price,
         payload.is_shown_online,
         payload.image_url,
         payload.updated_by,
@@ -276,6 +282,7 @@ where
                 c2.name as sub_category,
                 is_shown_online,
                 p.selling_price,
+                p.original_price,
                 p.created_at,
                 p.updated_at,
                 p.created_by,
@@ -330,6 +337,7 @@ pub async fn fetch_products_search(
                     c2.name as sub_category,
                     is_shown_online,
                     p.selling_price,
+                    p.original_price,
                     p.created_at,
                     p.updated_at,
                     p.created_by,

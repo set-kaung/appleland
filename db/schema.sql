@@ -2,34 +2,17 @@
 -- PostgreSQL database dump
 --
 
-\restrict hURi9Ab4UUKoMD6xPIhsque222KWamgwcosiK2XoJg16T5RcO8Ot2w6GlMFjA4v
-
 -- Dumped from database version 17.11 (Homebrew)
 -- Dumped by pg_dump version 17.11 (Homebrew)
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
 --
--- Name: tower_sessions; Type: SCHEMA; Schema: -; Owner: appleland_backend
+-- Name: tower_sessions; Type: SCHEMA; Schema: -; Owner: -
 --
 
 CREATE SCHEMA tower_sessions;
 
-
-ALTER SCHEMA tower_sessions OWNER TO appleland_backend;
-
 --
--- Name: admin_role; Type: TYPE; Schema: public; Owner: appleland_backend
+-- Name: admin_role; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.admin_role AS ENUM (
@@ -38,11 +21,8 @@ CREATE TYPE public.admin_role AS ENUM (
     'super_admin'
 );
 
-
-ALTER TYPE public.admin_role OWNER TO appleland_backend;
-
 --
--- Name: playground_token_status; Type: TYPE; Schema: public; Owner: appleland_backend
+-- Name: playground_token_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.playground_token_status AS ENUM (
@@ -51,15 +31,31 @@ CREATE TYPE public.playground_token_status AS ENUM (
     'expired'
 );
 
+--
+-- Name: _sqlx_migrations; Type: TABLE; Schema: public; Owner: -
+--
 
-ALTER TYPE public.playground_token_status OWNER TO appleland_backend;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
+CREATE TABLE public._sqlx_migrations (
+    version bigint NOT NULL,
+    description text NOT NULL,
+    installed_on timestamp with time zone DEFAULT now() NOT NULL,
+    success boolean NOT NULL,
+    checksum bytea NOT NULL,
+    execution_time bigint NOT NULL
+);
 
 --
--- Name: admin_sales; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: admin_ai_chat_usage; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.admin_ai_chat_usage (
+    admin_id uuid NOT NULL,
+    usage_date date NOT NULL,
+    request_count integer DEFAULT 0 NOT NULL
+);
+
+--
+-- Name: admin_sales; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.admin_sales (
@@ -69,11 +65,8 @@ CREATE TABLE public.admin_sales (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
-ALTER TABLE public.admin_sales OWNER TO appleland_backend;
-
 --
--- Name: admins; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: admins; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.admins (
@@ -85,11 +78,8 @@ CREATE TABLE public.admins (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
-ALTER TABLE public.admins OWNER TO appleland_backend;
-
 --
--- Name: categories; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: categories; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.categories (
@@ -104,11 +94,8 @@ CREATE TABLE public.categories (
     deleted_by uuid
 );
 
-
-ALTER TABLE public.categories OWNER TO appleland_backend;
-
 --
--- Name: delivery_contact; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: delivery_contact; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.delivery_contact (
@@ -118,11 +105,8 @@ CREATE TABLE public.delivery_contact (
     phone_number text NOT NULL
 );
 
-
-ALTER TABLE public.delivery_contact OWNER TO appleland_backend;
-
 --
--- Name: inventory; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: inventory; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.inventory (
@@ -140,11 +124,20 @@ CREATE TABLE public.inventory (
     CONSTRAINT check_remaining CHECK ((quantity_remaining >= 0))
 );
 
+--
+-- Name: order_status_history; Type: TABLE; Schema: public; Owner: -
+--
 
-ALTER TABLE public.inventory OWNER TO appleland_backend;
+CREATE TABLE public.order_status_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    status text NOT NULL,
+    changed_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
 
 --
--- Name: orders; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: orders; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.orders (
@@ -160,11 +153,8 @@ CREATE TABLE public.orders (
     delivery_status text DEFAULT 'pending'::text NOT NULL
 );
 
-
-ALTER TABLE public.orders OWNER TO appleland_backend;
-
 --
--- Name: payment_webhook_nonces; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: payment_webhook_nonces; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.payment_webhook_nonces (
@@ -172,11 +162,8 @@ CREATE TABLE public.payment_webhook_nonces (
     consumed_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
-ALTER TABLE public.payment_webhook_nonces OWNER TO appleland_backend;
-
 --
--- Name: playground_accounts; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: playground_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.playground_accounts (
@@ -188,11 +175,8 @@ CREATE TABLE public.playground_accounts (
     free_ticket_eligible integer DEFAULT 0 NOT NULL
 );
 
-
-ALTER TABLE public.playground_accounts OWNER TO appleland_backend;
-
 --
--- Name: playground_coupons; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: playground_coupons; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.playground_coupons (
@@ -204,11 +188,8 @@ CREATE TABLE public.playground_coupons (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-
-ALTER TABLE public.playground_coupons OWNER TO appleland_backend;
-
 --
--- Name: playground_purchase_tokens; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: playground_purchase_tokens; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.playground_purchase_tokens (
@@ -224,11 +205,8 @@ CREATE TABLE public.playground_purchase_tokens (
     CONSTRAINT playground_purchase_tokens_quantity_check CHECK ((total_quantity > 0))
 );
 
-
-ALTER TABLE public.playground_purchase_tokens OWNER TO appleland_backend;
-
 --
--- Name: playground_purchases; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: playground_purchases; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.playground_purchases (
@@ -241,11 +219,8 @@ CREATE TABLE public.playground_purchases (
     unit_price numeric(10,2) NOT NULL
 );
 
-
-ALTER TABLE public.playground_purchases OWNER TO appleland_backend;
-
 --
--- Name: products; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: products; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.products (
@@ -256,7 +231,7 @@ CREATE TABLE public.products (
     category_id uuid,
     sub_category_id uuid,
     selling_price numeric(19,2) NOT NULL,
-    is_active boolean NOT NULL,
+    is_shown_online boolean NOT NULL,
     image_url text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -265,14 +240,13 @@ CREATE TABLE public.products (
     is_deleted boolean DEFAULT false NOT NULL,
     deleted_at timestamp with time zone,
     deleted_by uuid,
-    is_perishable boolean DEFAULT false NOT NULL
+    is_perishable boolean DEFAULT false NOT NULL,
+    original_price numeric(19,2),
+    CONSTRAINT products_original_price_check CHECK (((original_price IS NULL) OR (original_price > selling_price)))
 );
 
-
-ALTER TABLE public.products OWNER TO appleland_backend;
-
 --
--- Name: sale_items; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: sale_items; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sale_items (
@@ -289,11 +263,8 @@ CREATE TABLE public.sale_items (
     CONSTRAINT sale_items_selling_price_check CHECK ((selling_price >= (0)::numeric))
 );
 
-
-ALTER TABLE public.sale_items OWNER TO appleland_backend;
-
 --
--- Name: sales; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: sales; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sales (
@@ -306,11 +277,24 @@ CREATE TABLE public.sales (
     payment_provider text
 );
 
+--
+-- Name: settings; Type: TABLE; Schema: public; Owner: -
+--
 
-ALTER TABLE public.sales OWNER TO appleland_backend;
+CREATE TABLE public.settings (
+    key text NOT NULL,
+    value jsonb NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL,
+    type text DEFAULT 'string'::text NOT NULL,
+    CONSTRAINT settings_value_type_check CHECK ((type = ANY (ARRAY['string'::text, 'integer'::text, 'decimal'::text, 'boolean'::text])))
+);
 
 --
--- Name: user_contact; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: user_contact; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_contact (
@@ -322,11 +306,8 @@ CREATE TABLE public.user_contact (
     user_id uuid NOT NULL
 );
 
-
-ALTER TABLE public.user_contact OWNER TO appleland_backend;
-
 --
--- Name: user_sales; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: user_sales; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.user_sales (
@@ -336,25 +317,20 @@ CREATE TABLE public.user_sales (
     sale_id uuid NOT NULL
 );
 
-
-ALTER TABLE public.user_sales OWNER TO appleland_backend;
-
 --
--- Name: users; Type: TABLE; Schema: public; Owner: appleland_backend
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    supabase_id uuid
+    supabase_id uuid,
+    username text NOT NULL
 );
 
-
-ALTER TABLE public.users OWNER TO appleland_backend;
-
 --
--- Name: session; Type: TABLE; Schema: tower_sessions; Owner: appleland_backend
+-- Name: session; Type: TABLE; Schema: tower_sessions; Owner: -
 --
 
 CREATE TABLE tower_sessions.session (
@@ -363,463 +339,456 @@ CREATE TABLE tower_sessions.session (
     expiry_date timestamp with time zone NOT NULL
 );
 
+--
+-- Name: _sqlx_migrations _sqlx_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
 
-ALTER TABLE tower_sessions.session OWNER TO appleland_backend;
+ALTER TABLE ONLY public._sqlx_migrations
+    ADD CONSTRAINT _sqlx_migrations_pkey PRIMARY KEY (version);
 
 --
--- Name: admin_sales admin_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: admin_ai_chat_usage admin_ai_chat_usage_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_ai_chat_usage
+    ADD CONSTRAINT admin_ai_chat_usage_pkey PRIMARY KEY (admin_id, usage_date);
+
+--
+-- Name: admin_sales admin_sales_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.admin_sales
     ADD CONSTRAINT admin_sales_pkey PRIMARY KEY (id);
 
-
 --
--- Name: admins admins_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: admins admins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.admins
     ADD CONSTRAINT admins_pkey PRIMARY KEY (id);
 
-
 --
--- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categories
     ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
 
-
 --
--- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.inventory
     ADD CONSTRAINT inventory_pkey PRIMARY KEY (id);
 
+--
+-- Name: order_status_history order_status_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_status_history
+    ADD CONSTRAINT order_status_history_pkey PRIMARY KEY (id);
 
 --
--- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
     ADD CONSTRAINT orders_pkey PRIMARY KEY (id);
 
-
 --
--- Name: orders orders_sale_id_key; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: orders orders_sale_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
     ADD CONSTRAINT orders_sale_id_key UNIQUE (sale_id);
 
-
 --
--- Name: payment_webhook_nonces payment_webhook_nonces_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: payment_webhook_nonces payment_webhook_nonces_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.payment_webhook_nonces
     ADD CONSTRAINT payment_webhook_nonces_pkey PRIMARY KEY (nonce);
 
-
 --
--- Name: playground_accounts playground_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_accounts playground_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_accounts
     ADD CONSTRAINT playground_accounts_pkey PRIMARY KEY (user_id);
 
-
 --
--- Name: playground_coupons playground_coupons_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_coupons playground_coupons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_coupons
     ADD CONSTRAINT playground_coupons_pkey PRIMARY KEY (id);
 
-
 --
--- Name: playground_purchase_tokens playground_purchase_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchase_tokens playground_purchase_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchase_tokens
     ADD CONSTRAINT playground_purchase_tokens_pkey PRIMARY KEY (id);
 
-
 --
--- Name: playground_purchases playground_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchases playground_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchases
     ADD CONSTRAINT playground_purchases_pkey PRIMARY KEY (id);
 
-
 --
--- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_pkey PRIMARY KEY (id);
 
-
 --
--- Name: sale_items sale_items_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sale_items sale_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sale_items
     ADD CONSTRAINT sale_items_pkey PRIMARY KEY (id);
 
-
 --
--- Name: sales sales_payment_order_id_key; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sales sales_payment_order_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sales
     ADD CONSTRAINT sales_payment_order_id_key UNIQUE (payment_order_id);
 
-
 --
--- Name: sales sales_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sales sales_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sales
     ADD CONSTRAINT sales_pkey PRIMARY KEY (id);
 
+--
+-- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.settings
+    ADD CONSTRAINT settings_pkey PRIMARY KEY (key);
 
 --
--- Name: delivery_contact shipping_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: delivery_contact shipping_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.delivery_contact
     ADD CONSTRAINT shipping_addresses_pkey PRIMARY KEY (id);
 
-
 --
--- Name: user_contact user_contact_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: user_contact user_contact_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_contact
     ADD CONSTRAINT user_contact_pkey PRIMARY KEY (id);
 
-
 --
--- Name: user_sales user_sale_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: user_sales user_sale_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT user_sale_pkey PRIMARY KEY (id);
 
-
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
-
 --
--- Name: users users_supabase_id_key; Type: CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: users users_supabase_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_supabase_id_key UNIQUE (supabase_id);
 
-
 --
--- Name: session session_pkey; Type: CONSTRAINT; Schema: tower_sessions; Owner: appleland_backend
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: tower_sessions; Owner: -
 --
 
 ALTER TABLE ONLY tower_sessions.session
     ADD CONSTRAINT session_pkey PRIMARY KEY (id);
 
+--
+-- Name: admin_sales_sale_id_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX admin_sales_sale_id_unique ON public.admin_sales USING btree (sale_id);
 
 --
--- Name: idx_delivery_contact_user_id; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_delivery_contact_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_delivery_contact_user_id ON public.user_contact USING btree (user_id);
 
+--
+-- Name: idx_order_status_history_order_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_status_history_order_created ON public.order_status_history USING btree (order_id, created_at);
 
 --
--- Name: idx_payment_webhook_nonces_consumed_at; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_payment_webhook_nonces_consumed_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_payment_webhook_nonces_consumed_at ON public.payment_webhook_nonces USING btree (consumed_at);
 
+--
+-- Name: idx_product_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_product_id ON public.inventory USING btree (product_id);
 
 --
--- Name: idx_products_barcode_active; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_products_barcode_active; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX idx_products_barcode_active ON public.products USING btree (barcode) WHERE (is_deleted IS FALSE);
 
-
 --
--- Name: idx_sale_items_product_id; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_sale_items_product_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_sale_items_product_id ON public.sale_items USING btree (product_id);
 
-
 --
--- Name: idx_sales_admin; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_sales_admin; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_sales_admin ON public.admin_sales USING btree (admin_id);
 
-
 --
--- Name: idx_sales_created_at; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_sales_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_sales_created_at ON public.sales USING btree (created_at);
 
-
 --
--- Name: idx_tokens_status_expires; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_tokens_status_expires; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_tokens_status_expires ON public.playground_purchase_tokens USING btree (status, expires_at);
 
-
 --
--- Name: idx_user_sales_user_id; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_user_sales_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_user_sales_user_id ON public.user_sales USING btree (user_id);
 
-
 --
--- Name: idx_users_supabase_id; Type: INDEX; Schema: public; Owner: appleland_backend
+-- Name: idx_users_supabase_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_users_supabase_id ON public.users USING btree (id);
 
+--
+-- Name: user_sales_sale_id_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX user_sales_sale_id_unique ON public.user_sales USING btree (sale_id);
 
 --
--- Name: admin_sales admin_sale_admin_fk; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: admin_ai_chat_usage admin_ai_chat_usage_admin_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_ai_chat_usage
+    ADD CONSTRAINT admin_ai_chat_usage_admin_id_fkey FOREIGN KEY (admin_id) REFERENCES public.admins(id);
+
+--
+-- Name: admin_sales admin_sale_admin_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.admin_sales
     ADD CONSTRAINT admin_sale_admin_fk FOREIGN KEY (admin_id) REFERENCES public.admins(id);
 
-
 --
--- Name: admin_sales admin_sale_sale_fk; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: admin_sales admin_sale_sale_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.admin_sales
     ADD CONSTRAINT admin_sale_sale_fk FOREIGN KEY (sale_id) REFERENCES public.sales(id);
 
-
 --
--- Name: categories fk_deleted_by; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: categories fk_deleted_by; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.categories
     ADD CONSTRAINT fk_deleted_by FOREIGN KEY (deleted_by) REFERENCES public.admins(id);
 
-
 --
--- Name: playground_coupons fk_playground_coupon_user; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_coupons fk_playground_coupon_user; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_coupons
     ADD CONSTRAINT fk_playground_coupon_user FOREIGN KEY (user_id) REFERENCES public.users(id);
 
-
 --
--- Name: inventory fk_products_created_by; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: inventory fk_products_created_by; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.inventory
     ADD CONSTRAINT fk_products_created_by FOREIGN KEY (created_by) REFERENCES public.admins(id);
 
-
 --
--- Name: products fk_products_created_by; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products fk_products_created_by; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT fk_products_created_by FOREIGN KEY (created_by) REFERENCES public.admins(id);
 
-
 --
--- Name: inventory fk_products_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: inventory fk_products_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.inventory
     ADD CONSTRAINT fk_products_updated_by FOREIGN KEY (updated_by) REFERENCES public.admins(id);
 
-
 --
--- Name: products fk_products_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products fk_products_updated_by; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT fk_products_updated_by FOREIGN KEY (updated_by) REFERENCES public.admins(id);
 
-
 --
--- Name: sale_items fk_sale_items_sale; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sale_items fk_sale_items_sale; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sale_items
     ADD CONSTRAINT fk_sale_items_sale FOREIGN KEY (sale_id) REFERENCES public.sales(id);
 
-
 --
--- Name: sale_items fk_sale_product; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sale_items fk_sale_product; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sale_items
     ADD CONSTRAINT fk_sale_product FOREIGN KEY (product_id) REFERENCES public.products(id);
 
-
 --
--- Name: user_sales fk_user_sales_sale_id; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: user_sales fk_user_sales_sale_id; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT fk_user_sales_sale_id FOREIGN KEY (sale_id) REFERENCES public.sales(id);
 
+--
+-- Name: order_status_history order_status_history_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_status_history
+    ADD CONSTRAINT order_status_history_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 --
--- Name: playground_accounts playground_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_accounts playground_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_accounts
     ADD CONSTRAINT playground_accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
-
 --
--- Name: playground_purchase_tokens playground_purchase_tokens_claimed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchase_tokens playground_purchase_tokens_claimed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchase_tokens
     ADD CONSTRAINT playground_purchase_tokens_claimed_by_fkey FOREIGN KEY (claimed_by) REFERENCES public.users(id);
 
-
 --
--- Name: playground_purchase_tokens playground_purchase_tokens_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchase_tokens playground_purchase_tokens_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchase_tokens
     ADD CONSTRAINT playground_purchase_tokens_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id);
 
-
 --
--- Name: playground_purchases playground_purchases_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchases playground_purchases_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchases
     ADD CONSTRAINT playground_purchases_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id);
 
-
 --
--- Name: playground_purchases playground_purchases_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: playground_purchases playground_purchases_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.playground_purchases
     ADD CONSTRAINT playground_purchases_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
-
 --
--- Name: products products_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products products_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id);
 
-
 --
--- Name: products products_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products products_deleted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_deleted_by_fkey FOREIGN KEY (deleted_by) REFERENCES public.admins(id);
 
-
 --
--- Name: products products_sub_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: products products_sub_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_sub_category_id_fkey FOREIGN KEY (sub_category_id) REFERENCES public.categories(id);
 
-
 --
--- Name: orders sale_fk; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: orders sale_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
     ADD CONSTRAINT sale_fk FOREIGN KEY (sale_id) REFERENCES public.sales(id);
 
-
 --
--- Name: sale_items sale_items_inventory_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: sale_items sale_items_inventory_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sale_items
     ADD CONSTRAINT sale_items_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES public.inventory(id);
 
+--
+-- Name: settings settings_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.settings
+    ADD CONSTRAINT settings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id);
 
 --
--- Name: orders shipping_address_fk; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: settings settings_updaetd_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.settings
+    ADD CONSTRAINT settings_updaetd_by_fkey FOREIGN KEY (updated_by) REFERENCES public.admins(id);
+
+--
+-- Name: orders shipping_address_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.orders
     ADD CONSTRAINT shipping_address_fk FOREIGN KEY (shipping_address_id) REFERENCES public.delivery_contact(id);
 
-
 --
--- Name: user_contact user_contact_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: user_contact user_contact_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_contact
     ADD CONSTRAINT user_contact_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
-
 --
--- Name: user_sales user_sale_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: appleland_backend
+-- Name: user_sales user_sale_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT user_sale_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
-
---
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
---
-
-GRANT ALL ON SCHEMA public TO appleland_backend;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: setkaung
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE setkaung IN SCHEMA public GRANT ALL ON SEQUENCES TO appleland_backend;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: setkaung
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE setkaung IN SCHEMA public GRANT ALL ON FUNCTIONS TO appleland_backend;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: setkaung
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE setkaung IN SCHEMA public GRANT ALL ON TABLES TO appleland_backend;
-
-
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict hURi9Ab4UUKoMD6xPIhsque222KWamgwcosiK2XoJg16T5RcO8Ot2w6GlMFjA4v
 

@@ -222,6 +222,7 @@ pub async fn create_product(
         sub_category_id: payload.sub_category_id,
         is_shown_online: payload.is_shown_online,
         selling_price: payload.selling_price,
+        original_price: payload.original_price,
         image_url: payload.image_url,
         created_by: admin_id,
         updated_by: admin_id,
@@ -251,7 +252,11 @@ pub async fn create_product(
 #[utoipa::path(
     put,
     path = "/admin/products/{product_id}",
-    description = "Update an existing product.",
+    description = "Update an existing product. This is a full replace (PUT): every field in the \
+                   request body overwrites the stored value, so clients must echo back fields they \
+                   are not changing. In particular, omitting `original_price` or sending it as null \
+                   removes any active discount, since a missing field on an optional payload \
+                   deserializes to null.",
     params(
         ("product_id" = Uuid, Path, description = "Product UUID")
     ),
@@ -292,6 +297,7 @@ pub async fn update_product(
         sub_category_id: payload.sub_category_id,
         is_shown_online: payload.is_shown_online,
         selling_price: payload.selling_price,
+        original_price: payload.original_price,
         image_url: payload.image_url,
         updated_by: admin_id,
         is_perishable: payload.is_perishable,

@@ -552,6 +552,10 @@ components:
                 - 'null'
               name:
                 type: string
+              original_price:
+                type:
+                - string
+                - 'null'
               quantity_in_stock:
                 type: integer
                 format: int32
@@ -873,6 +877,10 @@ components:
           - 'null'
         name:
           type: string
+        original_price:
+          type:
+          - string
+          - 'null'
         quantity_in_stock:
           type: integer
           format: int32

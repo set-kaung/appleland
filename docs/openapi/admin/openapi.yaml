@@ -775,7 +775,7 @@ paths:
     put:
       tags:
       - Admin Products
-      description: Update an existing product.
+      description: 'Update an existing product. This is a full replace (PUT): every field in the request body overwrites the stored value, so clients must echo back fields they are not changing. In particular, omitting `original_price` or sending it as null removes any active discount, since a missing field on an optional payload deserializes to null.'
       operationId: update_product
       parameters:
       - name: product_id
@@ -1374,6 +1374,10 @@ components:
           type: boolean
         name:
           type: string
+        original_price:
+          type:
+          - string
+          - 'null'
         quantity_in_stock:
           type: integer
           format: int32
@@ -1517,6 +1521,10 @@ components:
           type: boolean
         name:
           type: string
+        original_price:
+          type:
+          - string
+          - 'null'
         selling_price:
           type: string
         sub_category_id:
@@ -1870,6 +1878,10 @@ components:
                 type: boolean
               name:
                 type: string
+              original_price:
+                type:
+                - string
+                - 'null'
               quantity_in_stock:
                 type: integer
                 format: int32
@@ -2274,6 +2286,10 @@ components:
           type: boolean
         name:
           type: string
+        original_price:
+          type:
+          - string
+          - 'null'
         selling_price:
           type: string
         sub_category_id:
