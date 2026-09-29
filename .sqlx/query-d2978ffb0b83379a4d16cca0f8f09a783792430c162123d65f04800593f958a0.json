@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            p.id as \"id!\",\n            p.barcode as \"barcode!\",\n            p.name as \"name!\",\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_shown_online as \"is_shown_online!\",\n            p.selling_price as \"selling_price!\",\n            p.created_at as \"created_at!\",\n            p.updated_at as \"updated_at!\",\n            p.created_by as \"created_by!\",\n            p.updated_by as \"updated_by!\",\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 as \"quantity_in_stock!\",\n            p.image_url,\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.id = $1 AND p.is_deleted IS FALSE",
+  "query": "\n        SELECT\n            p.id,\n            p.barcode,\n            p.name,\n            p.description,\n            p.category_id,\n            c1.name as \"category?\",\n            p.sub_category_id,\n            c2.name as \"sub_category?\",\n            p.is_shown_online,\n            p.selling_price,\n            p.original_price,\n            p.created_at,\n            p.updated_at,\n            p.created_by,\n            p.updated_by,\n            COALESCE((SELECT SUM(quantity_remaining) FROM inventory WHERE product_id = p.id), 0)::INT4 AS \"quantity_in_stock!\",\n            p.image_url as \"image_url?\",\n            p.is_perishable\n        FROM products p\n        LEFT JOIN categories c1 on c1.id = p.category_id\n        LEFT JOIN categories c2 on c2.id = p.sub_category_id\n        WHERE p.is_shown_online = $3 AND p.is_deleted IS FALSE\n        ORDER BY p.created_at DESC, p.id DESC\n        LIMIT $1 OFFSET $2",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id!",
+        "name": "id",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -16,7 +16,7 @@
       },
       {
         "ordinal": 1,
-        "name": "barcode!",
+        "name": "barcode",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -27,7 +27,7 @@
       },
       {
         "ordinal": 2,
-        "name": "name!",
+        "name": "name",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -93,7 +93,7 @@
       },
       {
         "ordinal": 8,
-        "name": "is_shown_online!",
+        "name": "is_shown_online",
         "type_info": "Bool",
         "origin": {
           "Table": {
@@ -104,7 +104,7 @@
       },
       {
         "ordinal": 9,
-        "name": "selling_price!",
+        "name": "selling_price",
         "type_info": "Numeric",
         "origin": {
           "Table": {
@@ -115,7 +115,18 @@
       },
       {
         "ordinal": 10,
-        "name": "created_at!",
+        "name": "original_price",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "original_price"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
@@ -125,8 +136,8 @@
         }
       },
       {
-        "ordinal": 11,
-        "name": "updated_at!",
+        "ordinal": 12,
+        "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
@@ -136,8 +147,8 @@
         }
       },
       {
-        "ordinal": 12,
-        "name": "created_by!",
+        "ordinal": 13,
+        "name": "created_by",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -147,8 +158,8 @@
         }
       },
       {
-        "ordinal": 13,
-        "name": "updated_by!",
+        "ordinal": 14,
+        "name": "updated_by",
         "type_info": "Uuid",
         "origin": {
           "Table": {
@@ -158,14 +169,14 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "quantity_in_stock!",
         "type_info": "Int4",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
-        "name": "image_url",
+        "ordinal": 16,
+        "name": "image_url?",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -175,7 +186,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "is_perishable",
         "type_info": "Bool",
         "origin": {
@@ -188,7 +199,9 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Int8",
+        "Int8",
+        "Bool"
       ]
     },
     "nullable": [
@@ -197,11 +210,12 @@
       false,
       true,
       true,
-      true,
-      true,
+      false,
       true,
       false,
       false,
+      false,
+      true,
       false,
       false,
       false,
@@ -211,5 +225,5 @@
       false
     ]
   },
-  "hash": "5c13381d37e4490a8f3cdf4187293347af0304b843afa24ae48746ebd3572924"
+  "hash": "d2978ffb0b83379a4d16cca0f8f09a783792430c162123d65f04800593f958a0"
 }

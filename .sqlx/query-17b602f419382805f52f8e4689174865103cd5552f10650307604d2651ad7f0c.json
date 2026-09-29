@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_shown_online as \"is_shown_online!\",\n                p.selling_price as \"selling_price!\",\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url,\n                p.is_perishable as \"is_perishable!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            WHERE p.is_deleted IS FALSE\n            ",
+  "query": "\n            SELECT\n                p.id as \"id!\",\n                p.barcode as \"barcode!\",\n                p.name as \"name!\",\n                p.description,\n                p.category_id,\n                c1.name as category,\n                p.sub_category_id,\n                c2.name as sub_category,\n                p.is_shown_online as \"is_shown_online!\",\n                p.selling_price as \"selling_price!\",\n                p.original_price,\n                p.created_at as \"created_at!\",\n                p.updated_at as \"updated_at!\",\n                p.created_by as \"created_by!\",\n                p.updated_by as \"updated_by!\",\n                COALESCE((SELECT SUM(quantity_remaining)::INT4 FROM inventory WHERE product_id = p.id), 0) as \"quantity_in_stock!\",\n                p.image_url,\n                p.is_perishable as \"is_perishable!\"\n            FROM products p\n            LEFT JOIN categories c1 on c1.id = p.category_id\n            LEFT JOIN categories c2 on c2.id = p.sub_category_id\n            WHERE p.is_deleted IS FALSE\n            ",
   "describe": {
     "columns": [
       {
@@ -115,6 +115,17 @@
       },
       {
         "ordinal": 10,
+        "name": "original_price",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "original_price"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
         "name": "created_at!",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +136,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "updated_at!",
         "type_info": "Timestamptz",
         "origin": {
@@ -136,7 +147,7 @@
         }
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "created_by!",
         "type_info": "Uuid",
         "origin": {
@@ -147,7 +158,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "updated_by!",
         "type_info": "Uuid",
         "origin": {
@@ -158,13 +169,13 @@
         }
       },
       {
-        "ordinal": 14,
+        "ordinal": 15,
         "name": "quantity_in_stock!",
         "type_info": "Int4",
         "origin": "Expression"
       },
       {
-        "ordinal": 15,
+        "ordinal": 16,
         "name": "image_url",
         "type_info": "Text",
         "origin": {
@@ -175,7 +186,7 @@
         }
       },
       {
-        "ordinal": 16,
+        "ordinal": 17,
         "name": "is_perishable!",
         "type_info": "Bool",
         "origin": {
@@ -200,6 +211,7 @@
       true,
       false,
       false,
+      true,
       false,
       false,
       false,
@@ -209,5 +221,5 @@
       false
     ]
   },
-  "hash": "c04a78a6c7fc9823172c851a4dd4cb94ae92479992c98788fbdf8a962ce62b77"
+  "hash": "17b602f419382805f52f8e4689174865103cd5552f10650307604d2651ad7f0c"
 }

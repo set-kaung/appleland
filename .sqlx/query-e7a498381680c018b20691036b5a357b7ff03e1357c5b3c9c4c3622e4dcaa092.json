@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,is_shown_online,image_url,created_by,updated_by, is_perishable)\n        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$9,$10)\n        RETURNING\n            id\n        ",
+  "query": "\n        INSERT INTO products (barcode, name, description,category_id,sub_category_id,selling_price,original_price,is_shown_online,image_url,created_by,updated_by, is_perishable)\n        VALUES ($1, $2, $3, $4, $5, $6, $7,$8,$9,$10,$10,$11)\n        RETURNING\n            id\n        ",
   "describe": {
     "columns": [
       {
@@ -23,6 +23,7 @@
         "Uuid",
         "Uuid",
         "Numeric",
+        "Numeric",
         "Bool",
         "Text",
         "Uuid",
@@ -33,5 +34,5 @@
       false
     ]
   },
-  "hash": "2e8a4509e7d5b84b1a5a1c79f757668529ea2dce494dc4d09c54a45e1047765a"
+  "hash": "e7a498381680c018b20691036b5a357b7ff03e1357c5b3c9c4c3622e4dcaa092"
 }

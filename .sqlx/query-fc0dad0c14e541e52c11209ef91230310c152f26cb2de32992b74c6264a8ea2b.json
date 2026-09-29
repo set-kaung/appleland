@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE products\n       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, is_shown_online = $7, image_url = $8, updated_by= $9, updated_at = NOW(), is_perishable = $10\n       WHERE id = $11 AND is_deleted IS FALSE\n       RETURNING id\n        ",
+  "query": "UPDATE products\n       SET barcode = $1, name = $2, description = $3,category_id = $4,sub_category_id = $5, selling_price = $6, original_price = $7, is_shown_online = $8, image_url = $9, updated_by= $10, updated_at = NOW(), is_perishable = $11\n       WHERE id = $12 AND is_deleted IS FALSE\n       RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -23,6 +23,7 @@
         "Uuid",
         "Uuid",
         "Numeric",
+        "Numeric",
         "Bool",
         "Text",
         "Uuid",
@@ -34,5 +35,5 @@
       false
     ]
   },
-  "hash": "b6cab47360158c07e1e980ef212feef84971b75b49ca4604e37f7b4235e71297"
+  "hash": "fc0dad0c14e541e52c11209ef91230310c152f26cb2de32992b74c6264a8ea2b"
 }
