@@ -37,7 +37,8 @@ pub async fn get_admin_token_info(
             unit_price,
             claimed_by as "claimed_by?",
             expires_at,
-            (expires_at < NOW()) as "expired!"
+            (expires_at < NOW()) as "expired!",
+            free_quantity as "free_quantity!"
            FROM playground_purchase_tokens WHERE id = $1"#,
         id
     )
@@ -224,15 +225,17 @@ pub async fn update_claimed_status(
     tx: &mut Transaction<'_, Postgres>,
     claimed_user_id: Uuid,
     token: Uuid,
+    free_quantity: i32,
 ) -> Result<Option<ClaimedTokenInfo>, StoreError> {
     let claimed = sqlx::query_as!(
         ClaimedTokenInfo,
         r#"UPDATE playground_purchase_tokens
-               SET claimed_by = $1, claimed_at = NOW(), status = 'claimed'
+               SET claimed_by = $1, claimed_at = NOW(), status = 'claimed', free_quantity = $3
                WHERE id = $2 AND status = 'pending' AND expires_at > NOW()
-               RETURNING id, claimed_by as "claimed_by!", total_quantity, unit_price, created_by"#,
+               RETURNING id, claimed_by as "claimed_by!", total_quantity, unit_price, created_by, free_quantity as "free_quantity!""#,
         claimed_user_id,
-        token
+        token,
+        free_quantity
     )
     .fetch_optional(&mut **tx)
     .await?;
@@ -394,12 +397,13 @@ pub async fn insert_playground_purchase(
     is_free_redemption: bool,
     created_by: Uuid,
     unit_price: Decimal,
+    token_id: Uuid,
 ) -> Result<PlaygroundPurchaseRow, StoreError> {
     let result = sqlx::query_as!(PlaygroundPurchaseRow, r#"
-    INSERT INTO playground_purchases (user_id,quantity,is_free_redemption,created_at,created_by,unit_price)
-    VALUES($1,$2,$3,NOW(),$4,$5)
-    RETURNING id, user_id,quantity,is_free_redemption,created_by,created_at,unit_price
-    "#,user_id,quantity,is_free_redemption,created_by,unit_price).fetch_one(&mut **tx).await?;
+    INSERT INTO playground_purchases (user_id,quantity,is_free_redemption,created_at,created_by,unit_price,token_id)
+    VALUES($1,$2,$3,NOW(),$4,$5,$6)
+    RETURNING id, user_id,quantity,is_free_redemption,created_by,created_at,unit_price,token_id as "token_id!"
+    "#,user_id,quantity,is_free_redemption,created_by,unit_price,token_id).fetch_one(&mut **tx).await?;
     Ok(result)
 }
 

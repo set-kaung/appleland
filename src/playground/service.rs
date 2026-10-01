@@ -6,9 +6,9 @@ use std::ops::Mul;
 use uuid::Uuid;
 
 use super::model::{
-    AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery, PlaygroundCheckoutDataAdmin,
-    UserPlaygroundAccount, UserPlaygroundPurchase, UserPlaygroundPurchaseHistory,
-    UserPlaygroundPurchaseResponse, UserPlaygroundPurchasesQuery,
+    AdminCheckoutClaimData, AdminPlaygroundPurchase, AdminPlaygroundPurchasesQuery,
+    PlaygroundCheckoutDataAdmin, UserPlaygroundAccount, UserPlaygroundPurchase,
+    UserPlaygroundPurchaseHistory, UserPlaygroundPurchaseResponse, UserPlaygroundPurchasesQuery,
 };
 use crate::{
     app_error::{APIError, log_err_convert},
@@ -26,10 +26,17 @@ pub async fn claim_token(
         .await
         .map_err(|e| log_err_convert("cannot begin transaction", e, APIError::InternalErr))?;
 
-    let claimed = store::update_claimed_status(&mut tx, claimed_user_id, token).await?;
+    // Compute the number of coupons up front so the token row can record
+    // free_quantity atomically when the token is claimed. If coupon validation
+    // fails later somehow, the entire transaction rolls back and claim status is not persisted
+    let total_coupons = match &coupons {
+        Some(c) => c.len() as i32,
+        None => 0,
+    };
+    let claimed =
+        store::update_claimed_status(&mut tx, claimed_user_id, token, total_coupons).await?;
     if let Some(token_info) = claimed {
         let result = if let Some(pg_coupons) = coupons {
-            let total_coupons = pg_coupons.len() as i32;
             if total_coupons == 0 {
                 tracing::debug!("frontend sent empty json array");
                 return Err(APIError::BadRequest(
@@ -73,6 +80,7 @@ pub async fn claim_token(
                         false,
                         token_info.created_by,
                         token_info.unit_price,
+                        token_info.id,
                     )
                     .await?
                     .into(),
@@ -88,6 +96,7 @@ pub async fn claim_token(
                 true,
                 token_info.created_by,
                 token_info.unit_price,
+                token_info.id,
             )
             .await?
             .into();
@@ -110,6 +119,7 @@ pub async fn claim_token(
                 false,
                 token_info.created_by,
                 token_info.unit_price,
+                token_info.id,
             )
             .await?
             .into();
@@ -197,27 +207,26 @@ pub async fn get_playground_checkout_data_admin_service(
         return Err(APIError::NotFound);
     };
 
-    let (total_price, available_coupons) = match token_info.claimed_by {
+    let claim = match token_info.claimed_by {
         Some(user_id) => {
-            let coupons = store::get_available_user_coupons(pool, user_id).await?;
-            let coupons_redeemed = coupons.len().min(token_info.total_quantity as usize) as i32;
-            let charged_quantity = token_info.total_quantity - coupons_redeemed;
+            let charged_quantity = token_info.total_quantity - token_info.free_quantity;
             let total_price = Decimal::from_i32(charged_quantity)
                 .ok_or(APIError::InternalErr)?
                 .mul(token_info.unit_price);
-            (Some(total_price), coupons)
+            Some(AdminCheckoutClaimData {
+                claimed_by: user_id,
+                total_price,
+            })
         }
-        None => (None, Vec::new()),
+        None => None,
     };
 
     Ok(PlaygroundCheckoutDataAdmin {
-        claimed_by: token_info.claimed_by,
         total_quantity: token_info.total_quantity,
         unit_price: token_info.unit_price,
-        total_price,
-        available_coupons,
         expires_at: token_info.expires_at,
         expired: token_info.expired,
+        claim,
     })
 }
 

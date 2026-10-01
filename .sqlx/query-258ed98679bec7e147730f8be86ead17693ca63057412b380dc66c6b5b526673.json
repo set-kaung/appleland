@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE playground_purchase_tokens\n               SET claimed_by = $1, claimed_at = NOW(), status = 'claimed'\n               WHERE id = $2 AND status = 'pending' AND expires_at > NOW()\n               RETURNING id, claimed_by as \"claimed_by!\", total_quantity, unit_price, created_by",
+  "query": "UPDATE playground_purchase_tokens\n               SET claimed_by = $1, claimed_at = NOW(), status = 'claimed', free_quantity = $3\n               WHERE id = $2 AND status = 'pending' AND expires_at > NOW()\n               RETURNING id, claimed_by as \"claimed_by!\", total_quantity, unit_price, created_by, free_quantity as \"free_quantity!\"",
   "describe": {
     "columns": [
       {
@@ -57,12 +57,24 @@
             "name": "created_by"
           }
         }
+      },
+      {
+        "ordinal": 5,
+        "name": "free_quantity!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "playground_purchase_tokens",
+            "name": "free_quantity"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Uuid"
+        "Uuid",
+        "Int4"
       ]
     },
     "nullable": [
@@ -70,8 +82,9 @@
       true,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "2e42514cc821d915dbb17559da0e4d01a1603d607245c9092c7d9ed1d5e48762"
+  "hash": "258ed98679bec7e147730f8be86ead17693ca63057412b380dc66c6b5b526673"
 }

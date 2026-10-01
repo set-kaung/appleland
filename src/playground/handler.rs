@@ -167,12 +167,12 @@ pub async fn get_checkout_data(
 #[utoipa::path(
     get,
     path = "/admin/playground/checkout/{token_id}",
-    description = "Checkout data for a playground claim token from the admin side. The claiming user (claimed_by) is read from the token itself; coupons are applied for that user. Unclaimed tokens return `claimed_by` = null.",
+    description = "Checkout data for a playground claim token from the admin side. Unclaimed tokens return `claim` = null. Claimed tokens return `claim` with the claiming user and computed total price.",
     params(
         ("token_id" = Uuid, Path, description = "Claim token id"),
     ),
     responses(
-        (status = 200, description = "Claimed Response", body = PlaygroundCheckoutDataAdmin),
+        (status = 200, description = "Checkout Response", body = PlaygroundCheckoutDataAdmin),
         (status = 400, description = "Bad Request"),
         (status = 401, description = "Unauthorized - Missing or invalid session"),
         (status = 403, description = "Forbidden - Insufficient privileges"),

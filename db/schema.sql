@@ -202,6 +202,7 @@ CREATE TABLE public.playground_purchase_tokens (
     claimed_by uuid,
     claimed_at timestamp with time zone,
     unit_price numeric(10,2) NOT NULL,
+    free_quantity integer DEFAULT 0 NOT NULL,
     CONSTRAINT playground_purchase_tokens_quantity_check CHECK ((total_quantity > 0))
 );
 
@@ -216,7 +217,8 @@ CREATE TABLE public.playground_purchases (
     is_free_redemption boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid NOT NULL,
-    unit_price numeric(10,2) NOT NULL
+    unit_price numeric(10,2) NOT NULL,
+    token_id uuid NOT NULL
 );
 
 --
@@ -710,6 +712,13 @@ ALTER TABLE ONLY public.playground_purchase_tokens
 
 ALTER TABLE ONLY public.playground_purchases
     ADD CONSTRAINT playground_purchases_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id);
+
+--
+-- Name: playground_purchases playground_purchases_token_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.playground_purchases
+    ADD CONSTRAINT playground_purchases_token_id_fkey FOREIGN KEY (token_id) REFERENCES public.playground_purchase_tokens(id);
 
 --
 -- Name: playground_purchases playground_purchases_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

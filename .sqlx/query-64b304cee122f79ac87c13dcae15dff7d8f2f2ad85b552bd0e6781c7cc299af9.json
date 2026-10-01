@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT\n            total_quantity,\n            unit_price,\n            claimed_by as \"claimed_by?\",\n            expires_at,\n            (expires_at < NOW()) as \"expired!\"\n           FROM playground_purchase_tokens WHERE id = $1",
+  "query": "SELECT\n            total_quantity,\n            unit_price,\n            claimed_by as \"claimed_by?\",\n            expires_at,\n            (expires_at < NOW()) as \"expired!\",\n            free_quantity as \"free_quantity!\"\n           FROM playground_purchase_tokens WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -52,6 +52,17 @@
         "name": "expired!",
         "type_info": "Bool",
         "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "free_quantity!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "playground_purchase_tokens",
+            "name": "free_quantity"
+          }
+        }
       }
     ],
     "parameters": {
@@ -64,8 +75,9 @@
       false,
       true,
       false,
-      null
+      null,
+      false
     ]
   },
-  "hash": "27bccb07ff6fa9bc89d7d512d2ae1dc3e710af5a6e507695f3a9651029c46934"
+  "hash": "64b304cee122f79ac87c13dcae15dff7d8f2f2ad85b552bd0e6781c7cc299af9"
 }

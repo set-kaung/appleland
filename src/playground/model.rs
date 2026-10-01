@@ -89,6 +89,7 @@ pub struct ClaimedTokenInfo {
     pub total_quantity: i32,
     pub unit_price: Decimal,
     pub created_by: Uuid,
+    pub free_quantity: i32,
 }
 
 #[derive(FromRow)]
@@ -100,6 +101,7 @@ pub struct PlaygroundPurchaseRow {
     pub created_at: OffsetDateTime,
     pub created_by: Uuid,
     pub unit_price: Decimal,
+    pub token_id: Uuid,
 }
 
 #[derive(FromRow)]
@@ -152,14 +154,18 @@ pub struct PlaygroundCheckoutData {
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct AdminCheckoutClaimData {
+    pub claimed_by: Uuid,
+    pub total_price: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct PlaygroundCheckoutDataAdmin {
-    pub claimed_by: Option<Uuid>,
     pub total_quantity: i32,
     pub unit_price: Decimal,
-    pub total_price: Option<Decimal>,
-    pub available_coupons: Vec<Uuid>,
     pub expires_at: OffsetDateTime,
     pub expired: bool,
+    pub claim: Option<AdminCheckoutClaimData>,
 }
 
 #[derive(Debug, FromRow)]
@@ -169,6 +175,7 @@ pub struct AdminTokenInfo {
     pub claimed_by: Option<Uuid>,
     pub expires_at: OffsetDateTime,
     pub expired: bool,
+    pub free_quantity: i32,
 }
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]

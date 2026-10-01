@@ -433,7 +433,7 @@ paths:
     get:
       tags:
       - Admin Playground
-      description: Checkout data for a playground claim token from the admin side. The claiming user (claimed_by) is read from the token itself; coupons are applied for that user. Unclaimed tokens return `claimed_by` = null.
+      description: Checkout data for a playground claim token from the admin side. Unclaimed tokens return `claim` = null. Claimed tokens return `claim` with the claiming user and computed total price.
       operationId: get_checkout_data_admin
       parameters:
       - name: token_id
@@ -445,7 +445,7 @@ paths:
           format: uuid
       responses:
         '200':
-          description: Claimed Response
+          description: Checkout Response
           content:
             application/json:
               schema:
@@ -1100,6 +1100,17 @@ components:
         updated_by:
           type: string
           format: uuid
+    AdminCheckoutClaimData:
+      type: object
+      required:
+      - claimed_by
+      - total_price
+      properties:
+        claimed_by:
+          type: string
+          format: uuid
+        total_price:
+          type: string
     AdminInventory:
       type: object
       required:
@@ -1998,29 +2009,18 @@ components:
       required:
       - total_quantity
       - unit_price
-      - available_coupons
       - expires_at
       - expired
       properties:
-        available_coupons:
-          type: array
-          items:
-            type: string
-            format: uuid
-        claimed_by:
-          type:
-          - string
-          - 'null'
-          format: uuid
+        claim:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/AdminCheckoutClaimData'
         expired:
           type: boolean
         expires_at:
           type: string
           format: date-time
-        total_price:
-          type:
-          - string
-          - 'null'
         total_quantity:
           type: integer
           format: int32
