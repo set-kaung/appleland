@@ -21,6 +21,8 @@ pub struct AdminSale {
     pub total_amount: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    pub is_instore_sale: bool,
+    pub by_admin: Option<SaleAdminDetail>,
 }
 
 #[derive(Debug, FromRow, Serialize, ToSchema)]
@@ -34,7 +36,7 @@ pub struct AdminSaleDetails {
     pub by_admin: Option<SaleAdminDetail>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SaleAdminDetail {
     pub id: Uuid,
     pub username: String,
@@ -86,12 +88,27 @@ pub struct SaleItem {
     pub created_at: OffsetDateTime,
 }
 
-impl From<SaleRow> for AdminSale {
-    fn from(value: SaleRow) -> Self {
+#[derive(FromRow)]
+pub struct AdminSaleListRow {
+    pub id: Uuid,
+    pub total_amount: Decimal,
+    pub created_at: OffsetDateTime,
+    pub is_instore_sale: bool,
+    pub admin_id: Option<Uuid>,
+    pub admin_username: Option<String>,
+}
+
+impl From<AdminSaleListRow> for AdminSale {
+    fn from(value: AdminSaleListRow) -> Self {
         Self {
             id: value.id,
             total_amount: value.total_amount,
             created_at: value.created_at,
+            is_instore_sale: value.is_instore_sale,
+            by_admin: value
+                .admin_id
+                .zip(value.admin_username)
+                .map(|(id, username)| SaleAdminDetail { id, username }),
         }
     }
 }

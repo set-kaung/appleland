@@ -1,7 +1,8 @@
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
 use crate::sales::model::{
-    SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter, SaleSummaryRow,
+    AdminSaleListRow, SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter,
+    SaleSummaryRow,
 };
 use rust_decimal::Decimal;
 use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
@@ -12,12 +13,16 @@ pub async fn fetch_all_paginated(
     pool: &PgPool,
     limit: i64,
     offset: i64,
-) -> Result<(Vec<SaleRow>, i64), StoreError> {
+) -> Result<(Vec<AdminSaleListRow>, i64), StoreError> {
     let rows = sqlx::query_as!(
-        SaleRow,
+        AdminSaleListRow,
         r#"
-    SELECT id,total_amount,created_at,is_instore as "is_instore_sale" from sales
-    ORDER BY created_at DESC, id DESC
+    SELECT s.id, s.total_amount, s.created_at, s.is_instore AS is_instore_sale,
+           a.id AS admin_id, a.username AS admin_username
+    FROM sales s
+    LEFT JOIN admin_sales sa ON sa.sale_id = s.id
+    LEFT JOIN admins a ON a.id = sa.admin_id
+    ORDER BY s.created_at DESC, s.id DESC
     LIMIT $1 OFFSET $2
     "#,
         limit,

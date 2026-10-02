@@ -21,7 +21,7 @@ use uuid::Uuid;
 #[utoipa::path(
     get,
     path = "/admin/sales",
-    description = "List all sales with pagination.",
+    description = "List all sales with pagination. Each row includes `is_instore_sale` (channel) and `by_admin` (cashier, null for online sales).",
     params(pagination::PaginationQuery),
     responses(
         (status = 200, description = "Paginated list of sale records", body = pagination::PaginatedResponse<AdminSale>),
@@ -43,7 +43,7 @@ pub async fn get_sales_paginated(
 
     let data = result.into_iter().map(|x| x.into()).collect();
     let total_pages = (total_items as f64 / limit as f64).ceil() as i64;
-    // AdminSale implement From<SaleRow>
+    // AdminSale implement From<AdminSaleListRow>
     Ok(Json(pagination::PaginatedResponse {
         data,
         total_items,
