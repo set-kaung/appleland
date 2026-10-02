@@ -35,6 +35,7 @@ pub async fn perform_sale_admin(
     pool: &PgPool,
     admin_id: Uuid,
     products: &[SaleProduct],
+    payment_method: Option<&str>,
 ) -> Result<Uuid, StoreError> {
     perform_sale(
         pool,
@@ -42,7 +43,7 @@ pub async fn perform_sale_admin(
         SaleActor::Admin(admin_id),
         None,
         None,
-        None,
+        payment_method,
         true,
     )
     .await

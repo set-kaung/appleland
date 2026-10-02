@@ -865,7 +865,7 @@ paths:
     post:
       tags:
       - Admin Sales
-      description: Create a new sale (POS checkout) with FIFO inventory deduction.
+      description: Create a new sale (POS checkout) with FIFO inventory deduction. `payment_method` is optional and stored on the sale record (e.g. "Cash", "Card", "KPay"). When omitted, `sales.payment_method` is NULL.
       operationId: create_admin_sale
       requestBody:
         content:
@@ -1476,6 +1476,10 @@ components:
       required:
       - sale_products
       properties:
+        payment_method:
+          type:
+          - string
+          - 'null'
         sale_products:
           type: array
           items:

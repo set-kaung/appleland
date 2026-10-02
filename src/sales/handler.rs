@@ -82,7 +82,7 @@ pub async fn get_sale_detail_by_id(
 #[utoipa::path(
     post,
     path = "/admin/sales",
-    description = "Create a new sale (POS checkout) with FIFO inventory deduction.",
+    description = "Create a new sale (POS checkout) with FIFO inventory deduction. `payment_method` is optional and stored on the sale record (e.g. \"Cash\", \"Card\", \"KPay\"). When omitted, `sales.payment_method` is NULL.",
     request_body = CreateAdminSalePayload,
     responses(
         (status = 201, description = "Sale created", body = Uuid),
@@ -104,7 +104,13 @@ pub async fn create_admin_sale(
 ) -> ApiResultWithStatusCode<Uuid> {
     let admin_id = session_admin_id(session).await?;
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
-    let sale_id = service::perform_sale_admin(&state.db, admin_id, &aggregated_products).await?;
+    let sale_id = service::perform_sale_admin(
+        &state.db,
+        admin_id,
+        &aggregated_products,
+        payload.payment_method.as_deref(),
+    )
+    .await?;
     Ok((StatusCode::CREATED, Json(sale_id)))
 }
 

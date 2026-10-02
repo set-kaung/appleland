@@ -61,6 +61,7 @@ pub struct CreateUserSalePayload {
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct CreateAdminSalePayload {
     pub sale_products: Vec<SaleProduct>,
+    pub payment_method: Option<String>,
 }
 
 #[derive(Debug, Clone)]
