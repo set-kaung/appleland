@@ -100,6 +100,7 @@ async fn main() -> Result<(), AppError> {
         conf.demo_mode,
         AiConfig {
             gemini_api_key: conf.gemini_api_key,
+            gemini_model: conf.gemini_model,
             daily_limit: conf.ai_chat_daily_limit,
         },
     );

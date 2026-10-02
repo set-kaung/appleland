@@ -9,8 +9,8 @@ use crate::ai::store;
 use crate::app_error::APIError;
 use crate::app_state::AppState;
 
-const GEMINI_GENERATE_URL: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const GEMINI_API_BASE: &str =
+    "https://generativelanguage.googleapis.com/v1beta/models";
 const UPSTREAM_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub struct RelayResponse {
@@ -32,8 +32,9 @@ pub async fn chat_service(
     }
 
     let client = reqwest::Client::new();
+    let url = format!("{}/{}:generateContent", GEMINI_API_BASE, state.ai.gemini_model);
     let upstream = client
-        .post(GEMINI_GENERATE_URL)
+        .post(url)
         .header("x-goog-api-key", &state.ai.gemini_api_key)
         .header(CONTENT_TYPE, "application/json")
         .timeout(UPSTREAM_TIMEOUT)

@@ -14,6 +14,7 @@ pub struct StorageConfig {
 #[derive(Clone)]
 pub struct AiConfig {
     pub gemini_api_key: String,
+    pub gemini_model: String,
     pub daily_limit: u32,
 }
 

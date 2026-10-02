@@ -27,6 +27,9 @@ pub struct Config {
 
     pub gemini_api_key: String,
 
+    #[serde(default = "default_gemini_model")]
+    pub gemini_model: String,
+
     #[serde(default = "default_ai_chat_daily_limit")]
     pub ai_chat_daily_limit: u32,
 
@@ -62,6 +65,7 @@ impl std::fmt::Display for Config {
                 burst_size: {}
                 per_sec: {}
                 demo_mode: {}
+                gemini_model: {}
                 ai_chat_daily_limit: {}
                 session_delete_interval: {}
                 playground_token_cleanup_interval: {}
@@ -80,6 +84,7 @@ impl std::fmt::Display for Config {
             self.burst_size,
             self.per_sec,
             self.demo_mode,
+            self.gemini_model,
             self.ai_chat_daily_limit,
             self.session_delete_interval,
             self.playground_token_cleanup_interval,
@@ -142,6 +147,10 @@ fn default_true() -> bool {
 
 fn default_ai_chat_daily_limit() -> u32 {
     20
+}
+
+fn default_gemini_model() -> String {
+    "gemini-2.5-flash".to_string()
 }
 
 pub fn load_config() -> Result<Config, AppError> {
