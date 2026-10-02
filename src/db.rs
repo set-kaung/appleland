@@ -27,6 +27,9 @@ pub async fn connect_db(db_url: String) -> Result<Pool<Postgres>, sqlx::Error> {
 
 pub trait DBQueryFilter<DB: sqlx::Database> {
     fn apply_filter(&self, query_builder: &mut sqlx::QueryBuilder<DB>);
+
+    /// Add an ORDER BY clause. The default is no sorting.
+    fn apply_sort(&self, _query_builder: &mut sqlx::QueryBuilder<DB>) {}
 }
 
 pub fn escape_like(input: &str) -> String {
