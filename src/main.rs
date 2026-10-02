@@ -36,7 +36,7 @@ async fn main() -> Result<(), AppError> {
     let env_level: String = std::env::var("ENV").unwrap_or("prod".to_string());
 
     let env_filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("appleland=info,tower_http=warn"))
+        .or_else(|_| EnvFilter::try_new("appleland=info,tower_http=warn,axum::serve=warn"))
         .map_err(|e| AppError::StartupErr(format!("failed to set up tracing: {e}")))?;
 
     if json_logs {
