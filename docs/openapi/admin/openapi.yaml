@@ -834,7 +834,7 @@ paths:
     get:
       tags:
       - Admin Sales
-      description: List all sales with pagination.
+      description: List all sales with pagination. Each row includes `is_instore_sale` (channel) and `by_admin` (cashier, null for online sales).
       operationId: get_sales_paginated
       parameters:
       - name: page
@@ -1421,13 +1421,20 @@ components:
       - id
       - total_amount
       - created_at
+      - is_instore_sale
       properties:
+        by_admin:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/SaleAdminDetail'
         created_at:
           type: string
           format: date-time
         id:
           type: string
           format: uuid
+        is_instore_sale:
+          type: boolean
         total_amount:
           type: string
     AdminSaleDetails:
@@ -1942,13 +1949,20 @@ components:
             - id
             - total_amount
             - created_at
+            - is_instore_sale
             properties:
+              by_admin:
+                oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/SaleAdminDetail'
               created_at:
                 type: string
                 format: date-time
               id:
                 type: string
                 format: uuid
+              is_instore_sale:
+                type: boolean
               total_amount:
                 type: string
         total_items:
