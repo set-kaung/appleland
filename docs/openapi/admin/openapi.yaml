@@ -28,6 +28,55 @@ paths:
           description: Upstream Gemini request timed out
       security:
       - session_cookie: []
+  /admin/analytics/ai/by-category:
+    get:
+      tags:
+      - Admin AI Analytics
+      description: Category-level performance for the AI assistant / manager dashboards. Aggregates sale items by product category over the given Myanmar date range.
+      operationId: get_category_performance
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Paginated category performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_CategoryPerformanceRow'
+        '403':
+          description: Forbidden - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/analytics/ai/product-performance:
     get:
       tags:
@@ -1599,6 +1648,39 @@ components:
           $ref: '#/components/schemas/AdminRole'
         username:
           type: string
+    CategoryPerformanceRow:
+      type: object
+      required:
+      - units_sold
+      - revenue
+      - cost
+      - profit
+      - margin_pct
+      properties:
+        category:
+          type:
+          - string
+          - 'null'
+        category_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        cost:
+          type: string
+        margin_pct:
+          type: string
+        profit:
+          type: string
+        revenue:
+          type: string
+        share_pct:
+          type:
+          - string
+          - 'null'
+        units_sold:
+          type: integer
+          format: int64
     CreateAdjustmentPayload:
       type: object
       required:
@@ -2169,6 +2251,58 @@ components:
                 type: boolean
               total_amount:
                 type: string
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
+    PaginatedResponse_CategoryPerformanceRow:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - units_sold
+            - revenue
+            - cost
+            - profit
+            - margin_pct
+            properties:
+              category:
+                type:
+                - string
+                - 'null'
+              category_id:
+                type:
+                - string
+                - 'null'
+                format: uuid
+              cost:
+                type: string
+              margin_pct:
+                type: string
+              profit:
+                type: string
+              revenue:
+                type: string
+              share_pct:
+                type:
+                - string
+                - 'null'
+              units_sold:
+                type: integer
+                format: int64
         total_items:
           type: integer
           format: int64
