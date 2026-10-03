@@ -28,6 +28,55 @@ paths:
           description: Upstream Gemini request timed out
       security:
       - session_cookie: []
+  /admin/analytics/ai/product-performance:
+    get:
+      tags:
+      - Admin AI Analytics
+      description: Product performance for the AI assistant / manager dashboards. Aggregates sale items over the given Myanmar date range. Defaults to all history if no dates are supplied.
+      operationId: get_product_performance
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Paginated product performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_ProductPerformanceRow'
+        '403':
+          description: Forbidden - Missing or invalid session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/categories:
     get:
       tags:
@@ -2126,6 +2175,64 @@ components:
         total_pages:
           type: integer
           format: int64
+    PaginatedResponse_ProductPerformanceRow:
+      type: object
+      required:
+      - data
+      - total_items
+      - total_pages
+      - current_page
+      properties:
+        current_page:
+          type: integer
+          format: int64
+        data:
+          type: array
+          items:
+            type: object
+            required:
+            - product_id
+            - name
+            - units_sold
+            - revenue
+            - cost
+            - profit
+            - margin_pct
+            - last_sold_at
+            properties:
+              category:
+                type:
+                - string
+                - 'null'
+              cost:
+                type: string
+              last_sold_at:
+                type: string
+                format: date-time
+              margin_pct:
+                type: string
+              name:
+                type: string
+              product_id:
+                type: string
+                format: uuid
+              profit:
+                type: string
+              revenue:
+                type: string
+              share_pct:
+                type:
+                - string
+                - 'null'
+              units_sold:
+                type: integer
+                format: int64
+        total_items:
+          type: integer
+          format: int64
+        total_pages:
+          type: integer
+          format: int64
     PaginatedResponse_UserResponse:
       type: object
       required:
@@ -2211,6 +2318,45 @@ components:
           format: uuid
         query:
           type: string
+    ProductPerformanceRow:
+      type: object
+      required:
+      - product_id
+      - name
+      - units_sold
+      - revenue
+      - cost
+      - profit
+      - margin_pct
+      - last_sold_at
+      properties:
+        category:
+          type:
+          - string
+          - 'null'
+        cost:
+          type: string
+        last_sold_at:
+          type: string
+          format: date-time
+        margin_pct:
+          type: string
+        name:
+          type: string
+        product_id:
+          type: string
+          format: uuid
+        profit:
+          type: string
+        revenue:
+          type: string
+        share_pct:
+          type:
+          - string
+          - 'null'
+        units_sold:
+          type: integer
+          format: int64
     ProductSearchParams:
       type: object
       properties:
@@ -2524,3 +2670,5 @@ tags:
   description: Staff account management
 - name: Admin AI Assistant
   description: Gemini-powered chat assistant for admins
+- name: Admin AI Analytics
+  description: AI / manager analytics over sales and inventory

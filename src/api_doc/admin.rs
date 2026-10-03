@@ -10,6 +10,7 @@ use crate::inventory::model::{
     AdjustmentReason, AdminInventory, CreateAdjustmentPayload, InventoryAdjustment,
     InventoryBatchInfo, NewInventoryPayload, StockLevel,
 };
+use crate::analytics::model::ProductPerformanceRow;
 use crate::orders::model::{
     AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, OrderItem, OrderShippingAddress,
     OrderStatusEntry, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
@@ -28,6 +29,7 @@ use crate::users::model::UserResponse;
 
 use crate::auth::admin as admin_auth;
 use crate::ai;
+use crate::analytics;
 use crate::category;
 use crate::image_storage;
 use crate::inventory;
@@ -51,6 +53,7 @@ use utoipa::OpenApi;
     modifiers(&SessionCookieSecurityAddon),
     paths(
         ai::handler::chat,
+        analytics::handler::get_product_performance,
         category::handler::create_category,
         category::handler::get_all_categories,
         category::handler::update_category,
@@ -92,6 +95,8 @@ use utoipa::OpenApi;
             admin_auth::model::Admin,
             AdminProduct,
             PaginationQuery,
+            ProductPerformanceRow,
+            PaginatedResponse<ProductPerformanceRow>,
             CreateProductPayload,
             UpdateProductPayload,
             ProductFilter,
@@ -149,6 +154,7 @@ use utoipa::OpenApi;
         (name = "Admin Orders", description = "Order tracking and delivery management"),
         (name = "Admin Staff", description = "Staff account management"),
         (name = "Admin AI Assistant", description = "Gemini-powered chat assistant for admins"),
+        (name = "Admin AI Analytics", description = "AI / manager analytics over sales and inventory"),
     )
 )]
 pub struct AdminApiDoc;
