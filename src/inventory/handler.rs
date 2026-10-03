@@ -3,13 +3,15 @@ use crate::app_extractor::{RequiresRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::session_admin_id;
 use crate::inventory::model::{
-    AdminInventory, LowStockQuery, NewInventoryPayload, NewInventoryRecord, StockLevel,
+    AdminInventory, AvailableOnlyQuery, CreateAdjustmentPayload, InventoryAdjustment,
+    InventoryBatchInfo, LowStockQuery, NewInventoryPayload, NewInventoryRecord, StockLevel,
 };
 use crate::inventory::service;
 use crate::product::service as product_service;
-use crate::{ApiResult, PaginatedApiResult, pagination};
+use crate::{ApiResult, ApiResultWithStatusCode, PaginatedApiResult, pagination};
 use axum::Json;
 use axum::extract::{Path, Query, State};
+use axum::http::StatusCode;
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -115,4 +117,66 @@ pub async fn get_product_inventory_stock_level(
     let limit = query.limit.unwrap_or(10);
     let result = service::get_stock_levels(&state.db, limit).await?;
     Ok(Json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/admin/inventory/{product_id}/batches",
+    description = "List inventory batches for a product. Use available_only=true to filter to batches with remaining stock (for deductions).",
+    params(
+        ("product_id" = Uuid, Path, description = "Product UUID"),
+        AvailableOnlyQuery
+    ),
+    responses(
+        (status = 200, description = "Inventory batches", body = Vec<InventoryBatchInfo>),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Product not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Inventory"
+)]
+pub async fn get_product_batches(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    Path(product_id): Path<Uuid>,
+    Query(query): Query<AvailableOnlyQuery>,
+) -> ApiResult<Vec<InventoryBatchInfo>> {
+    let batches = service::get_product_batches(
+        &state.db,
+        product_id,
+        query.available_only.unwrap_or(false),
+    )
+    .await?;
+    Ok(Json(batches))
+}
+
+#[utoipa::path(
+    post,
+    path = "/admin/inventory/adjustments",
+    description = "Record an inventory adjustment (damaged, expired, miscounted, corrected). Deducts or adds stock. For additions, inventory_id is required. For deductions, inventory_id is optional (FIFO from oldest batch with remaining stock).",
+    request_body = CreateAdjustmentPayload,
+    responses(
+        (status = 201, description = "Adjustment recorded", body = InventoryAdjustment),
+        (status = 400, description = "Bad request"),
+        (status = 401, description = "Unauthorized - Missing or invalid session"),
+        (status = 404, description = "Product not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("session_cookie" = [])
+    ),
+    tag = "Admin Inventory"
+)]
+pub async fn create_adjustment(
+    RequiresRole(_role, _): RequiresRole<SuperAdminRole>,
+    State(state): State<AppState>,
+    session: Session,
+    Json(payload): Json<CreateAdjustmentPayload>,
+) -> ApiResultWithStatusCode<InventoryAdjustment> {
+    let admin_id: Uuid = session_admin_id(session).await?;
+    let result = service::create_adjustment(&state.db, &payload, admin_id).await?;
+    Ok((StatusCode::CREATED, Json(result)))
 }

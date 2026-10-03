@@ -138,6 +138,35 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/inventory/adjustments:
+    post:
+      tags:
+      - Admin Inventory
+      description: Record an inventory adjustment (damaged, expired, miscounted, corrected). Deducts or adds stock. For additions, inventory_id is required. For deductions, inventory_id is optional (FIFO from oldest batch with remaining stock).
+      operationId: create_adjustment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdjustmentPayload'
+        required: true
+      responses:
+        '201':
+          description: Adjustment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryAdjustment'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/inventory/low-stock:
     get:
       tags:
@@ -237,6 +266,42 @@ paths:
                 $ref: '#/components/schemas/AdminInventory'
         '400':
           description: Bad request
+        '401':
+          description: Unauthorized - Missing or invalid session
+        '404':
+          description: Product not found
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
+  /admin/inventory/{product_id}/batches:
+    get:
+      tags:
+      - Admin Inventory
+      description: List inventory batches for a product. Use available_only=true to filter to batches with remaining stock (for deductions).
+      operationId: get_product_batches
+      parameters:
+      - name: product_id
+        in: path
+        description: Product UUID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: available_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Inventory batches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryBatchInfo'
         '401':
           description: Unauthorized - Missing or invalid session
         '404':
@@ -1041,6 +1106,13 @@ paths:
       - session_cookie: []
 components:
   schemas:
+    AdjustmentReason:
+      type: string
+      enum:
+      - damaged
+      - expired
+      - miscounted
+      - corrected
     Admin:
       type: object
       required:
@@ -1478,6 +1550,30 @@ components:
           $ref: '#/components/schemas/AdminRole'
         username:
           type: string
+    CreateAdjustmentPayload:
+      type: object
+      required:
+      - product_id
+      - quantity_change
+      - reason
+      properties:
+        inventory_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        note:
+          type:
+          - string
+          - 'null'
+        product_id:
+          type: string
+          format: uuid
+        quantity_change:
+          type: integer
+          format: int32
+        reason:
+          $ref: '#/components/schemas/AdjustmentReason'
     CreateAdminSalePayload:
       type: object
       required:
@@ -1581,6 +1677,65 @@ components:
       - Pending
       - OnDelivery
       - Received
+    InventoryAdjustment:
+      type: object
+      required:
+      - id
+      - product_id
+      - quantity_change
+      - reason
+      - recorded_by
+      - created_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        inventory_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        note:
+          type:
+          - string
+          - 'null'
+        product_id:
+          type: string
+          format: uuid
+        quantity_change:
+          type: integer
+          format: int32
+        reason:
+          $ref: '#/components/schemas/AdjustmentReason'
+        recorded_by:
+          type: string
+          format: uuid
+    InventoryBatchInfo:
+      type: object
+      required:
+      - id
+      - short_id
+      - quantity_received
+      - quantity_remaining
+      - received_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        quantity_received:
+          type: integer
+          format: int32
+        quantity_remaining:
+          type: integer
+          format: int32
+        received_at:
+          type: string
+          format: date-time
+        short_id:
+          type: string
     LoginRequest:
       type: object
       required:

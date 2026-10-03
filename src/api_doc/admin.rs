@@ -6,7 +6,10 @@ use crate::product::model::{
 use crate::category::model::{
     AdminCategory, CreateCategoryPayload, DeleteCategoryResponse, UpdateCategoryPayload,
 };
-use crate::inventory::model::{AdminInventory, NewInventoryPayload, StockLevel};
+use crate::inventory::model::{
+    AdjustmentReason, AdminInventory, CreateAdjustmentPayload, InventoryAdjustment,
+    InventoryBatchInfo, NewInventoryPayload, StockLevel,
+};
 use crate::orders::model::{
     AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, OrderItem, OrderShippingAddress,
     OrderStatusEntry, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
@@ -55,6 +58,8 @@ use utoipa::OpenApi;
         inventory::handler::insert_inventory_record,
         inventory::handler::get_product_inventory_records,
         inventory::handler::get_product_inventory_stock_level,
+        inventory::handler::get_product_batches,
+        inventory::handler::create_adjustment,
         admin_auth::handler::admin_login_handler,
         admin_auth::handler::admin_logout_handler,
         playground::handler::creat_playground_token,
@@ -107,6 +112,10 @@ use utoipa::OpenApi;
             AdminInventory,
             NewInventoryPayload,
             StockLevel,
+            AdjustmentReason,
+            CreateAdjustmentPayload,
+            InventoryAdjustment,
+            InventoryBatchInfo,
             CreateClaimTokenPayload,
             TicketSaleSummary,
             TicketSaleSummaryFilter,

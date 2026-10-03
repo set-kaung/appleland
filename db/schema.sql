@@ -12,6 +12,17 @@
 CREATE SCHEMA tower_sessions;
 
 --
+-- Name: adjustment_reason; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.adjustment_reason AS ENUM (
+    'damaged',
+    'expired',
+    'miscounted',
+    'corrected'
+);
+
+--
 -- Name: admin_role; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -122,6 +133,22 @@ CREATE TABLE public.inventory (
     received_at timestamp with time zone DEFAULT now() NOT NULL,
     expiry_date timestamp with time zone,
     CONSTRAINT check_remaining CHECK ((quantity_remaining >= 0))
+);
+
+--
+-- Name: inventory_adjustments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.inventory_adjustments (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    product_id uuid NOT NULL,
+    inventory_id uuid,
+    quantity_change integer NOT NULL,
+    reason public.adjustment_reason NOT NULL,
+    recorded_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    note text,
+    CONSTRAINT inventory_adjustments_quantity_change_check CHECK ((quantity_change <> 0))
 );
 
 --
@@ -377,6 +404,13 @@ ALTER TABLE ONLY public.categories
     ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
 
 --
+-- Name: inventory_adjustments inventory_adjustments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory_adjustments
+    ADD CONSTRAINT inventory_adjustments_pkey PRIMARY KEY (id);
+
+--
 -- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -559,6 +593,12 @@ CREATE UNIQUE INDEX idx_products_barcode_active ON public.products USING btree (
 CREATE INDEX idx_sale_items_product_id ON public.sale_items USING btree (product_id);
 
 --
+-- Name: idx_sale_items_sale_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sale_items_sale_id ON public.sale_items USING btree (sale_id);
+
+--
 -- Name: idx_sales_admin; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -677,6 +717,27 @@ ALTER TABLE ONLY public.sale_items
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT fk_user_sales_sale_id FOREIGN KEY (sale_id) REFERENCES public.sales(id);
+
+--
+-- Name: inventory_adjustments inventory_adjustments_inventory_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory_adjustments
+    ADD CONSTRAINT inventory_adjustments_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES public.inventory(id);
+
+--
+-- Name: inventory_adjustments inventory_adjustments_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory_adjustments
+    ADD CONSTRAINT inventory_adjustments_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);
+
+--
+-- Name: inventory_adjustments inventory_adjustments_recorded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.inventory_adjustments
+    ADD CONSTRAINT inventory_adjustments_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.admins(id);
 
 --
 -- Name: order_status_history order_status_history_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -

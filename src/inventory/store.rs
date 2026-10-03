@@ -1,7 +1,9 @@
-use crate::inventory::model::{InventoryRow, StockLevelRow};
+use crate::inventory::model::{
+    AdjustmentReason, InventoryAdjustmentRow, InventoryBatchRow, InventoryRow, StockLevelRow,
+};
 use crate::{app_error, inventory::model::NewInventoryRecord};
 
-use sqlx::{Executor, PgPool, Postgres, Transaction};
+use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
 use uuid::Uuid;
 
 pub async fn insert_new_inventory_record<'e, E>(
@@ -133,4 +135,93 @@ pub async fn get_product_stock_levels(
     .await?;
 
     Ok(rows)
+}
+
+pub async fn get_product_batches(
+    pool: &PgPool,
+    product_id: Uuid,
+    available_only: bool,
+) -> Result<Vec<InventoryBatchRow>, app_error::StoreError> {
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
+        "SELECT id, product_id, quantity_received, quantity_remaining, received_at FROM inventory WHERE product_id = ",
+    );
+    qb.push_bind(product_id);
+    if available_only {
+        qb.push(" AND quantity_remaining > 0");
+    }
+    qb.push(" ORDER BY received_at ASC, id ASC");
+
+    let rows = qb.build_query_as::<InventoryBatchRow>().fetch_all(pool).await?;
+    Ok(rows)
+}
+
+pub async fn lock_inventory_batch(
+    tx: &mut Transaction<'_, Postgres>,
+    product_id: Uuid,
+    inventory_id: Uuid,
+) -> Result<InventoryBatchRow, app_error::StoreError> {
+    Ok(sqlx::query_as!(
+        InventoryBatchRow,
+        "SELECT id, product_id, quantity_received, quantity_remaining, received_at FROM inventory WHERE product_id = $1 AND id = $2 FOR UPDATE",
+        product_id,
+        inventory_id,
+    )
+    .fetch_one(&mut **tx)
+    .await?)
+}
+
+pub async fn lock_fifo_inventory_batches(
+    tx: &mut Transaction<'_, Postgres>,
+    product_id: Uuid,
+) -> Result<Vec<InventoryBatchRow>, app_error::StoreError> {
+    Ok(sqlx::query_as!(
+        InventoryBatchRow,
+        "SELECT id, product_id, quantity_received, quantity_remaining, received_at FROM inventory WHERE product_id = $1 AND quantity_remaining > 0 ORDER BY received_at ASC, id ASC FOR UPDATE",
+        product_id,
+    )
+    .fetch_all(&mut **tx)
+    .await?)
+}
+
+pub async fn update_inventory_batch_quantity(
+    tx: &mut Transaction<'_, Postgres>,
+    inventory_id: Uuid,
+    quantity_change: i32,
+) -> Result<u64, app_error::StoreError> {
+    let result = sqlx::query!(
+        "UPDATE inventory SET quantity_remaining = quantity_remaining + $1, updated_at = NOW() WHERE id = $2",
+        quantity_change,
+        inventory_id,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(result.rows_affected())
+}
+
+pub async fn insert_inventory_adjustment(
+    tx: &mut Transaction<'_, Postgres>,
+    product_id: Uuid,
+    inventory_id: Option<Uuid>,
+    quantity_change: i32,
+    reason: AdjustmentReason,
+    admin_id: Uuid,
+    note: Option<&str>,
+) -> Result<InventoryAdjustmentRow, app_error::StoreError> {
+    Ok(sqlx::query_as!(
+        InventoryAdjustmentRow,
+        r#"
+        INSERT INTO inventory_adjustments (product_id, inventory_id, quantity_change, reason, recorded_by, note)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, product_id, inventory_id, quantity_change, reason as "reason: AdjustmentReason", recorded_by, created_at, note
+        "#,
+        product_id,
+        inventory_id,
+        quantity_change,
+        reason as AdjustmentReason,
+        admin_id,
+        note,
+    )
+    .fetch_one(&mut **tx)
+    .await?)
 }

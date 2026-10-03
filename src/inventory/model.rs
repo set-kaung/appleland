@@ -156,8 +156,104 @@ impl From<InventoryRow> for AdminInventory {
             created_at: value.created_at,
             updated_at: value.updated_at,
             received_at: value.received_at,
-
             expiry_date: value.expiry_date,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, sqlx::Type, Serialize, Deserialize, ToSchema)]
+#[sqlx(type_name = "adjustment_reason", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum AdjustmentReason {
+    Damaged,
+    Expired,
+    Miscounted,
+    Corrected,
+}
+
+#[derive(Debug, FromRow)]
+pub struct InventoryAdjustmentRow {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub inventory_id: Option<Uuid>,
+    pub quantity_change: i32,
+    pub reason: AdjustmentReason,
+    pub recorded_by: Uuid,
+    pub created_at: OffsetDateTime,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct InventoryAdjustment {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub inventory_id: Option<Uuid>,
+    pub quantity_change: i32,
+    pub reason: AdjustmentReason,
+    pub recorded_by: Uuid,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    pub note: Option<String>,
+}
+
+impl From<InventoryAdjustmentRow> for InventoryAdjustment {
+    fn from(row: InventoryAdjustmentRow) -> Self {
+        Self {
+            id: row.id,
+            product_id: row.product_id,
+            inventory_id: row.inventory_id,
+            quantity_change: row.quantity_change,
+            reason: row.reason,
+            recorded_by: row.recorded_by,
+            created_at: row.created_at,
+            note: row.note,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateAdjustmentPayload {
+    pub product_id: Uuid,
+    pub inventory_id: Option<Uuid>,
+    pub quantity_change: i32,
+    pub reason: AdjustmentReason,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct AvailableOnlyQuery {
+    pub available_only: Option<bool>,
+}
+
+#[derive(Debug, FromRow)]
+pub struct InventoryBatchRow {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub quantity_received: i32,
+    pub quantity_remaining: i32,
+    pub received_at: OffsetDateTime,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct InventoryBatchInfo {
+    pub id: Uuid,
+    pub short_id: String,
+    pub quantity_received: i32,
+    pub quantity_remaining: i32,
+    #[serde(with = "time::serde::rfc3339")]
+    pub received_at: OffsetDateTime,
+}
+
+impl From<InventoryBatchRow> for InventoryBatchInfo {
+    fn from(row: InventoryBatchRow) -> Self {
+        let id_string = row.id.to_string();
+        Self {
+            short_id: id_string.split_at(8).0.to_string(),
+            id: row.id,
+            quantity_received: row.quantity_received,
+            quantity_remaining: row.quantity_remaining,
+            received_at: row.received_at,
         }
     }
 }

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inventory SET quantity_remaining = quantity_remaining + $1, updated_at = NOW() WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "86f2e02d0820f5671a000990b6ee4aacff19aa5ed51e40ba857b23d4e930373e"
+}
