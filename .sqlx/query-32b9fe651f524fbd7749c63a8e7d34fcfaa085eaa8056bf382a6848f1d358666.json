@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            p.id AS \"product_id!\",\n            p.name AS \"product_name!\",\n            i.id AS \"batch_id!\",\n            i.quantity_remaining AS \"quantity_remaining!\",\n            i.expiry_date AS \"expiry_date!\"\n        FROM inventory i\n        JOIN products p ON p.id = i.product_id\n        WHERE i.quantity_remaining > 0\n          AND (i.expiry_date AT TIME ZONE 'Asia/Yangon')::date\n              BETWEEN (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Yangon')::date\n                  AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Yangon')::date + $1::integer\n        ORDER BY i.expiry_date ASC, i.id ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "product_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "product_name!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "products",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "batch_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "quantity_remaining!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "quantity_remaining"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "expiry_date!",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "expiry_date"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "32b9fe651f524fbd7749c63a8e7d34fcfaa085eaa8056bf382a6848f1d358666"
+}

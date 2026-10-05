@@ -18,7 +18,7 @@ pub async fn fetch_all_paginated(
         AdminSaleListRow,
         r#"
     SELECT s.id, s.total_amount, s.created_at, s.is_instore AS is_instore_sale,
-           a.id AS admin_id, a.username AS admin_username
+           a.id AS "admin_id?", a.username AS "admin_username?"
     FROM sales s
     LEFT JOIN admin_sales sa ON sa.sale_id = s.id
     LEFT JOIN admins a ON a.id = sa.admin_id
