@@ -212,30 +212,13 @@ pub fn with_global_middleware(
                             .extensions()
                             .get::<ConnectInfo<SocketAddr>>()
                             .map(|ci| ci.0.to_string());
-                        let user_agent = request
-                            .headers()
-                            .get(header::USER_AGENT)
-                            .and_then(|v| v.to_str().ok())
-                            .unwrap_or("unknown");
-                        let forwarded_for = request
-                            .headers()
-                            .get("x-forwarded-for")
-                            .and_then(|v| v.to_str().ok())
-                            .unwrap_or("none");
-                        let host = request
-                            .headers()
-                            .get(header::HOST)
-                            .and_then(|v| v.to_str().ok())
-                            .unwrap_or("none");
+
                         tracing::debug_span!(
                             "http_request",
                             request_id = %request_id,
                             method = %request.method(),
                             path = %request.uri().path(),
                             remote_addr = %remote_addr.as_deref().unwrap_or("unknown"),
-                            user_agent = %user_agent,
-                            x_forwarded_for = %forwarded_for,
-                            host = %host,
                         )
                     })
                     .on_response(|response: &Response, latency: Duration, _span: &Span| {
