@@ -126,7 +126,7 @@ fn default_burst_size() -> u32 {
 }
 
 fn default_expiry_interval() -> String {
-    "1m".to_string()
+    "8h".to_string()
 }
 
 fn default_playground_cleanup_interval() -> String {
@@ -150,7 +150,7 @@ fn default_ai_chat_daily_limit() -> u32 {
 }
 
 fn default_gemini_model() -> String {
-    "gemini-2.5-flash".to_string()
+    "gemini-3.1-flash-lite".to_string()
 }
 
 pub fn load_config() -> Result<Config, AppError> {
