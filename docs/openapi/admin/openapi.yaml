@@ -77,6 +77,40 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/analytics/ai/expiring-soon:
+    get:
+      tags:
+      - Admin AI Analytics
+      description: SuperAdmin-only expiry report. Returns all inventory batches with quantity_remaining > 0 whose expiry date falls between today and today + days, inclusive, using Asia/Yangon calendar dates. Defaults to 30 days; days=0 returns batches expiring today. Excludes earlier expiry dates and batches without an expiry date. Results are unpaginated and ordered by expiry_date, then batch_id, ascending. expiry_date is returned as an RFC 3339 timestamp.
+      operationId: get_expiring_soon
+      parameters:
+      - name: days
+        in: query
+        description: Days ahead from today in Asia/Yangon, inclusive. Zero means today only.
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 30
+          maximum: 65535
+          minimum: 0
+      responses:
+        '200':
+          description: All matching inventory batches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpiringSoonRow'
+        '400':
+          description: Invalid days query parameter; must be an integer from 0 to 65535
+        '403':
+          description: Forbidden - Requires a SuperAdmin session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/analytics/ai/product-performance:
     get:
       tags:
@@ -1808,6 +1842,30 @@ components:
       - Pending
       - OnDelivery
       - Received
+    ExpiringSoonRow:
+      type: object
+      required:
+      - product_id
+      - product_name
+      - batch_id
+      - quantity_remaining
+      - expiry_date
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Inventory record ID identifying the batch.
+        expiry_date:
+          type: string
+          format: date-time
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+        quantity_remaining:
+          type: integer
+          format: int32
     InventoryAdjustment:
       type: object
       required:

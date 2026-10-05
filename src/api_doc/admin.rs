@@ -10,7 +10,7 @@ use crate::inventory::model::{
     AdjustmentReason, AdminInventory, CreateAdjustmentPayload, InventoryAdjustment,
     InventoryBatchInfo, NewInventoryPayload, StockLevel,
 };
-use crate::analytics::model::{CategoryPerformanceRow, ProductPerformanceRow};
+use crate::analytics::model::{CategoryPerformanceRow, ExpiringSoonRow, ProductPerformanceRow};
 use crate::orders::model::{
     AdminOrderDetail, AdminOrderRow, AdminOrdersQuery, OrderItem, OrderShippingAddress,
     OrderStatusEntry, UpdateOrderDeliveryStatusResponse, UpdateOrderTrackingURLPayload,
@@ -55,6 +55,7 @@ use utoipa::OpenApi;
         ai::handler::chat,
         analytics::handler::get_product_performance,
         analytics::handler::get_category_performance,
+        analytics::handler::get_expiring_soon,
         category::handler::create_category,
         category::handler::get_all_categories,
         category::handler::update_category,
@@ -100,6 +101,7 @@ use utoipa::OpenApi;
             PaginatedResponse<ProductPerformanceRow>,
             CategoryPerformanceRow,
             PaginatedResponse<CategoryPerformanceRow>,
+            ExpiringSoonRow,
             CreateProductPayload,
             UpdateProductPayload,
             ProductFilter,

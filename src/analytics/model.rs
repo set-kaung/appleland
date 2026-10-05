@@ -8,6 +8,30 @@ use uuid::Uuid;
 use crate::db::DBQueryFilter;
 use sqlx::Postgres;
 
+#[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct ExpiringSoonQuery {
+    /// Days ahead from today in Asia/Yangon, inclusive. Zero means today only.
+    #[serde(default = "default_expiring_soon_days")]
+    #[param(default = 30, minimum = 0, maximum = 65535)]
+    pub days: u16,
+}
+
+fn default_expiring_soon_days() -> u16 {
+    30
+}
+
+#[derive(Debug, FromRow, Serialize, ToSchema)]
+pub struct ExpiringSoonRow {
+    pub product_id: Uuid,
+    pub product_name: String,
+    /// Inventory record ID identifying the batch.
+    pub batch_id: Uuid,
+    pub quantity_remaining: i32,
+    #[serde(with = "time::serde::rfc3339")]
+    pub expiry_date: OffsetDateTime,
+}
+
 #[derive(Debug, FromRow, Serialize, ToSchema)]
 pub struct ProductPerformanceRow {
     pub product_id: Uuid,

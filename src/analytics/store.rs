@@ -1,9 +1,39 @@
 use crate::analytics::model::{
-    ByCategoryFilter, CategoryPerformanceRow, ProductPerformanceFilter, ProductPerformanceRow,
+    ByCategoryFilter, CategoryPerformanceRow, ExpiringSoonRow, ProductPerformanceFilter,
+    ProductPerformanceRow,
 };
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
 use sqlx::{PgPool, Postgres, QueryBuilder};
+
+pub async fn get_expiring_soon(
+    pool: &PgPool,
+    days: u16,
+) -> Result<Vec<ExpiringSoonRow>, StoreError> {
+    let rows = sqlx::query_as!(
+        ExpiringSoonRow,
+        r#"
+        SELECT
+            p.id AS "product_id!",
+            p.name AS "product_name!",
+            i.id AS "batch_id!",
+            i.quantity_remaining AS "quantity_remaining!",
+            i.expiry_date AS "expiry_date!"
+        FROM inventory i
+        JOIN products p ON p.id = i.product_id
+        WHERE i.quantity_remaining > 0
+          AND (i.expiry_date AT TIME ZONE 'Asia/Yangon')::date
+              BETWEEN (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Yangon')::date
+                  AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Yangon')::date + $1::integer
+        ORDER BY i.expiry_date ASC, i.id ASC
+        "#,
+        i32::from(days)
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
+}
 
 pub async fn get_product_performance(
     pool: &PgPool,
