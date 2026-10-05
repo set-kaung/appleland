@@ -4,6 +4,7 @@
 *.sh
 *dump*.sql
 !run.sh
+!check.sh
 drop.sql
 *.md
 !docs/*.md
