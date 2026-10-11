@@ -29,6 +29,7 @@ use crate::users::model::UserResponse;
 
 use crate::auth::admin as admin_auth;
 use crate::ai;
+use crate::admin_settings;
 use crate::analytics;
 use crate::category;
 use crate::image_storage;
@@ -53,6 +54,7 @@ use utoipa::OpenApi;
     modifiers(&SessionCookieSecurityAddon),
     paths(
         ai::handler::chat,
+        admin_settings::handlers::get_all_settings,
         analytics::handler::get_product_performance,
         analytics::handler::get_category_performance,
         analytics::handler::get_expiring_soon,
@@ -144,7 +146,8 @@ use utoipa::OpenApi;
             AdminStaff,
             UserResponse,
             PaginatedResponse<UserResponse>,
-            image_storage::UploadResponse
+            image_storage::UploadResponse,
+            admin_settings::model::SettingResponse
         )
     ),
     tags(
@@ -160,6 +163,7 @@ use utoipa::OpenApi;
         (name = "Admin Staff", description = "Staff account management"),
         (name = "Admin AI Assistant", description = "Gemini-powered chat assistant for admins"),
         (name = "Admin AI Analytics", description = "AI / manager analytics over sales and inventory"),
+        (name = "Admin Settings", description = "Store configuration settings"),
     )
 )]
 pub struct AdminApiDoc;

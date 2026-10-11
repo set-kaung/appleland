@@ -18,8 +18,8 @@ use tower_http::cors::CorsLayer;
 use crate::app_state::AppState;
 use crate::{ai, app_error::AppError, orders, staff};
 use crate::{
-    analytics, auth, category, image_storage, inventory, middleware, playground, product, sales,
-    users,
+    admin_settings, analytics, auth, category, image_storage, inventory, middleware, playground,
+    product, sales, users,
 };
 use sqlx::Connection;
 
@@ -86,6 +86,7 @@ pub fn create_app(
         .nest("/playground", playground::route_admin())
         .nest("/orders", orders::route_admin())
         .nest("/analytics", analytics::route_admin())
+        .nest("/settings", admin_settings::route_admin())
         .nest("/uploads", image_storage::route())
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),

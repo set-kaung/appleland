@@ -2,7 +2,6 @@ use crate::admin_settings::model::{NewSetting, SettingRow};
 use crate::app_error::StoreError;
 use sqlx::{Executor, PgPool, Postgres};
 
-#[allow(dead_code)]
 pub async fn get_all_settings(pool: &PgPool) -> Result<Vec<SettingRow>, StoreError> {
     let rows = sqlx::query_as!(
         SettingRow,
