@@ -24,6 +24,15 @@ impl SettingValueType {
             SettingValueType::Boolean => "boolean",
         }
     }
+
+    pub fn is_valid(self, value: &serde_json::Value) -> bool {
+        match self {
+            SettingValueType::String => value.is_string(),
+            SettingValueType::Integer => value.as_i64().is_some(),
+            SettingValueType::Decimal => value.is_number(),
+            SettingValueType::Boolean => value.is_boolean(),
+        }
+    }
 }
 
 impl TryFrom<&str> for SettingValueType {
@@ -78,6 +87,11 @@ pub struct SettingPayload {
     pub value: serde_json::Value,
     pub description: Option<String>,
     pub value_type: SettingValueType,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UpdateSettingPayload {
+    pub value: serde_json::Value,
 }
 
 #[allow(dead_code)]

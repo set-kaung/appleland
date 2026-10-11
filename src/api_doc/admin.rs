@@ -55,6 +55,7 @@ use utoipa::OpenApi;
     paths(
         ai::handler::chat,
         admin_settings::handlers::get_all_settings,
+        admin_settings::handlers::update_setting_value,
         analytics::handler::get_product_performance,
         analytics::handler::get_category_performance,
         analytics::handler::get_expiring_soon,
@@ -147,7 +148,8 @@ use utoipa::OpenApi;
             UserResponse,
             PaginatedResponse<UserResponse>,
             image_storage::UploadResponse,
-            admin_settings::model::SettingResponse
+            admin_settings::model::SettingResponse,
+            admin_settings::model::UpdateSettingPayload
         )
     ),
     tags(

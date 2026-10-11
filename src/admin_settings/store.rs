@@ -1,6 +1,7 @@
 use crate::admin_settings::model::{NewSetting, SettingRow};
 use crate::app_error::StoreError;
 use sqlx::{Executor, PgPool, Postgres};
+use uuid::Uuid;
 
 pub async fn get_all_settings(pool: &PgPool) -> Result<Vec<SettingRow>, StoreError> {
     let rows = sqlx::query_as!(
@@ -60,6 +61,33 @@ where
         new_setting.description,
         new_setting.value_type.as_str(),
         new_setting.updated_by,
+    )
+    .fetch_one(executor)
+    .await?;
+
+    Ok(result)
+}
+
+pub async fn update_setting_value<'e, E>(
+    executor: E,
+    key: &str,
+    value: serde_json::Value,
+    updated_by: Option<Uuid>,
+) -> Result<SettingRow, StoreError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    let result = sqlx::query_as!(
+        SettingRow,
+        r#"
+        UPDATE settings
+        SET value = $2, updated_by = $3, updated_at = NOW()
+        WHERE key = $1
+        RETURNING key, value, description, type AS value_type, created_at, updated_at, updated_by
+        "#,
+        key,
+        value,
+        updated_by,
     )
     .fetch_one(executor)
     .await?;
