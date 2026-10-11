@@ -2,7 +2,7 @@
 
 use crate::app_error::StoreError;
 use crate::inventory::model::InventoryRow;
-use crate::sales::model::SaleProduct;
+use crate::sales::model::{ProductPrice, SaleProduct};
 use crate::sales::service::build_sale_items;
 use rust_decimal::Decimal;
 use std::collections::HashMap;
@@ -25,6 +25,13 @@ fn make_inventory(product_id: Uuid, quantity_remaining: i32, unit_cost: i64) -> 
     }
 }
 
+fn make_price(selling: i64, original: Option<i64>) -> ProductPrice {
+    ProductPrice {
+        selling_price: Decimal::new(selling, 2),
+        original_price: original.map(|v| Decimal::new(v, 2)),
+    }
+}
+
 fn make_sale_product(product_id: Uuid, quantity: i32) -> SaleProduct {
     SaleProduct {
         product_id,
@@ -35,12 +42,12 @@ fn make_sale_product(product_id: Uuid, quantity: i32) -> SaleProduct {
 #[test]
 fn test_enough_inventory_single_entry() {
     let product_id = Uuid::new_v4();
-    let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
+    let product_prices = HashMap::from([(product_id, make_price(500, None))]);
     let inventory = vec![make_inventory(product_id, 10, 100)];
     let sale_products = vec![make_sale_product(product_id, 5)];
 
     let (items, deductions) =
-        build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
+        build_sale_items(&sale_products, &product_prices, &inventory).unwrap();
 
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].quantity, 5);
@@ -53,14 +60,14 @@ fn test_enough_inventory_single_entry() {
 #[test]
 fn test_enough_inventory_fifo_split_across_entries() {
     let product_id = Uuid::new_v4();
-    let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
+    let product_prices = HashMap::from([(product_id, make_price(500, None))]);
     let inv1 = make_inventory(product_id, 3, 100);
     let inv2 = make_inventory(product_id, 7, 150);
     let inventory = vec![inv1.clone(), inv2.clone()];
     let sale_products = vec![make_sale_product(product_id, 8)];
 
     let (items, deductions) =
-        build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
+        build_sale_items(&sale_products, &product_prices, &inventory).unwrap();
 
     assert_eq!(items.len(), 2);
 
@@ -78,11 +85,11 @@ fn test_enough_inventory_fifo_split_across_entries() {
 #[test]
 fn test_not_enough_inventory() {
     let product_id = Uuid::new_v4();
-    let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
+    let product_prices = HashMap::from([(product_id, make_price(500, None))]);
     let inventory = vec![make_inventory(product_id, 3, 100)];
     let sale_products = vec![make_sale_product(product_id, 5)];
 
-    let result = build_sale_items(&sale_products, &selling_prices, &inventory);
+    let result = build_sale_items(&sale_products, &product_prices, &inventory);
 
     assert!(matches!(
         result,
@@ -93,11 +100,11 @@ fn test_not_enough_inventory() {
 #[test]
 fn test_zero_inventory_entries() {
     let product_id = Uuid::new_v4();
-    let selling_prices = HashMap::from([(product_id, Decimal::new(500, 2))]);
+    let product_prices = HashMap::from([(product_id, make_price(500, None))]);
     let inventory: Vec<InventoryRow> = vec![];
     let sale_products = vec![make_sale_product(product_id, 1)];
 
-    let result = build_sale_items(&sale_products, &selling_prices, &inventory);
+    let result = build_sale_items(&sale_products, &product_prices, &inventory);
 
     assert!(matches!(
         result,
@@ -109,9 +116,9 @@ fn test_zero_inventory_entries() {
 fn test_multiple_products() {
     let product_a = Uuid::new_v4();
     let product_b = Uuid::new_v4();
-    let selling_prices = HashMap::from([
-        (product_a, Decimal::new(500, 2)),
-        (product_b, Decimal::new(800, 2)),
+    let product_prices = HashMap::from([
+        (product_a, make_price(500, None)),
+        (product_b, make_price(800, None)),
     ]);
     let inv_a = make_inventory(product_a, 10, 100);
     let inv_b = make_inventory(product_b, 5, 200);
@@ -122,7 +129,7 @@ fn test_multiple_products() {
     ];
 
     let (items, deductions) =
-        build_sale_items(&sale_products, &selling_prices, &inventory).unwrap();
+        build_sale_items(&sale_products, &product_prices, &inventory).unwrap();
 
     assert_eq!(items.len(), 2);
     assert_eq!(items[0].product_id, product_a);
@@ -131,4 +138,35 @@ fn test_multiple_products() {
     assert_eq!(items[1].quantity, 3);
 
     assert_eq!(deductions, vec![(inv_a.id, 4), (inv_b.id, 3)]);
+}
+
+#[test]
+fn test_discounted_price_snapshot_carried_into_every_sale_item() {
+    let product_id = Uuid::new_v4();
+    let product_prices = HashMap::from([(product_id, make_price(500, Some(800)))]);
+    let inv1 = make_inventory(product_id, 3, 100);
+    let inv2 = make_inventory(product_id, 7, 150);
+    let inventory = vec![inv1, inv2];
+    let sale_products = vec![make_sale_product(product_id, 8)];
+
+    let (items, _) = build_sale_items(&sale_products, &product_prices, &inventory).unwrap();
+
+    assert_eq!(items.len(), 2);
+    assert_eq!(items[0].selling_price, Decimal::new(500, 2));
+    assert_eq!(items[0].original_price, Some(Decimal::new(800, 2)));
+    assert_eq!(items[1].selling_price, Decimal::new(500, 2));
+    assert_eq!(items[1].original_price, Some(Decimal::new(800, 2)));
+}
+
+#[test]
+fn test_undiscounted_price_snapshot_is_none() {
+    let product_id = Uuid::new_v4();
+    let product_prices = HashMap::from([(product_id, make_price(500, None))]);
+    let inventory = vec![make_inventory(product_id, 10, 100)];
+    let sale_products = vec![make_sale_product(product_id, 5)];
+
+    let (items, _) = build_sale_items(&sale_products, &product_prices, &inventory).unwrap();
+
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].original_price, None);
 }

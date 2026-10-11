@@ -90,6 +90,9 @@ pub enum APIError {
     #[error("payment not confirmed for order")]
     PaymentNotConfirmed,
 
+    #[error("payment already processed")]
+    PaymentAlreadyProcessed,
+
     #[error("too many requests: {0}")]
     TooManyRequests(String),
 
@@ -125,6 +128,9 @@ impl IntoResponse for APIError {
             }
             APIError::PaymentNotConfirmed => {
                 (StatusCode::PAYMENT_REQUIRED, "payment not confirmed").into_response()
+            }
+            APIError::PaymentAlreadyProcessed => {
+                (StatusCode::CONFLICT, "payment already processed").into_response()
             }
             APIError::TooManyRequests(e) => (StatusCode::TOO_MANY_REQUESTS, e).into_response(),
             APIError::GatewayTimeout => {

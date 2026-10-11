@@ -54,6 +54,13 @@ pub enum SaleActor {
     User(Uuid),
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct SalePayment<'a> {
+    pub order_id: Option<&'a str>,
+    pub provider: Option<&'a str>,
+    pub method: Option<&'a str>,
+}
+
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct CreateUserSalePayload {
     pub payment_order_id: String,
@@ -66,6 +73,18 @@ pub struct CreateAdminSalePayload {
     pub payment_method: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct ProductPrice {
+    pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SaleTotalInfo {
+    pub total_amount: Decimal,
+    pub points_earnable_amount: Decimal,
+}
+
 #[derive(Debug, Clone)]
 pub struct SaleProductDTO {
     pub product_id: Uuid,
@@ -73,6 +92,7 @@ pub struct SaleProductDTO {
     pub cost_price: Decimal,
     pub inventory_id: Uuid,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize, ToSchema)]
@@ -83,6 +103,7 @@ pub struct SaleItem {
     pub sale_id: Uuid,
     pub quantity: i32,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub cost_price: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,

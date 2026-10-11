@@ -233,6 +233,7 @@ pub async fn fetch_order_items(
             p.name as "product_name!",
             si.quantity,
             si.selling_price,
+            si.original_price,
             si.cost_price,
             si.created_at
         FROM sale_items si

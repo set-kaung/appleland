@@ -105,3 +105,54 @@ pub async fn get_all_users_paginated(
 
     Ok((result, total.unwrap_or(0)))
 }
+
+pub async fn insert_user_store_points(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+) -> Result<(), StoreError> {
+    sqlx::query!(
+        "INSERT INTO user_store_points (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING",
+        user_id
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
+pub async fn update_user_store_points_balance(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    points: i32,
+) -> Result<i32, StoreError> {
+    let result = sqlx::query_scalar!(
+        r#"UPDATE user_store_points
+           SET balance = user_store_points.balance + $1, updated_at = NOW()
+           WHERE user_id = $2
+           RETURNING balance"#,
+        points,
+        user_id
+    )
+    .fetch_one(&mut **tx)
+    .await?;
+
+    Ok(result)
+}
+
+pub async fn insert_user_point_transaction(
+    tx: &mut Transaction<'_, Postgres>,
+    user_id: Uuid,
+    sale_id: Uuid,
+    delta: i32,
+    reason: &str,
+) -> Result<(), StoreError> {
+    sqlx::query!(
+        "INSERT INTO user_point_transactions (user_id, sale_id, delta, reason) VALUES ($1, $2, $3, $4)",
+        user_id,
+        sale_id,
+        delta,
+        reason
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}

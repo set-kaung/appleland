@@ -7,7 +7,10 @@ use uuid::Uuid;
 use crate::app_error::{APIError, StoreError};
 use crate::inventory;
 use crate::orders;
-use crate::sales::model::{AdminSaleDetails, SaleActor, SaleProduct, SaleProductDTO};
+use crate::sales::model::{
+    AdminSaleDetails, ProductPrice, SaleActor, SalePayment, SaleProduct, SaleProductDTO,
+    SaleTotalInfo,
+};
 use crate::users;
 
 type InventoryDeduction = (Uuid, i32);
@@ -16,19 +19,27 @@ type SaleItemsWithDeductions = (Vec<SaleProductDTO>, Vec<InventoryDeduction>);
 pub async fn compute_sale_total(
     pool: &PgPool,
     products: &[SaleProduct],
-) -> Result<Decimal, StoreError> {
+) -> Result<SaleTotalInfo, StoreError> {
     let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
-    let prices = sale_store::fetch_selling_prices(pool, &product_ids).await?;
+    let prices = sale_store::fetch_product_prices(pool, &product_ids).await?;
 
     let mut total = Decimal::ZERO;
+    let mut total_non_discount = Decimal::ZERO;
     for p in products {
         let price = prices.get(&p.product_id).ok_or_else(|| {
             StoreError::InvalidInput(format!("product not found: {}", p.product_id))
         })?;
-        total += *price * Decimal::from(p.quantity);
+        let cost = price.selling_price * Decimal::from(p.quantity);
+        total += cost;
+        if price.original_price.is_none() {
+            total_non_discount += cost;
+        }
     }
 
-    Ok(total)
+    Ok(SaleTotalInfo {
+        total_amount: total,
+        points_earnable_amount: total_non_discount,
+    })
 }
 
 pub async fn perform_sale_admin(
@@ -36,14 +47,17 @@ pub async fn perform_sale_admin(
     admin_id: Uuid,
     products: &[SaleProduct],
     payment_method: Option<&str>,
-) -> Result<Uuid, StoreError> {
+) -> Result<Uuid, APIError> {
     perform_sale(
         pool,
         products,
         SaleActor::Admin(admin_id),
+        SalePayment {
+            order_id: None,
+            provider: None,
+            method: payment_method,
+        },
         None,
-        None,
-        payment_method,
         true,
     )
     .await
@@ -56,15 +70,19 @@ pub async fn perform_sale_user(
     payment_order_id: &str,
     payment_provider: &str,
     payment_method: &str,
-) -> Result<Uuid, StoreError> {
+    points_earnable_amount: Decimal,
+) -> Result<Uuid, APIError> {
     tracing::debug!("perfrom_sale_user called");
     perform_sale(
         pool,
         products,
         SaleActor::User(user_id),
-        Some(payment_order_id),
-        Some(payment_provider),
-        Some(payment_method),
+        SalePayment {
+            order_id: Some(payment_order_id),
+            provider: Some(payment_provider),
+            method: Some(payment_method),
+        },
+        Some(points_earnable_amount),
         false,
     )
     .await
@@ -74,23 +92,22 @@ async fn perform_sale(
     pool: &PgPool,
     products: &[SaleProduct],
     actor: SaleActor,
-    payment_order_id: Option<&str>,
-    payment_provider: Option<&str>,
-    payment_method: Option<&str>,
+    payment: SalePayment<'_>,
+    points_earnable_amount: Option<Decimal>,
     is_instore: bool,
-) -> Result<Uuid, StoreError> {
-    let mut tx = pool.begin().await?;
+) -> Result<Uuid, APIError> {
+    let mut tx = pool.begin().await.map_err(StoreError::from)?;
 
     let product_ids: Vec<Uuid> = products.iter().map(|p| p.product_id).collect();
 
-    let selling_prices: HashMap<Uuid, Decimal> =
-        sale_store::fetch_selling_prices(&mut *tx, &product_ids).await?;
+    let product_prices: HashMap<Uuid, ProductPrice> =
+        sale_store::fetch_product_prices(&mut *tx, &product_ids).await?;
 
     let inventory_entries =
         inventory::store::fetch_inventory_fifo_batch(&mut *tx, &product_ids).await?;
 
     let (sale_product_dtos, deductions) =
-        build_sale_items(products, &selling_prices, &inventory_entries)?;
+        build_sale_items(products, &product_prices, &inventory_entries)?;
 
     if let Err(err @ StoreError::UnexpectedRowsAffected(_)) =
         inventory::store::deduct_inventory_batch(&mut tx, &deductions).await
@@ -98,22 +115,26 @@ async fn perform_sale(
         if let Ok(fresh_entries) =
             inventory::store::fetch_inventory_fifo_batch(pool, &product_ids).await
             && let Err(shortage @ StoreError::InsufficientInventory(..)) =
-                build_sale_items(products, &selling_prices, &fresh_entries)
+                build_sale_items(products, &product_prices, &fresh_entries)
         {
-            return Err(shortage);
+            return Err(shortage.into());
         }
-        return Err(err);
+        return Err(err.into());
     }
 
     let sale_id = insert_sale_data(
         &mut tx,
         sale_product_dtos,
         is_instore,
-        payment_order_id,
-        payment_provider,
-        payment_method,
+        payment.order_id,
+        payment.provider,
+        payment.method,
     )
-    .await?;
+    .await
+    .map_err(|e| match e {
+        StoreError::UniqueKeyViolated(_) => APIError::PaymentAlreadyProcessed,
+        other => other.into(),
+    })?;
 
     match actor {
         SaleActor::Admin(admin_id) => {
@@ -122,10 +143,20 @@ async fn perform_sale(
         SaleActor::User(user_id) => {
             sale_store::insert_user_sale(&mut tx, sale_id, user_id).await?;
             insert_user_order(&mut tx, sale_id, user_id).await?;
+            if let Some(points_earnable_amount) = points_earnable_amount {
+                let points = users::service::add_user_points_from_sale(
+                    &mut tx,
+                    user_id,
+                    sale_id,
+                    points_earnable_amount,
+                )
+                .await?;
+                sale_store::update_sale_points(&mut tx, sale_id, points.points_added).await?;
+            };
         }
     }
 
-    tx.commit().await?;
+    tx.commit().await.map_err(StoreError::from)?;
 
     Ok(sale_id)
 }
@@ -191,7 +222,7 @@ pub fn validate_aggregate_sale_products(
 // create the SaleProductDTO Vector (with inventory ids) for insert_sale_data
 pub(super) fn build_sale_items(
     sale_products: &[SaleProduct],
-    selling_prices: &HashMap<Uuid, Decimal>,
+    product_prices: &HashMap<Uuid, ProductPrice>,
     inventory_entries: &[inventory::model::InventoryRow],
 ) -> Result<SaleItemsWithDeductions, StoreError> {
     let mut inventory_by_product: HashMap<Uuid, Vec<&inventory::model::InventoryRow>> =
@@ -227,7 +258,7 @@ pub(super) fn build_sale_items(
             ));
         }
 
-        let selling_price = *selling_prices
+        let price = product_prices
             .get(&product.product_id)
             .ok_or(StoreError::RecordNotFound)?;
 
@@ -247,7 +278,8 @@ pub(super) fn build_sale_items(
                 quantity: deduct,
                 cost_price: entry.unit_cost,
                 inventory_id: entry.id,
-                selling_price,
+                selling_price: price.selling_price,
+                original_price: price.original_price,
             });
 
             remaining_sale_quantity -= deduct;

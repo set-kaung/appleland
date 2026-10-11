@@ -1,5 +1,5 @@
 use super::store;
-use crate::app_error::{APIError, StoreError};
+use crate::app_error::APIError;
 use crate::app_extractor::{RequiresRole, SaleAdminRole, SuperAdminRole};
 use crate::app_state::AppState;
 use crate::auth::CurrentUser;
@@ -162,6 +162,8 @@ pub async fn create_user_sale(
 ) -> ApiResultWithStatusCode<Uuid> {
     let aggregated_products = service::validate_aggregate_sale_products(&payload.sale_products)?;
 
+    let sale_info = service::compute_sale_total(&state.db, &aggregated_products).await?;
+
     let payment_method = if state.demo_mode {
         String::from("Demo")
     } else {
@@ -173,10 +175,9 @@ pub async fn create_user_sale(
             return Err(APIError::PaymentNotConfirmed);
         };
 
-        let expected_total = service::compute_sale_total(&state.db, &aggregated_products).await?;
         let paid_amount = Decimal::from_f64(payment_info.amount)
             .ok_or_else(|| APIError::BadRequest("invalid payment amount".into()))?;
-        if paid_amount != expected_total {
+        if paid_amount != sale_info.total_amount {
             return Err(APIError::BadRequest(
                 "payment amount does not match sale total".into(),
             ));
@@ -192,11 +193,12 @@ pub async fn create_user_sale(
         &payload.payment_order_id,
         state.payment_provider.provider_name(),
         &payment_method,
+        sale_info.points_earnable_amount,
     )
     .await
     {
         Ok(sale_id) => Ok((StatusCode::CREATED, Json(sale_id))),
-        Err(StoreError::UniqueKeyViolated(_)) => {
+        Err(APIError::PaymentAlreadyProcessed) => {
             let sale_id = store::fetch_sale_id_by_payment_order_id(
                 &state.db,
                 &payload.payment_order_id,
@@ -205,6 +207,6 @@ pub async fn create_user_sale(
             .await?;
             Ok((StatusCode::CREATED, Json(sale_id)))
         }
-        Err(e) => Err(e.into()),
+        Err(e) => Err(e),
     }
 }

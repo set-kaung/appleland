@@ -1,8 +1,8 @@
 use crate::app_error::StoreError;
 use crate::db::DBQueryFilter;
 use crate::sales::model::{
-    AdminSaleListRow, SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow, SaleSummaryFilter,
-    SaleSummaryRow,
+    AdminSaleListRow, ProductPrice, SaleAdminDetail, SaleItem, SaleProductDTO, SaleRow,
+    SaleSummaryFilter, SaleSummaryRow,
 };
 use rust_decimal::Decimal;
 use sqlx::{Executor, PgPool, Postgres, QueryBuilder, Transaction};
@@ -41,7 +41,7 @@ pub async fn fetch_all_paginated(
 pub async fn fetch_sale_items(pool: &PgPool, sale_id: Uuid) -> Result<Vec<SaleItem>, StoreError> {
     let sale_items = sqlx::query_as!(
         SaleItem,
-        r#"SELECT si.id, si.product_id, p.name as product_name, si.sale_id, si.quantity, si.selling_price,si.cost_price, si.created_at
+        r#"SELECT si.id, si.product_id, p.name as product_name, si.sale_id, si.quantity, si.selling_price, si.original_price, si.cost_price, si.created_at
            FROM sale_items si
            JOIN products p on p.id = si.product_id
            WHERE sale_id = $1"#,
@@ -177,22 +177,48 @@ pub async fn insert_user_sale(
     Ok(())
 }
 
-pub async fn fetch_selling_prices<'e, E>(
+pub async fn update_sale_points(
+    tx: &mut Transaction<'_, Postgres>,
+    sale_id: Uuid,
+    points_earned: i32,
+) -> Result<(), StoreError> {
+    sqlx::query!(
+        "UPDATE sales SET points_earned = $1, is_points_applied = TRUE WHERE id = $2",
+        points_earned,
+        sale_id
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
+pub async fn fetch_product_prices<'e, E>(
     executor: E,
     product_ids: &[Uuid],
-) -> Result<HashMap<Uuid, Decimal>, StoreError>
+) -> Result<HashMap<Uuid, ProductPrice>, StoreError>
 where
     E: Executor<'e, Database = Postgres>,
 {
     let rows = sqlx::query_as!(
         PriceRow,
-        "SELECT id, selling_price FROM products WHERE id = ANY($1) AND is_deleted IS FALSE",
+        "SELECT id, selling_price, original_price FROM products WHERE id = ANY($1) AND is_deleted IS FALSE",
         product_ids
     )
     .fetch_all(executor)
     .await?;
 
-    let found: HashMap<Uuid, Decimal> = rows.into_iter().map(|r| (r.id, r.selling_price)).collect();
+    let found: HashMap<Uuid, ProductPrice> = rows
+        .into_iter()
+        .map(|r| {
+            (
+                r.id,
+                ProductPrice {
+                    selling_price: r.selling_price,
+                    original_price: r.original_price,
+                },
+            )
+        })
+        .collect();
 
     // for all client requested product ids
     // check if any is missing in products returned from db
@@ -223,6 +249,7 @@ where
 struct PriceRow {
     id: Uuid,
     selling_price: Decimal,
+    original_price: Option<Decimal>,
 }
 
 pub async fn insert_sale_items(
@@ -231,7 +258,7 @@ pub async fn insert_sale_items(
     sale_products: Vec<SaleProductDTO>,
 ) -> Result<(), StoreError> {
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        "INSERT INTO sale_items (sale_id, product_id, quantity, selling_price, cost_price, inventory_id) ",
+        "INSERT INTO sale_items (sale_id, product_id, quantity, selling_price, original_price, cost_price, inventory_id) ",
     );
 
     qb.push_values(sale_products, |mut row, item| {
@@ -239,6 +266,7 @@ pub async fn insert_sale_items(
             .push_bind(item.product_id)
             .push_bind(item.quantity)
             .push_bind(item.selling_price)
+            .push_bind(item.original_price)
             .push_bind(item.cost_price)
             .push_bind(item.inventory_id);
     });

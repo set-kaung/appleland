@@ -162,6 +162,7 @@ pub struct OrderItemRow {
     pub product_name: String,
     pub quantity: i32,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub cost_price: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
@@ -271,6 +272,7 @@ pub struct OrderItem {
     pub product_name: String,
     pub quantity: i32,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
     pub cost_price: Decimal,
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
@@ -284,6 +286,7 @@ impl From<OrderItemRow> for OrderItem {
             product_name: value.product_name,
             quantity: value.quantity,
             selling_price: value.selling_price,
+            original_price: value.original_price,
             cost_price: value.cost_price,
             created_at: value.created_at,
         }
@@ -311,6 +314,7 @@ pub struct UserOrderItem {
     pub product_name: String,
     pub quantity: i32,
     pub selling_price: Decimal,
+    pub original_price: Option<Decimal>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -338,6 +342,7 @@ impl From<OrderDetail> for UserOrderDetail {
                     product_name: i.product_name,
                     quantity: i.quantity,
                     selling_price: i.selling_price,
+                    original_price: i.original_price,
                 })
                 .collect(),
             status_history: value

@@ -32,6 +32,13 @@ pub struct UserResponse {
     pub phone_number: Option<String>,
 }
 
+#[derive(Debug, Copy, Clone, Serialize)]
+pub struct UserPointsBalanceUpdateResult {
+    pub id: Uuid,
+    pub points_added: i32,
+    pub final_balance: i32,
+}
+
 impl From<UserRow> for UserResponse {
     fn from(value: UserRow) -> Self {
         Self {
