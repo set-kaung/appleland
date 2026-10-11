@@ -287,7 +287,9 @@ CREATE TABLE public.sale_items (
     selling_price numeric(19,2) NOT NULL,
     cost_price numeric(19,2) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    original_price numeric(19,2),
     CONSTRAINT sale_items_cost_price_check CHECK ((cost_price >= (0)::numeric)),
+    CONSTRAINT sale_items_original_price_check CHECK (((original_price IS NULL) OR (original_price > selling_price))),
     CONSTRAINT sale_items_quantity_check CHECK ((quantity > 0)),
     CONSTRAINT sale_items_selling_price_check CHECK ((selling_price >= (0)::numeric))
 );
@@ -303,7 +305,14 @@ CREATE TABLE public.sales (
     is_instore boolean NOT NULL,
     payment_order_id text,
     payment_method text,
-    payment_provider text
+    payment_provider text,
+    points_earned integer DEFAULT 0 NOT NULL,
+    points_redeemed integer DEFAULT 0 NOT NULL,
+    points_discount_amount numeric(20,2) DEFAULT 0 NOT NULL,
+    is_points_applied boolean DEFAULT false NOT NULL,
+    CONSTRAINT sales_points_discount_amount_check CHECK ((points_discount_amount >= (0)::numeric)),
+    CONSTRAINT sales_points_earned_check CHECK ((points_earned >= 0)),
+    CONSTRAINT sales_points_redeemed_check CHECK ((points_redeemed >= 0))
 );
 
 --
@@ -316,8 +325,7 @@ CREATE TABLE public.settings (
     description text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    created_by uuid NOT NULL,
-    updated_by uuid NOT NULL,
+    updated_by uuid,
     type text DEFAULT 'string'::text NOT NULL,
     CONSTRAINT settings_value_type_check CHECK ((type = ANY (ARRAY['string'::text, 'integer'::text, 'decimal'::text, 'boolean'::text])))
 );
@@ -336,6 +344,21 @@ CREATE TABLE public.user_contact (
 );
 
 --
+-- Name: user_point_transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_point_transactions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    sale_id uuid,
+    delta integer NOT NULL,
+    reason text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_point_transactions_delta_check CHECK ((delta <> 0)),
+    CONSTRAINT user_point_transactions_reason_check CHECK ((reason = ANY (ARRAY['earn'::text, 'redeem'::text, 'adjust'::text, 'refund'::text])))
+);
+
+--
 -- Name: user_sales; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -344,6 +367,19 @@ CREATE TABLE public.user_sales (
     user_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     sale_id uuid NOT NULL
+);
+
+--
+-- Name: user_store_points; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_store_points (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    balance integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_store_points_balance_check CHECK ((balance >= 0))
 );
 
 --
@@ -523,11 +559,32 @@ ALTER TABLE ONLY public.user_contact
     ADD CONSTRAINT user_contact_pkey PRIMARY KEY (id);
 
 --
+-- Name: user_point_transactions user_point_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_point_transactions
+    ADD CONSTRAINT user_point_transactions_pkey PRIMARY KEY (id);
+
+--
 -- Name: user_sales user_sale_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT user_sale_pkey PRIMARY KEY (id);
+
+--
+-- Name: user_store_points user_store_points_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_store_points
+    ADD CONSTRAINT user_store_points_pkey PRIMARY KEY (id);
+
+--
+-- Name: user_store_points user_store_points_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_store_points
+    ADD CONSTRAINT user_store_points_user_id_key UNIQUE (user_id);
 
 --
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -615,6 +672,12 @@ CREATE INDEX idx_sales_created_at ON public.sales USING btree (created_at);
 --
 
 CREATE INDEX idx_tokens_status_expires ON public.playground_purchase_tokens USING btree (status, expires_at);
+
+--
+-- Name: idx_user_point_transactions_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_point_transactions_user_id ON public.user_point_transactions USING btree (user_id);
 
 --
 -- Name: idx_user_sales_user_id; Type: INDEX; Schema: public; Owner: -
@@ -824,13 +887,6 @@ ALTER TABLE ONLY public.sale_items
     ADD CONSTRAINT sale_items_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES public.inventory(id);
 
 --
--- Name: settings settings_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.settings
-    ADD CONSTRAINT settings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.admins(id);
-
---
 -- Name: settings settings_updaetd_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -852,11 +908,32 @@ ALTER TABLE ONLY public.user_contact
     ADD CONSTRAINT user_contact_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 --
+-- Name: user_point_transactions user_point_transactions_sale_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_point_transactions
+    ADD CONSTRAINT user_point_transactions_sale_id_fkey FOREIGN KEY (sale_id) REFERENCES public.sales(id);
+
+--
+-- Name: user_point_transactions user_point_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_point_transactions
+    ADD CONSTRAINT user_point_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+--
 -- Name: user_sales user_sale_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_sales
     ADD CONSTRAINT user_sale_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+--
+-- Name: user_store_points user_store_points_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_store_points
+    ADD CONSTRAINT user_store_points_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 --
 -- PostgreSQL database dump complete

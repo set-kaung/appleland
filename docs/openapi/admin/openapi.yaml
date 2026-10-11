@@ -1975,6 +1975,10 @@ components:
         id:
           type: string
           format: uuid
+        original_price:
+          type:
+          - string
+          - 'null'
         product_id:
           type: string
           format: uuid
@@ -2622,6 +2626,10 @@ components:
         id:
           type: string
           format: uuid
+        original_price:
+          type:
+          - string
+          - 'null'
         product_id:
           type: string
           format: uuid

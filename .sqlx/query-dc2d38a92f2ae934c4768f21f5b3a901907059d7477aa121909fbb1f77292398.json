@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO user_store_points (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dc2d38a92f2ae934c4768f21f5b3a901907059d7477aa121909fbb1f77292398"
+}

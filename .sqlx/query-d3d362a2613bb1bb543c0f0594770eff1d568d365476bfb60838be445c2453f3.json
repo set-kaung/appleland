@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT key, value, description, type, created_at, updated_at, created_by, updated_by\n        FROM settings\n        ORDER BY key ASC\n        ",
+  "query": "\n        SELECT key, value, description, type AS value_type, created_at, updated_at, updated_by\n        FROM settings\n        ORDER BY key ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -38,7 +38,7 @@
       },
       {
         "ordinal": 3,
-        "name": "type",
+        "name": "value_type",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -71,17 +71,6 @@
       },
       {
         "ordinal": 6,
-        "name": "created_by",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "settings",
-            "name": "created_by"
-          }
-        }
-      },
-      {
-        "ordinal": 7,
         "name": "updated_by",
         "type_info": "Uuid",
         "origin": {
@@ -102,9 +91,8 @@
       false,
       false,
       false,
-      false,
-      false
+      true
     ]
   },
-  "hash": "61f80240d49c3e8c3490234a28c67efd8ffb5863f71c1e8f6cf539636267ec25"
+  "hash": "d3d362a2613bb1bb543c0f0594770eff1d568d365476bfb60838be445c2453f3"
 }

@@ -702,6 +702,10 @@ components:
       - quantity
       - selling_price
       properties:
+        original_price:
+          type:
+          - string
+          - 'null'
         product_id:
           type: string
           format: uuid

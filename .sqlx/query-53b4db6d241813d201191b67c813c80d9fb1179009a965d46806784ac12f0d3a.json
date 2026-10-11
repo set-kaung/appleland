@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            si.id,\n            si.product_id,\n            p.name as \"product_name!\",\n            si.quantity,\n            si.selling_price,\n            si.cost_price,\n            si.created_at\n        FROM sale_items si\n        JOIN products p ON p.id = si.product_id\n        JOIN orders o ON o.sale_id = si.sale_id\n        WHERE o.id = $1\n        ",
+  "query": "SELECT si.id, si.product_id, p.name as product_name, si.sale_id, si.quantity, si.selling_price, si.original_price, si.cost_price, si.created_at\n           FROM sale_items si\n           JOIN products p on p.id = si.product_id\n           WHERE sale_id = $1",
   "describe": {
     "columns": [
       {
@@ -27,7 +27,7 @@
       },
       {
         "ordinal": 2,
-        "name": "product_name!",
+        "name": "product_name",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,6 +38,17 @@
       },
       {
         "ordinal": 3,
+        "name": "sale_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sale_items",
+            "name": "sale_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "quantity",
         "type_info": "Int4",
         "origin": {
@@ -48,7 +59,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "selling_price",
         "type_info": "Numeric",
         "origin": {
@@ -59,7 +70,18 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
+        "name": "original_price",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "sale_items",
+            "name": "original_price"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "cost_price",
         "type_info": "Numeric",
         "origin": {
@@ -70,7 +92,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 8,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -93,8 +115,10 @@
       false,
       false,
       false,
+      true,
+      false,
       false
     ]
   },
-  "hash": "81c66223fe973efd209b2f39e6658f2b6ba9438ecda5905934250637aa4bcde2"
+  "hash": "53b4db6d241813d201191b67c813c80d9fb1179009a965d46806784ac12f0d3a"
 }

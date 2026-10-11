@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_store_points\n           SET balance = user_store_points.balance + $1, updated_at = NOW()\n           WHERE user_id = $2\n           RETURNING balance",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "balance",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "user_store_points",
+            "name": "balance"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2c97b8017676e5c9626ead4e745f349eba67b7cd232db64d87a705ea00d34fe6"
+}

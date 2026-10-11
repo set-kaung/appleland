@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO settings (key, value, description, type, created_by, updated_by)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        RETURNING key, value, description, type, created_at, updated_at, created_by, updated_by\n        ",
+  "query": "\n        INSERT INTO settings (key, value, description, type, updated_by)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING key, value, description, type AS value_type, created_at, updated_at, updated_by\n        ",
   "describe": {
     "columns": [
       {
@@ -38,7 +38,7 @@
       },
       {
         "ordinal": 3,
-        "name": "type",
+        "name": "value_type",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -71,17 +71,6 @@
       },
       {
         "ordinal": 6,
-        "name": "created_by",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "settings",
-            "name": "created_by"
-          }
-        }
-      },
-      {
-        "ordinal": 7,
         "name": "updated_by",
         "type_info": "Uuid",
         "origin": {
@@ -108,9 +97,8 @@
       false,
       false,
       false,
-      false,
-      false
+      true
     ]
   },
-  "hash": "22e8b700883f79a4bb51c4e9e082b3acf01476d2a91bc0e7b1f68074505b62b0"
+  "hash": "39fd06312a5af581b60032b25f6bbff8be5a3ad5ef41177830ca4e6ef9e21525"
 }

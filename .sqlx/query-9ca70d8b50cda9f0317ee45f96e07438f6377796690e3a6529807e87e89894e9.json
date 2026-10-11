@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT si.id, si.product_id, p.name as product_name, si.sale_id, si.quantity, si.selling_price,si.cost_price, si.created_at\n           FROM sale_items si\n           JOIN products p on p.id = si.product_id\n           WHERE sale_id = $1",
+  "query": "\n        SELECT\n            si.id,\n            si.product_id,\n            p.name as \"product_name!\",\n            si.quantity,\n            si.selling_price,\n            si.original_price,\n            si.cost_price,\n            si.created_at\n        FROM sale_items si\n        JOIN products p ON p.id = si.product_id\n        JOIN orders o ON o.sale_id = si.sale_id\n        WHERE o.id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -27,7 +27,7 @@
       },
       {
         "ordinal": 2,
-        "name": "product_name",
+        "name": "product_name!",
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,17 +38,6 @@
       },
       {
         "ordinal": 3,
-        "name": "sale_id",
-        "type_info": "Uuid",
-        "origin": {
-          "Table": {
-            "table": "sale_items",
-            "name": "sale_id"
-          }
-        }
-      },
-      {
-        "ordinal": 4,
         "name": "quantity",
         "type_info": "Int4",
         "origin": {
@@ -59,13 +48,24 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 4,
         "name": "selling_price",
         "type_info": "Numeric",
         "origin": {
           "Table": {
             "table": "sale_items",
             "name": "selling_price"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "original_price",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "sale_items",
+            "name": "original_price"
           }
         }
       },
@@ -103,10 +103,10 @@
       false,
       false,
       false,
-      false,
+      true,
       false,
       false
     ]
   },
-  "hash": "58f9d232c4d5466f1bad83b4e630f425c0be6f079744b6fdd1a7e07ed076b9e7"
+  "hash": "9ca70d8b50cda9f0317ee45f96e07438f6377796690e3a6529807e87e89894e9"
 }
