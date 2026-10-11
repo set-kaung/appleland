@@ -1172,6 +1172,42 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/settings/{key}:
+    patch:
+      tags:
+      - Admin Settings
+      description: Update the value of an existing setting. The value must match the setting's declared type (string, integer, decimal, or boolean); otherwise the request is rejected with 400. Only the value is changed; the setting key, description, and type are untouched.
+      operationId: update_setting_value
+      parameters:
+      - name: key
+        in: path
+        description: The setting key to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSettingPayload'
+        required: true
+      responses:
+        '200':
+          description: The updated setting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingResponse'
+        '400':
+          description: Value does not match the setting's declared type
+        '403':
+          description: Forbidden - Requires a SuperAdmin session
+        '404':
+          description: Setting not found
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/staff:
     get:
       tags:
@@ -2866,6 +2902,12 @@ components:
           - string
           - 'null'
           format: uuid
+    UpdateSettingPayload:
+      type: object
+      required:
+      - value
+      properties:
+        value: {}
     UploadResponse:
       type: object
       required:
