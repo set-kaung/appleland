@@ -1151,6 +1151,27 @@ paths:
           description: Internal server error
       security:
       - session_cookie: []
+  /admin/settings:
+    get:
+      tags:
+      - Admin Settings
+      description: List all store settings ordered by key, ascending.
+      operationId: get_all_settings
+      responses:
+        '200':
+          description: All settings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SettingResponse'
+        '403':
+          description: Forbidden - Requires a SuperAdmin session
+        '500':
+          description: Internal server error
+      security:
+      - session_cookie: []
   /admin/staff:
     get:
       tags:
@@ -2702,6 +2723,35 @@ components:
           - string
           - 'null'
           format: date
+    SettingResponse:
+      type: object
+      required:
+      - key
+      - value
+      - value_type
+      - created_at
+      - updated_at
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        description:
+          type:
+          - string
+          - 'null'
+        key:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        value: {}
+        value_type:
+          type: string
     StockLevel:
       type: object
       required:
@@ -2872,3 +2922,5 @@ tags:
   description: Gemini-powered chat assistant for admins
 - name: Admin AI Analytics
   description: AI / manager analytics over sales and inventory
+- name: Admin Settings
+  description: Store configuration settings
