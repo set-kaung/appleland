@@ -7,7 +7,7 @@ pub async fn get_all_settings(pool: &PgPool) -> Result<Vec<SettingRow>, StoreErr
     let rows = sqlx::query_as!(
         SettingRow,
         r#"
-        SELECT key, value, description, type, created_at, updated_at, created_by, updated_by
+        SELECT key, value, description, type AS value_type, created_at, updated_at, updated_by
         FROM settings
         ORDER BY key ASC
         "#,
@@ -19,20 +19,23 @@ pub async fn get_all_settings(pool: &PgPool) -> Result<Vec<SettingRow>, StoreErr
 }
 
 #[allow(dead_code)]
-pub async fn get_setting_by_key(
-    pool: &PgPool,
-    key: &String,
-) -> Result<Option<SettingRow>, StoreError> {
+pub async fn get_setting_by_key<'e, E>(
+    executor: E,
+    key: &str,
+) -> Result<Option<SettingRow>, StoreError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
     let row = sqlx::query_as!(
         SettingRow,
         r#"
-        SELECT key, value, description, type, created_at, updated_at, created_by, updated_by
+        SELECT key, value, description, type AS value_type, created_at, updated_at, updated_by
         FROM settings
         WHERE key = $1
         "#,
         key
     )
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
 
     Ok(row)
@@ -49,15 +52,15 @@ where
     let result = sqlx::query_as!(
         SettingRow,
         r#"
-        INSERT INTO settings (key, value, description, type, created_by, updated_by)
-        VALUES ($1, $2, $3, $4, $5, $5)
-        RETURNING key, value, description, type, created_at, updated_at, created_by, updated_by
+        INSERT INTO settings (key, value, description, type, updated_by)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING key, value, description, type AS value_type, created_at, updated_at, updated_by
         "#,
         new_setting.key,
         new_setting.value,
         new_setting.description,
-        new_setting.r#type.as_str(),
-        new_setting.created_by,
+        new_setting.value_type.as_str(),
+        new_setting.updated_by,
     )
     .fetch_one(executor)
     .await?;
